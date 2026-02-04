@@ -20,7 +20,7 @@ export function GameOverScreen({
     <div 
       className="fixed inset-0 flex flex-col items-center justify-center p-6"
       style={{ 
-        background: 'linear-gradient(180deg, #2D1F2D 0%, #1A0F1A 100%)'
+        background: 'linear-gradient(180deg, #1a0f0f 0%, #0d0505 100%)'
       }}
     >
       {/* Broken hearts floating */}
@@ -41,53 +41,54 @@ export function GameOverScreen({
         ))}
       </div>
 
-      <div className="card-love max-w-sm w-full text-center relative z-10">
-        {/* Game over title */}
-        <div className="mb-6">
-          <div className="text-5xl mb-3">💔</div>
-          <h1 className="text-4xl font-display font-bold text-love-pink mb-2">
-            Game Over
+      {/* Game Over overlay - centered popup style */}
+      <div className="relative z-10 text-center">
+        {/* Retro GAME OVER text */}
+        <div className="mb-8">
+          <div className="text-6xl mb-4">💔</div>
+          <h1 className="game-over-title text-red-500">
+            GAME OVER
           </h1>
-          <p className="text-muted-foreground">
-            Don't give up, {playerName || 'Hero'}!
-          </p>
         </div>
 
-        {/* Stats */}
-        <div className="bg-love-cream rounded-2xl p-4 mb-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Level Reached</p>
-              <p className="text-2xl font-display font-bold text-love-dark">{level}</p>
+        {/* Stats panel */}
+        <div className="retro-hud-panel mb-6 inline-block">
+          <div className="flex flex-col gap-2 text-left px-4 py-2">
+            <div className="flex justify-between gap-8">
+              <span className="retro-text text-xs text-gray-400">WORLD</span>
+              <span className="retro-text text-sm text-white">{level}</span>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Final Score</p>
-              <p className="text-2xl font-display font-bold text-love-dark">{score}</p>
+            <div className="flex justify-between gap-8">
+              <span className="retro-text text-xs text-gray-400">SCORE</span>
+              <span className="retro-text text-sm text-yellow-400">{score.toString().padStart(6, '0')}</span>
             </div>
           </div>
         </div>
 
         {/* Encouragement */}
-        <p className="text-love-pink/80 mb-6 font-display">
-          Love conquers all! Try again? 💕
+        <p className="text-pink-400 mb-6 font-display text-lg">
+          Don't give up, {playerName || 'Hero'}! 💕
+        </p>
+        <p className="text-gray-400 mb-8 text-sm">
+          Lives reset to 3. Try again from World 1!
         </p>
 
         {/* Buttons */}
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3 items-center">
           <button
             onClick={onRestart}
-            className="btn-love w-full flex items-center justify-center gap-3"
+            className="btn-love flex items-center justify-center gap-3 min-w-[200px]"
           >
             <RotateCcw className="w-5 h-5" />
-            Try Again
+            TRY AGAIN
           </button>
           
           <button
             onClick={onMainMenu}
-            className="btn-gold w-full flex items-center justify-center gap-3"
+            className="btn-gold flex items-center justify-center gap-3 min-w-[200px]"
           >
             <Home className="w-5 h-5" />
-            Main Menu
+            MAIN MENU
           </button>
         </div>
       </div>

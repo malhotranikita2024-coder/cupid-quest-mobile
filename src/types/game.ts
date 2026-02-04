@@ -22,6 +22,7 @@ export interface GameState {
   sfxEnabled: boolean;
   isPaused: boolean;
   timeRemaining: number;
+  hasFinishedGame: boolean;
 }
 
 export interface PlayerState {
@@ -50,12 +51,46 @@ export interface Platform {
   originalY?: number;
 }
 
+export interface HitBlock {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  type: 'question' | 'brick';
+  isHit: boolean;
+  contents?: 'collectible' | 'cookie' | 'none';
+  bounceTimer: number;
+}
+
+export interface Pipe {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  hasEnemy: boolean;
+  enemyTimer: number;
+  enemyVisible: boolean;
+  enemyDirection: 'up' | 'down';
+}
+
+export interface FallingHazard {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  triggerX: number;
+  isFalling: boolean;
+  velocityY: number;
+  isActive: boolean;
+}
+
 export interface Collectible {
   x: number;
   y: number;
   type: 'rose' | 'chocolate' | 'teddy' | 'letter' | 'pearl' | 'ring' | 'arrow' | 'cookie';
   collected: boolean;
   animationOffset: number;
+  fromBlock?: boolean;
 }
 
 export interface Enemy {
@@ -92,10 +127,14 @@ export interface LevelData {
   platforms: Platform[];
   collectibles: Collectible[];
   enemies: Enemy[];
+  hitBlocks: HitBlock[];
+  pipes: Pipe[];
+  fallingHazards: FallingHazard[];
   checkpoint: Checkpoint;
   flag: LevelFlag;
   backgroundColor: string;
   groundColor: string;
+  levelWidth: number;
 }
 
 export interface TouchControls {
