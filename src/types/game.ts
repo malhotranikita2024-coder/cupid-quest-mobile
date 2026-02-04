@@ -1,0 +1,141 @@
+export type GameScreen = 
+  | 'menu' 
+  | 'howToPlay' 
+  | 'settings' 
+  | 'game' 
+  | 'levelComplete' 
+  | 'gameOver' 
+  | 'story' 
+  | 'finalEnding'
+  | 'badges';
+
+export interface GameState {
+  screen: GameScreen;
+  playerName: string;
+  currentLevel: number;
+  lives: number;
+  score: number;
+  collectibles: number;
+  fortuneCookieCollected: boolean;
+  completedLevels: number[];
+  musicEnabled: boolean;
+  sfxEnabled: boolean;
+  isPaused: boolean;
+  timeRemaining: number;
+}
+
+export interface PlayerState {
+  x: number;
+  y: number;
+  velocityX: number;
+  velocityY: number;
+  isJumping: boolean;
+  isRunning: boolean;
+  facingRight: boolean;
+  isGrounded: boolean;
+  isInvincible: boolean;
+  invincibleTimer: number;
+}
+
+export interface Platform {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  type: 'ground' | 'floating' | 'moving' | 'falling';
+  moveDirection?: 'horizontal' | 'vertical';
+  moveSpeed?: number;
+  moveRange?: number;
+  originalX?: number;
+  originalY?: number;
+}
+
+export interface Collectible {
+  x: number;
+  y: number;
+  type: 'rose' | 'chocolate' | 'teddy' | 'letter' | 'pearl' | 'ring' | 'arrow' | 'cookie';
+  collected: boolean;
+  animationOffset: number;
+}
+
+export interface Enemy {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  type: 'heartBug' | 'brokenHeartSlime' | 'jealousCloud';
+  velocityX: number;
+  isDefeated: boolean;
+  direction: 1 | -1;
+  patrolStart: number;
+  patrolEnd: number;
+}
+
+export interface Checkpoint {
+  x: number;
+  y: number;
+  activated: boolean;
+}
+
+export interface LevelFlag {
+  x: number;
+  y: number;
+  reached: boolean;
+}
+
+export interface LevelData {
+  id: number;
+  name: string;
+  collectibleType: string;
+  collectibleEmoji: string;
+  theme: string;
+  platforms: Platform[];
+  collectibles: Collectible[];
+  enemies: Enemy[];
+  checkpoint: Checkpoint;
+  flag: LevelFlag;
+  backgroundColor: string;
+  groundColor: string;
+}
+
+export interface TouchControls {
+  left: boolean;
+  right: boolean;
+  jump: boolean;
+  run: boolean;
+}
+
+export const LEVEL_STORIES: Record<number, { before?: string; after: string }> = {
+  1: {
+    after: "Great start, {name}! 🌹 These roses will make the surprise bloom with love."
+  },
+  2: {
+    after: "Sweet choice, {name}! 🍫 Love tastes better with chocolate."
+  },
+  3: {
+    after: "A cozy touch! 🧸 This teddy will keep the Valentine warmth alive."
+  },
+  4: {
+    after: "Words matter, {name} 💌 A letter can carry a heart across any distance."
+  },
+  5: {
+    after: "Elegant and rare! 💎 Pearls make the surprise feel truly special."
+  },
+  6: {
+    after: "Almost there, {name} 💍 A ring means promise, trust, and forever vibes."
+  },
+  7: {
+    before: "Final step, hero 🏹 Collect Cupid's arrows and complete the ultimate Valentine surprise!",
+    after: ""
+  }
+};
+
+export const LEVEL_INFO: { emoji: string; name: string; theme: string }[] = [
+  { emoji: '🌹', name: 'Rose Garden', theme: 'Rose gardens, heart flowers, pink skies' },
+  { emoji: '🍫', name: 'Candyland', theme: 'Chocolate blocks and sweet treats' },
+  { emoji: '🧸', name: 'Toyland', theme: 'Plush clouds and soft toys' },
+  { emoji: '💌', name: 'Letter Lane', theme: 'Floating envelopes and messages' },
+  { emoji: '💎', name: 'Pearl Ocean', theme: 'Shell platforms and underwater beauty' },
+  { emoji: '💍', name: 'Golden Palace', theme: 'Jewelry and golden treasures' },
+  { emoji: '🏹', name: 'Cupid Sky', theme: 'Clouds and love arrows' },
+];
