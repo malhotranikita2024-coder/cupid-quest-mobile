@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, ChevronLeft, ChevronRight, ArrowUp, Zap, Heart, Cookie, Flag, Star } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, ArrowUp, Zap, Heart, Cookie, Flag, Star, AlertTriangle } from 'lucide-react';
 
 interface HowToPlayScreenProps {
   onBack: () => void;
@@ -34,8 +34,13 @@ export function HowToPlayScreen({ onBack }: HowToPlayScreenProps) {
     },
     {
       icon: <span className="text-3xl">💗</span>,
+      title: 'Hit Blocks',
+      description: 'Jump into blocks from below to reveal items',
+    },
+    {
+      icon: <span className="text-3xl">💔</span>,
       title: 'Defeat Enemies',
-      description: 'Jump on enemies to defeat them',
+      description: 'Jump on enemies to defeat them, avoid pipes!',
     },
     {
       icon: <span className="text-3xl">❤️🏁</span>,
@@ -50,7 +55,7 @@ export function HowToPlayScreen({ onBack }: HowToPlayScreenProps) {
       style={{ background: 'var(--gradient-sky)' }}
     >
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center gap-4 mb-4">
         <button
           onClick={onBack}
           className="p-3 rounded-xl bg-white/80 backdrop-blur-sm shadow-lg hover:bg-white transition-colors"
@@ -62,20 +67,20 @@ export function HowToPlayScreen({ onBack }: HowToPlayScreenProps) {
 
       {/* Instructions grid */}
       <div className="flex-1 max-w-2xl mx-auto w-full">
-        <div className="grid gap-3">
+        <div className="grid gap-2">
           {instructions.map((item, index) => (
             <div
               key={index}
-              className="card-love flex items-center gap-4 p-4"
+              className="card-love flex items-center gap-4 p-3"
             >
-              <div className="w-14 h-14 rounded-xl bg-love-rose/30 flex items-center justify-center text-love-pink flex-shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-love-rose/30 flex items-center justify-center text-love-pink flex-shrink-0">
                 {item.icon}
               </div>
               <div className="flex-1">
-                <h3 className="font-display font-bold text-love-dark">
+                <h3 className="font-display font-bold text-love-dark text-sm">
                   {item.title}
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {item.description}
                 </p>
               </div>
@@ -83,17 +88,31 @@ export function HowToPlayScreen({ onBack }: HowToPlayScreenProps) {
           ))}
         </div>
 
+        {/* Lives Warning */}
+        <div className="card-love mt-3 p-3 border-2 border-red-300 bg-red-50/50">
+          <h3 className="font-display font-bold text-red-600 mb-1 flex items-center gap-2 text-sm">
+            <AlertTriangle className="w-4 h-4" />
+            Lives System
+          </h3>
+          <ul className="text-xs text-red-700 space-y-1">
+            <li>• You start with 3 lives ❤️❤️❤️</li>
+            <li>• If you die, the level restarts from the beginning</li>
+            <li>• At 0 lives = Game Over → Restart from World 1</li>
+            <li>• Find Fortune Cookies 🍪 for extra lives!</li>
+          </ul>
+        </div>
+
         {/* Tips */}
-        <div className="card-love mt-4 p-4">
-          <h3 className="font-display font-bold text-love-dark mb-2 flex items-center gap-2">
-            <Star className="w-5 h-5 text-love-gold fill-love-gold" />
+        <div className="card-love mt-3 p-3">
+          <h3 className="font-display font-bold text-love-dark mb-1 flex items-center gap-2 text-sm">
+            <Star className="w-4 h-4 text-love-gold fill-love-gold" />
             Pro Tips
           </h3>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• Each level has ONE Fortune Cookie - find it!</li>
-            <li>• Checkpoints save your progress mid-level</li>
-            <li>• You have 5 minutes per level - don't rush!</li>
+          <ul className="text-xs text-muted-foreground space-y-1">
+            <li>• Watch out for pipe enemies - they pop out periodically!</li>
+            <li>• Falling hazards trigger when you get close</li>
             <li>• Higher platforms often have more items</li>
+            <li>• Each level takes about 4-5 minutes</li>
           </ul>
         </div>
       </div>
@@ -101,7 +120,7 @@ export function HowToPlayScreen({ onBack }: HowToPlayScreenProps) {
       {/* Back button */}
       <button
         onClick={onBack}
-        className="btn-love mt-4 mx-auto"
+        className="btn-love mt-3 mx-auto"
       >
         Got it! 💕
       </button>

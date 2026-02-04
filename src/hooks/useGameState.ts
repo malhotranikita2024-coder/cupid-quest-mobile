@@ -13,7 +13,8 @@ const INITIAL_STATE: GameState = {
   musicEnabled: true,
   sfxEnabled: true,
   isPaused: false,
-  timeRemaining: 300, // 5 minutes in seconds
+  timeRemaining: 300,
+  hasFinishedGame: false,
 };
 
 export function useGameState() {
@@ -50,24 +51,31 @@ export function useGameState() {
     }));
   }, []);
 
+  // Called when player reaches the flag
   const completeLevel = useCallback(() => {
     setGameState(prev => {
       const newCompleted = prev.completedLevels.includes(prev.currentLevel)
         ? prev.completedLevels
         : [...prev.completedLevels, prev.currentLevel];
       
+      // If completing level 7, mark game as finished
+      const isLevel7 = prev.currentLevel === 7;
+      
       return {
         ...prev,
         completedLevels: newCompleted,
-        screen: prev.currentLevel === 7 ? 'finalEnding' : 'levelComplete',
+        hasFinishedGame: isLevel7 ? true : prev.hasFinishedGame,
+        screen: isLevel7 ? 'finalEnding' : 'levelComplete',
       };
     });
   }, []);
 
+  // Called to advance to next level (after story screen)
   const nextLevel = useCallback(() => {
     setGameState(prev => {
+      // Never go past level 7
       if (prev.currentLevel >= 7) {
-        return { ...prev, screen: 'finalEnding' };
+        return { ...prev, screen: 'finalEnding', hasFinishedGame: true };
       }
       return {
         ...prev,
@@ -77,14 +85,19 @@ export function useGameState() {
     });
   }, []);
 
-  const loseLife = useCallback(() => {
+  // Called when player loses a life - returns true if game over
+  const loseLife = useCallback((): boolean => {
+    let isGameOver = false;
     setGameState(prev => {
       const newLives = prev.lives - 1;
       if (newLives <= 0) {
+        isGameOver = true;
         return { ...prev, lives: 0, screen: 'gameOver' };
       }
+      // Just reduce life, don't change screen - level restarts handled elsewhere
       return { ...prev, lives: newLives };
     });
+    return isGameOver;
   }, []);
 
   const addLife = useCallback(() => {
@@ -128,14 +141,27 @@ export function useGameState() {
     setGameState(prev => ({ ...prev, timeRemaining: time }));
   }, []);
 
+  // Full game restart - back to level 1 with 3 lives
   const restartGame = useCallback(() => {
-    setGameState({
+    setGameState(prev => ({
       ...INITIAL_STATE,
-      playerName: gameState.playerName,
-      musicEnabled: gameState.musicEnabled,
-      sfxEnabled: gameState.sfxEnabled,
-    });
-  }, [gameState.playerName, gameState.musicEnabled, gameState.sfxEnabled]);
+      playerName: prev.playerName,
+      musicEnabled: prev.musicEnabled,
+      sfxEnabled: prev.sfxEnabled,
+    }));
+  }, []);
+
+  // Restart current level (after death, keeps current lives)
+  const restartCurrentLevel = useCallback(() => {
+    setGameState(prev => ({
+      ...prev,
+      screen: 'game',
+      collectibles: 0,
+      fortuneCookieCollected: false,
+      timeRemaining: 300,
+      isPaused: false,
+    }));
+  }, []);
 
   const goToMenu = useCallback(() => {
     setGameState(prev => ({ ...prev, screen: 'menu' }));
@@ -159,6 +185,7 @@ export function useGameState() {
     toggleSfx,
     updateTimer,
     restartGame,
+    restartCurrentLevel,
     goToMenu,
   };
 }

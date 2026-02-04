@@ -1,0 +1,297 @@
+import { useRef, useCallback, useEffect } from 'react';
+
+// Simple 8-bit style audio generation using Web Audio API
+class RetroAudioEngine {
+  private audioContext: AudioContext | null = null;
+  private masterGain: GainNode | null = null;
+  private musicEnabled: boolean = true;
+  private sfxEnabled: boolean = true;
+  private bgMusicOsc: OscillatorNode[] = [];
+  private bgMusicGain: GainNode | null = null;
+  private bgMusicInterval: number | null = null;
+
+  init() {
+    if (this.audioContext) return;
+    try {
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      this.masterGain = this.audioContext.createGain();
+      this.masterGain.connect(this.audioContext.destination);
+      this.masterGain.gain.value = 0.3;
+    } catch (e) {
+      console.warn('Web Audio API not supported');
+    }
+  }
+
+  setMusicEnabled(enabled: boolean) {
+    this.musicEnabled = enabled;
+    if (!enabled) this.stopBackgroundMusic();
+  }
+
+  setSfxEnabled(enabled: boolean) {
+    this.sfxEnabled = enabled;
+  }
+
+  private playTone(frequency: number, duration: number, type: OscillatorType = 'square', volume: number = 0.3) {
+    if (!this.audioContext || !this.masterGain || !this.sfxEnabled) return;
+
+    const oscillator = this.audioContext.createOscillator();
+    const gainNode = this.audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(this.masterGain);
+    
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+    
+    gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + duration);
+    
+    oscillator.start(this.audioContext.currentTime);
+    oscillator.stop(this.audioContext.currentTime + duration);
+  }
+
+  playJump() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    // Rising sweep for jump
+    const ctx = this.audioContext;
+    if (!ctx || !this.masterGain) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(600, ctx.currentTime + 0.1);
+    
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+    
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.15);
+  }
+
+  playCollect() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    // Happy chime
+    setTimeout(() => this.playTone(880, 0.1, 'square', 0.15), 0);
+    setTimeout(() => this.playTone(1100, 0.1, 'square', 0.15), 50);
+    setTimeout(() => this.playTone(1320, 0.15, 'square', 0.15), 100);
+  }
+
+  playCookieCollect() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    // Magical sparkle sound
+    const notes = [523, 659, 784, 880, 1047];
+    notes.forEach((freq, i) => {
+      setTimeout(() => this.playTone(freq, 0.15, 'sine', 0.2), i * 60);
+    });
+  }
+
+  playBlockHit() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    this.playTone(150, 0.08, 'square', 0.25);
+    setTimeout(() => this.playTone(200, 0.05, 'square', 0.15), 40);
+  }
+
+  playEnemyStomp() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    this.playTone(400, 0.05, 'square', 0.2);
+    setTimeout(() => this.playTone(200, 0.1, 'square', 0.15), 30);
+  }
+
+  playDeath() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    // Classic descending death jingle
+    const notes = [440, 415, 392, 370, 349, 330, 311, 294, 277, 262];
+    notes.forEach((freq, i) => {
+      setTimeout(() => this.playTone(freq, 0.12, 'square', 0.25), i * 80);
+    });
+  }
+
+  playGameOver() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    // Sad game over tone
+    setTimeout(() => this.playTone(392, 0.3, 'square', 0.2), 0);
+    setTimeout(() => this.playTone(330, 0.3, 'square', 0.2), 300);
+    setTimeout(() => this.playTone(262, 0.5, 'square', 0.2), 600);
+  }
+
+  playLevelComplete() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    // Victory fanfare
+    const melody = [
+      { freq: 523, dur: 0.1 },
+      { freq: 659, dur: 0.1 },
+      { freq: 784, dur: 0.1 },
+      { freq: 1047, dur: 0.3 },
+      { freq: 784, dur: 0.1 },
+      { freq: 1047, dur: 0.4 },
+    ];
+    let time = 0;
+    melody.forEach((note) => {
+      setTimeout(() => this.playTone(note.freq, note.dur, 'square', 0.2), time);
+      time += note.dur * 800;
+    });
+  }
+
+  playCheckpoint() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    this.playTone(440, 0.1, 'square', 0.15);
+    setTimeout(() => this.playTone(554, 0.1, 'square', 0.15), 100);
+    setTimeout(() => this.playTone(659, 0.2, 'square', 0.15), 200);
+  }
+
+  startBackgroundMusic() {
+    if (!this.musicEnabled) return;
+    this.init();
+    if (!this.audioContext || !this.masterGain) return;
+
+    // Stop existing music
+    this.stopBackgroundMusic();
+
+    this.bgMusicGain = this.audioContext.createGain();
+    this.bgMusicGain.connect(this.masterGain);
+    this.bgMusicGain.gain.value = 0.08;
+
+    // Simple looping melody pattern
+    const bassPattern = [131, 165, 196, 165]; // C3, E3, G3, E3
+    const melodyPattern = [523, 659, 784, 659, 523, 587, 659, 523]; // Higher melody
+
+    let bassIdx = 0;
+    let melodyIdx = 0;
+
+    this.bgMusicInterval = window.setInterval(() => {
+      if (!this.audioContext || !this.bgMusicGain || !this.musicEnabled) return;
+
+      // Bass note
+      const bassOsc = this.audioContext.createOscillator();
+      const bassGain = this.audioContext.createGain();
+      bassOsc.connect(bassGain);
+      bassGain.connect(this.bgMusicGain);
+      bassOsc.type = 'triangle';
+      bassOsc.frequency.value = bassPattern[bassIdx % bassPattern.length];
+      bassGain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+      bassGain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.25);
+      bassOsc.start();
+      bassOsc.stop(this.audioContext.currentTime + 0.25);
+      bassIdx++;
+
+      // Melody note every 2 beats
+      if (bassIdx % 2 === 0) {
+        const melodyOsc = this.audioContext.createOscillator();
+        const melodyGainNode = this.audioContext.createGain();
+        melodyOsc.connect(melodyGainNode);
+        melodyGainNode.connect(this.bgMusicGain);
+        melodyOsc.type = 'square';
+        melodyOsc.frequency.value = melodyPattern[melodyIdx % melodyPattern.length];
+        melodyGainNode.gain.setValueAtTime(0.15, this.audioContext.currentTime);
+        melodyGainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+        melodyOsc.start();
+        melodyOsc.stop(this.audioContext.currentTime + 0.2);
+        melodyIdx++;
+      }
+    }, 250);
+  }
+
+  stopBackgroundMusic() {
+    if (this.bgMusicInterval) {
+      clearInterval(this.bgMusicInterval);
+      this.bgMusicInterval = null;
+    }
+    this.bgMusicOsc.forEach(osc => {
+      try { osc.stop(); } catch {}
+    });
+    this.bgMusicOsc = [];
+  }
+}
+
+const audioEngine = new RetroAudioEngine();
+
+export function useAudio(musicEnabled: boolean, sfxEnabled: boolean) {
+  const initializedRef = useRef(false);
+
+  useEffect(() => {
+    audioEngine.setMusicEnabled(musicEnabled);
+  }, [musicEnabled]);
+
+  useEffect(() => {
+    audioEngine.setSfxEnabled(sfxEnabled);
+  }, [sfxEnabled]);
+
+  const initAudio = useCallback(() => {
+    if (!initializedRef.current) {
+      audioEngine.init();
+      initializedRef.current = true;
+    }
+  }, []);
+
+  const playJump = useCallback(() => {
+    audioEngine.playJump();
+  }, []);
+
+  const playCollect = useCallback(() => {
+    audioEngine.playCollect();
+  }, []);
+
+  const playCookieCollect = useCallback(() => {
+    audioEngine.playCookieCollect();
+  }, []);
+
+  const playBlockHit = useCallback(() => {
+    audioEngine.playBlockHit();
+  }, []);
+
+  const playEnemyStomp = useCallback(() => {
+    audioEngine.playEnemyStomp();
+  }, []);
+
+  const playDeath = useCallback(() => {
+    audioEngine.playDeath();
+  }, []);
+
+  const playGameOver = useCallback(() => {
+    audioEngine.playGameOver();
+  }, []);
+
+  const playLevelComplete = useCallback(() => {
+    audioEngine.playLevelComplete();
+  }, []);
+
+  const playCheckpoint = useCallback(() => {
+    audioEngine.playCheckpoint();
+  }, []);
+
+  const startBackgroundMusic = useCallback(() => {
+    audioEngine.startBackgroundMusic();
+  }, []);
+
+  const stopBackgroundMusic = useCallback(() => {
+    audioEngine.stopBackgroundMusic();
+  }, []);
+
+  return {
+    initAudio,
+    playJump,
+    playCollect,
+    playCookieCollect,
+    playBlockHit,
+    playEnemyStomp,
+    playDeath,
+    playGameOver,
+    playLevelComplete,
+    playCheckpoint,
+    startBackgroundMusic,
+    stopBackgroundMusic,
+  };
+}

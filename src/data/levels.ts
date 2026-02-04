@@ -1,72 +1,119 @@
-import { LevelData, Platform, Collectible, Enemy, Checkpoint, LevelFlag } from '@/types/game';
+import { LevelData, Platform, Collectible, Enemy, HitBlock, Pipe, FallingHazard } from '@/types/game';
 
 const GROUND_Y = 520;
-const PLAYER_START_X = 100;
+const LEVEL_WIDTH = 6000; // Extended level width for 4-5 min gameplay
+
+// Helper to create ground segments with gaps
+function createGroundSegments(segments: { start: number; width: number }[]): Platform[] {
+  return segments.map(seg => ({
+    x: seg.start,
+    y: GROUND_Y,
+    width: seg.width,
+    height: 80,
+    type: 'ground' as const,
+  }));
+}
+
+// Helper to create floating platforms
+function createFloatingPlatform(x: number, y: number, width: number = 120): Platform {
+  return { x, y, width, height: 30, type: 'floating' as const };
+}
+
+// Helper to create question/brick blocks
+function createQuestionBlock(x: number, y: number, contents: 'collectible' | 'cookie' | 'none' = 'collectible'): HitBlock {
+  return { x, y, width: 40, height: 40, type: 'question', isHit: false, contents, bounceTimer: 0 };
+}
+
+function createBrickBlock(x: number, y: number): HitBlock {
+  return { x, y, width: 40, height: 40, type: 'brick', isHit: false, contents: 'none', bounceTimer: 0 };
+}
+
+// Helper to create pipe with enemy
+function createPipe(x: number, hasEnemy: boolean = true): Pipe {
+  return { x, y: GROUND_Y - 80, width: 60, height: 80, hasEnemy, enemyTimer: 0, enemyVisible: false, enemyDirection: 'up' };
+}
+
+// Helper to create falling hazard
+function createFallingHazard(x: number, y: number, triggerX: number): FallingHazard {
+  return { x, y, width: 40, height: 40, triggerX, isFalling: false, velocityY: 0, isActive: true };
+}
 
 function createLevel1(): LevelData {
+  // Level 1: Rose Garden - Tutorial feel, wide platforms, few enemies
   const platforms: Platform[] = [
-    // Main ground
-    { x: 0, y: GROUND_Y, width: 600, height: 80, type: 'ground' },
-    { x: 700, y: GROUND_Y, width: 400, height: 80, type: 'ground' },
-    { x: 1200, y: GROUND_Y, width: 500, height: 80, type: 'ground' },
-    { x: 1800, y: GROUND_Y, width: 400, height: 80, type: 'ground' },
-    { x: 2300, y: GROUND_Y, width: 600, height: 80, type: 'ground' },
-    
-    // Floating platforms
-    { x: 300, y: 400, width: 150, height: 30, type: 'floating' },
-    { x: 500, y: 320, width: 120, height: 30, type: 'floating' },
-    { x: 800, y: 380, width: 180, height: 30, type: 'floating' },
-    { x: 1050, y: 300, width: 100, height: 30, type: 'floating' },
-    { x: 1300, y: 400, width: 150, height: 30, type: 'floating' },
-    { x: 1550, y: 350, width: 120, height: 30, type: 'floating' },
-    { x: 1900, y: 420, width: 160, height: 30, type: 'floating' },
-    { x: 2100, y: 340, width: 140, height: 30, type: 'floating' },
-    { x: 2400, y: 380, width: 130, height: 30, type: 'floating' },
+    ...createGroundSegments([
+      { start: 0, width: 800 },
+      { start: 900, width: 600 },
+      { start: 1600, width: 500 },
+      { start: 2200, width: 700 },
+      { start: 3000, width: 600 },
+      { start: 3700, width: 500 },
+      { start: 4300, width: 700 },
+      { start: 5100, width: 800 },
+    ]),
+    // Floating platforms for exploration
+    createFloatingPlatform(400, 400, 150),
+    createFloatingPlatform(650, 320, 120),
+    createFloatingPlatform(1000, 380, 180),
+    createFloatingPlatform(1300, 300, 140),
+    createFloatingPlatform(1700, 400, 150),
+    createFloatingPlatform(2000, 340, 130),
+    createFloatingPlatform(2400, 380, 160),
+    createFloatingPlatform(2700, 300, 140),
+    createFloatingPlatform(3100, 360, 150),
+    createFloatingPlatform(3400, 280, 130),
+    createFloatingPlatform(3800, 400, 140),
+    createFloatingPlatform(4100, 320, 150),
+    createFloatingPlatform(4500, 380, 160),
+    createFloatingPlatform(4800, 300, 130),
+    createFloatingPlatform(5200, 360, 150),
+    createFloatingPlatform(5500, 400, 140),
   ];
 
-  const collectibles: Collectible[] = [
-    // Ground level roses
-    { x: 200, y: GROUND_Y - 60, type: 'rose', collected: false, animationOffset: 0 },
-    { x: 300, y: GROUND_Y - 60, type: 'rose', collected: false, animationOffset: 0.5 },
-    { x: 400, y: GROUND_Y - 60, type: 'rose', collected: false, animationOffset: 1 },
-    { x: 750, y: GROUND_Y - 60, type: 'rose', collected: false, animationOffset: 1.5 },
-    { x: 900, y: GROUND_Y - 60, type: 'rose', collected: false, animationOffset: 2 },
-    
-    // Platform roses
-    { x: 350, y: 340, type: 'rose', collected: false, animationOffset: 0.3 },
-    { x: 550, y: 260, type: 'rose', collected: false, animationOffset: 0.8 },
-    { x: 870, y: 320, type: 'rose', collected: false, animationOffset: 1.3 },
-    { x: 1080, y: 240, type: 'rose', collected: false, animationOffset: 1.8 },
-    { x: 1350, y: 340, type: 'rose', collected: false, animationOffset: 2.3 },
-    
-    // More ground roses
-    { x: 1250, y: GROUND_Y - 60, type: 'rose', collected: false, animationOffset: 0.2 },
-    { x: 1400, y: GROUND_Y - 60, type: 'rose', collected: false, animationOffset: 0.7 },
-    { x: 1550, y: 290, type: 'rose', collected: false, animationOffset: 1.2 },
-    { x: 1950, y: 360, type: 'rose', collected: false, animationOffset: 1.7 },
-    { x: 2150, y: 280, type: 'rose', collected: false, animationOffset: 2.2 },
-    
-    // End area roses
-    { x: 2400, y: GROUND_Y - 60, type: 'rose', collected: false, animationOffset: 0.4 },
-    { x: 2500, y: GROUND_Y - 60, type: 'rose', collected: false, animationOffset: 0.9 },
-    { x: 2600, y: GROUND_Y - 60, type: 'rose', collected: false, animationOffset: 1.4 },
-    { x: 2450, y: 320, type: 'rose', collected: false, animationOffset: 1.9 },
-    
-    // Fortune cookie (hidden on high platform)
-    { x: 1080, y: 230, type: 'cookie', collected: false, animationOffset: 0 },
-  ];
+  const collectibles: Collectible[] = [];
+  // Ground level roses
+  for (let i = 0; i < 40; i++) {
+    const x = 150 + i * 140;
+    if (x < LEVEL_WIDTH - 200) {
+      collectibles.push({
+        x,
+        y: i % 3 === 0 ? 280 : GROUND_Y - 60,
+        type: 'rose',
+        collected: false,
+        animationOffset: i * 0.15,
+      });
+    }
+  }
+  // Fortune cookie - hidden on high platform
+  collectibles.push({ x: 3450, y: 220, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
-    { x: 250, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 150, patrolEnd: 500 },
-    { x: 800, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.5, isDefeated: false, direction: -1, patrolStart: 720, patrolEnd: 1050 },
-    { x: 1350, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1, isDefeated: false, direction: 1, patrolStart: 1250, patrolEnd: 1600 },
-    { x: 1900, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 1820, patrolEnd: 2150 },
-    { x: 2450, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.2, isDefeated: false, direction: 1, patrolStart: 2350, patrolEnd: 2700 },
+    { x: 500, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 300, patrolEnd: 700 },
+    { x: 1100, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.5, isDefeated: false, direction: -1, patrolStart: 950, patrolEnd: 1400 },
+    { x: 2400, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1, isDefeated: false, direction: 1, patrolStart: 2250, patrolEnd: 2800 },
+    { x: 3200, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 3050, patrolEnd: 3500 },
+    { x: 4500, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 4350, patrolEnd: 4900 },
+    { x: 5300, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.2, isDefeated: false, direction: -1, patrolStart: 5150, patrolEnd: 5700 },
   ];
 
-  const checkpoint: Checkpoint = { x: 1400, y: GROUND_Y - 80, activated: false };
-  
-  const flag: LevelFlag = { x: 2750, y: GROUND_Y - 120, reached: false };
+  const hitBlocks: HitBlock[] = [
+    createQuestionBlock(500, 380),
+    createQuestionBlock(1150, 340),
+    createBrickBlock(1190, 340),
+    createQuestionBlock(2500, 360),
+    createQuestionBlock(3600, 340),
+    createBrickBlock(3640, 340),
+    createQuestionBlock(4600, 360),
+    createQuestionBlock(5400, 340),
+  ];
+
+  const pipes: Pipe[] = [
+    createPipe(1500, false), // No enemy - intro pipe
+    createPipe(2900, false),
+    createPipe(4200, false),
+  ];
+
+  const fallingHazards: FallingHazard[] = []; // No falling hazards in level 1
 
   return {
     id: 1,
@@ -77,51 +124,101 @@ function createLevel1(): LevelData {
     platforms,
     collectibles,
     enemies,
-    checkpoint,
-    flag,
+    hitBlocks,
+    pipes,
+    fallingHazards,
+    checkpoint: { x: 2800, y: GROUND_Y - 80, activated: false },
+    flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
     backgroundColor: '#FFE4EC',
     groundColor: '#8B4557',
+    levelWidth: LEVEL_WIDTH,
   };
 }
 
 function createLevel2(): LevelData {
+  // Level 2: Candyland - More collectibles, more blocks, enemies appear more often
   const platforms: Platform[] = [
-    { x: 0, y: GROUND_Y, width: 500, height: 80, type: 'ground' },
-    { x: 600, y: GROUND_Y, width: 300, height: 80, type: 'ground' },
-    { x: 1000, y: GROUND_Y, width: 400, height: 80, type: 'ground' },
-    { x: 1500, y: GROUND_Y, width: 350, height: 80, type: 'ground' },
-    { x: 1950, y: GROUND_Y, width: 500, height: 80, type: 'ground' },
-    
-    { x: 250, y: 420, width: 130, height: 30, type: 'floating' },
-    { x: 450, y: 350, width: 100, height: 30, type: 'floating' },
-    { x: 700, y: 400, width: 150, height: 30, type: 'floating' },
-    { x: 950, y: 320, width: 120, height: 30, type: 'floating' },
-    { x: 1150, y: 400, width: 140, height: 30, type: 'floating' },
-    { x: 1350, y: 340, width: 110, height: 30, type: 'floating' },
-    { x: 1600, y: 380, width: 160, height: 30, type: 'floating' },
-    { x: 1850, y: 300, width: 130, height: 30, type: 'floating' },
-    { x: 2100, y: 360, width: 150, height: 30, type: 'floating' },
+    ...createGroundSegments([
+      { start: 0, width: 700 },
+      { start: 800, width: 500 },
+      { start: 1400, width: 600 },
+      { start: 2100, width: 500 },
+      { start: 2700, width: 700 },
+      { start: 3500, width: 500 },
+      { start: 4100, width: 600 },
+      { start: 4800, width: 600 },
+      { start: 5500, width: 400 },
+    ]),
+    createFloatingPlatform(350, 420, 130),
+    createFloatingPlatform(550, 350, 100),
+    createFloatingPlatform(900, 400, 150),
+    createFloatingPlatform(1200, 320, 120),
+    createFloatingPlatform(1500, 400, 140),
+    createFloatingPlatform(1800, 340, 110),
+    createFloatingPlatform(2200, 380, 160),
+    createFloatingPlatform(2500, 300, 130),
+    createFloatingPlatform(2900, 360, 150),
+    createFloatingPlatform(3200, 280, 120),
+    createFloatingPlatform(3600, 400, 140),
+    createFloatingPlatform(3900, 320, 130),
+    createFloatingPlatform(4300, 380, 160),
+    createFloatingPlatform(4600, 300, 120),
+    createFloatingPlatform(5000, 360, 140),
+    createFloatingPlatform(5300, 400, 130),
+    createFloatingPlatform(5600, 340, 150),
   ];
 
   const collectibles: Collectible[] = [];
-  for (let i = 0; i < 20; i++) {
-    collectibles.push({
-      x: 150 + i * 120,
-      y: i % 2 === 0 ? GROUND_Y - 60 : 280 + (i % 3) * 40,
-      type: 'chocolate',
-      collected: false,
-      animationOffset: i * 0.2,
-    });
+  for (let i = 0; i < 45; i++) {
+    const x = 120 + i * 125;
+    if (x < LEVEL_WIDTH - 200) {
+      collectibles.push({
+        x,
+        y: i % 2 === 0 ? GROUND_Y - 60 : 280 + (i % 3) * 30,
+        type: 'chocolate',
+        collected: false,
+        animationOffset: i * 0.12,
+      });
+    }
   }
-  collectibles.push({ x: 1880, y: 240, type: 'cookie', collected: false, animationOffset: 0 });
+  collectibles.push({ x: 3250, y: 220, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
-    { x: 300, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 450 },
-    { x: 750, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.3, isDefeated: false, direction: -1, patrolStart: 620, patrolEnd: 880 },
-    { x: 1100, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 1020, patrolEnd: 1350 },
-    { x: 1600, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.5, isDefeated: false, direction: -1, patrolStart: 1520, patrolEnd: 1800 },
-    { x: 2100, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 1970, patrolEnd: 2350 },
+    { x: 400, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 200, patrolEnd: 600 },
+    { x: 900, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.3, isDefeated: false, direction: -1, patrolStart: 820, patrolEnd: 1180 },
+    { x: 1500, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 1420, patrolEnd: 1900 },
+    { x: 2300, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 2150, patrolEnd: 2550 },
+    { x: 2900, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.5, isDefeated: false, direction: 1, patrolStart: 2750, patrolEnd: 3300 },
+    { x: 3700, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 3550, patrolEnd: 3950 },
+    { x: 4400, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 4150, patrolEnd: 4650 },
+    { x: 5100, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.4, isDefeated: false, direction: -1, patrolStart: 4850, patrolEnd: 5350 },
   ];
+
+  const hitBlocks: HitBlock[] = [
+    createQuestionBlock(400, 380),
+    createBrickBlock(440, 380),
+    createQuestionBlock(480, 380),
+    createQuestionBlock(1000, 340),
+    createBrickBlock(1040, 340),
+    createQuestionBlock(1600, 360),
+    createQuestionBlock(2300, 340),
+    createBrickBlock(2340, 340),
+    createBrickBlock(2380, 340),
+    createQuestionBlock(3000, 360),
+    createQuestionBlock(3800, 340),
+    createBrickBlock(3840, 340),
+    createQuestionBlock(4500, 360),
+    createQuestionBlock(5200, 340),
+  ];
+
+  const pipes: Pipe[] = [
+    createPipe(1300, true),
+    createPipe(2600, true),
+    createPipe(4000, false),
+    createPipe(5400, true),
+  ];
+
+  const fallingHazards: FallingHazard[] = []; // No falling hazards in level 2
 
   return {
     id: 2,
@@ -132,59 +229,663 @@ function createLevel2(): LevelData {
     platforms,
     collectibles,
     enemies,
-    checkpoint: { x: 1200, y: GROUND_Y - 80, activated: false },
-    flag: { x: 2300, y: GROUND_Y - 120, reached: false },
+    hitBlocks,
+    pipes,
+    fallingHazards,
+    checkpoint: { x: 2500, y: GROUND_Y - 80, activated: false },
+    flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
     backgroundColor: '#FFF0E6',
     groundColor: '#8B5A2B',
+    levelWidth: LEVEL_WIDTH,
   };
 }
 
-// Create simple placeholder levels for 3-7
-function createSimpleLevel(id: number, name: string, emoji: string, collectibleType: string, bgColor: string, groundColor: string): LevelData {
+function createLevel3(): LevelData {
+  // Level 3: Toyland - Introduce pipe enemies regularly, vertical routes
   const platforms: Platform[] = [
-    { x: 0, y: GROUND_Y, width: 800, height: 80, type: 'ground' },
-    { x: 900, y: GROUND_Y, width: 600, height: 80, type: 'ground' },
-    { x: 1600, y: GROUND_Y, width: 700, height: 80, type: 'ground' },
-    
-    { x: 300, y: 400, width: 150, height: 30, type: 'floating' },
-    { x: 600, y: 340, width: 120, height: 30, type: 'floating' },
-    { x: 1000, y: 380, width: 180, height: 30, type: 'floating' },
-    { x: 1300, y: 300, width: 140, height: 30, type: 'floating' },
-    { x: 1700, y: 360, width: 160, height: 30, type: 'floating' },
-    { x: 2000, y: 320, width: 130, height: 30, type: 'floating' },
+    ...createGroundSegments([
+      { start: 0, width: 600 },
+      { start: 750, width: 450 },
+      { start: 1350, width: 550 },
+      { start: 2000, width: 500 },
+      { start: 2600, width: 600 },
+      { start: 3300, width: 450 },
+      { start: 3850, width: 550 },
+      { start: 4500, width: 600 },
+      { start: 5200, width: 700 },
+    ]),
+    // Vertical section - stacked platforms
+    createFloatingPlatform(300, 420, 120),
+    createFloatingPlatform(350, 340, 100),
+    createFloatingPlatform(300, 260, 120),
+    createFloatingPlatform(350, 180, 100),
+    // Regular floating
+    createFloatingPlatform(800, 400, 140),
+    createFloatingPlatform(1100, 320, 130),
+    createFloatingPlatform(1450, 380, 150),
+    // Another vertical section
+    createFloatingPlatform(1700, 420, 110),
+    createFloatingPlatform(1750, 340, 100),
+    createFloatingPlatform(1700, 260, 110),
+    // Continue
+    createFloatingPlatform(2100, 380, 140),
+    createFloatingPlatform(2400, 300, 130),
+    createFloatingPlatform(2750, 360, 150),
+    createFloatingPlatform(3050, 280, 120),
+    createFloatingPlatform(3400, 400, 140),
+    createFloatingPlatform(3700, 320, 130),
+    createFloatingPlatform(4000, 380, 150),
+    createFloatingPlatform(4300, 300, 120),
+    createFloatingPlatform(4700, 360, 140),
+    createFloatingPlatform(5000, 280, 130),
+    createFloatingPlatform(5300, 400, 150),
+    createFloatingPlatform(5600, 340, 130),
   ];
 
   const collectibles: Collectible[] = [];
-  for (let i = 0; i < 15; i++) {
-    collectibles.push({
-      x: 150 + i * 140,
-      y: i % 2 === 0 ? GROUND_Y - 60 : 260 + (i % 3) * 40,
-      type: collectibleType as any,
-      collected: false,
-      animationOffset: i * 0.25,
-    });
+  for (let i = 0; i < 50; i++) {
+    const x = 100 + i * 115;
+    if (x < LEVEL_WIDTH - 200) {
+      collectibles.push({
+        x,
+        y: i % 3 === 0 ? 200 + (i % 4) * 50 : GROUND_Y - 60,
+        type: 'teddy',
+        collected: false,
+        animationOffset: i * 0.1,
+      });
+    }
   }
-  collectibles.push({ x: 1330, y: 240, type: 'cookie', collected: false, animationOffset: 0 });
+  collectibles.push({ x: 380, y: 120, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
-    { x: 400, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 700 },
-    { x: 1000, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.5, isDefeated: false, direction: -1, patrolStart: 920, patrolEnd: 1400 },
-    { x: 1800, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 1620, patrolEnd: 2200 },
+    { x: 350, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 150, patrolEnd: 550 },
+    { x: 850, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.4, isDefeated: false, direction: -1, patrolStart: 780, patrolEnd: 1150 },
+    { x: 1450, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 1380, patrolEnd: 1850 },
+    { x: 2200, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 2050, patrolEnd: 2450 },
+    { x: 2800, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.5, isDefeated: false, direction: 1, patrolStart: 2650, patrolEnd: 3100 },
+    { x: 3500, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 3350, patrolEnd: 3700 },
+    { x: 4000, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: 1, patrolStart: 3900, patrolEnd: 4350 },
+    { x: 4700, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: -1, patrolStart: 4550, patrolEnd: 5050 },
+    { x: 5400, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 5250, patrolEnd: 5800 },
   ];
 
+  const hitBlocks: HitBlock[] = [
+    createQuestionBlock(450, 360),
+    createBrickBlock(490, 360),
+    createQuestionBlock(950, 340),
+    createQuestionBlock(1550, 340),
+    createBrickBlock(1590, 340),
+    createQuestionBlock(2250, 360),
+    createBrickBlock(2290, 360),
+    createBrickBlock(2330, 360),
+    createQuestionBlock(2950, 340),
+    createQuestionBlock(3550, 360),
+    createBrickBlock(3590, 360),
+    createQuestionBlock(4150, 340),
+    createQuestionBlock(4850, 360),
+    createQuestionBlock(5450, 340),
+    createBrickBlock(5490, 340),
+  ];
+
+  const pipes: Pipe[] = [
+    createPipe(700, true),
+    createPipe(1300, true),
+    createPipe(1950, true),
+    createPipe(2550, true),
+    createPipe(3250, true),
+    createPipe(4450, true),
+    createPipe(5100, true),
+  ];
+
+  const fallingHazards: FallingHazard[] = []; // No falling hazards in level 3
+
   return {
-    id,
-    name,
-    collectibleType,
-    collectibleEmoji: emoji,
-    theme: name,
+    id: 3,
+    name: 'Toyland',
+    collectibleType: 'teddy',
+    collectibleEmoji: '🧸',
+    theme: 'Plush clouds and soft toys',
     platforms,
     collectibles,
     enemies,
-    checkpoint: { x: 1100, y: GROUND_Y - 80, activated: false },
-    flag: { x: 2150, y: GROUND_Y - 120, reached: false },
-    backgroundColor: bgColor,
-    groundColor,
+    hitBlocks,
+    pipes,
+    fallingHazards,
+    checkpoint: { x: 2400, y: GROUND_Y - 80, activated: false },
+    flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
+    backgroundColor: '#E8F4FF',
+    groundColor: '#9B7653',
+    levelWidth: LEVEL_WIDTH,
+  };
+}
+
+function createLevel4(): LevelData {
+  // Level 4: Letter Lane - Introduce falling hazards at low frequency
+  const platforms: Platform[] = [
+    ...createGroundSegments([
+      { start: 0, width: 550 },
+      { start: 700, width: 400 },
+      { start: 1200, width: 500 },
+      { start: 1800, width: 450 },
+      { start: 2350, width: 550 },
+      { start: 3000, width: 400 },
+      { start: 3500, width: 500 },
+      { start: 4100, width: 550 },
+      { start: 4750, width: 500 },
+      { start: 5350, width: 550 },
+    ]),
+    createFloatingPlatform(280, 400, 130),
+    createFloatingPlatform(500, 320, 110),
+    createFloatingPlatform(800, 380, 140),
+    createFloatingPlatform(1050, 300, 120),
+    createFloatingPlatform(1350, 360, 150),
+    createFloatingPlatform(1600, 280, 110),
+    createFloatingPlatform(1900, 400, 140),
+    createFloatingPlatform(2150, 320, 130),
+    createFloatingPlatform(2500, 380, 150),
+    createFloatingPlatform(2800, 300, 120),
+    createFloatingPlatform(3100, 360, 140),
+    createFloatingPlatform(3350, 280, 110),
+    createFloatingPlatform(3650, 400, 150),
+    createFloatingPlatform(3900, 320, 130),
+    createFloatingPlatform(4250, 380, 140),
+    createFloatingPlatform(4550, 300, 120),
+    createFloatingPlatform(4900, 360, 150),
+    createFloatingPlatform(5150, 280, 110),
+    createFloatingPlatform(5500, 400, 140),
+  ];
+
+  const collectibles: Collectible[] = [];
+  for (let i = 0; i < 52; i++) {
+    const x = 90 + i * 110;
+    if (x < LEVEL_WIDTH - 200) {
+      collectibles.push({
+        x,
+        y: i % 4 === 0 ? 220 + (i % 3) * 40 : GROUND_Y - 60,
+        type: 'letter',
+        collected: false,
+        animationOffset: i * 0.09,
+      });
+    }
+  }
+  collectibles.push({ x: 1650, y: 220, type: 'cookie', collected: false, animationOffset: 0 });
+
+  const enemies: Enemy[] = [
+    { x: 300, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 500 },
+    { x: 800, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.5, isDefeated: false, direction: -1, patrolStart: 720, patrolEnd: 1050 },
+    { x: 1350, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 1230, patrolEnd: 1650 },
+    { x: 1950, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: -1, patrolStart: 1830, patrolEnd: 2200 },
+    { x: 2500, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: 1, patrolStart: 2380, patrolEnd: 2850 },
+    { x: 3150, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 3030, patrolEnd: 3350 },
+    { x: 3650, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 3530, patrolEnd: 3950 },
+    { x: 4250, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.7, isDefeated: false, direction: -1, patrolStart: 4130, patrolEnd: 4600 },
+    { x: 4900, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 4780, patrolEnd: 5200 },
+    { x: 5500, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: -1, patrolStart: 5380, patrolEnd: 5800 },
+  ];
+
+  const hitBlocks: HitBlock[] = [
+    createQuestionBlock(350, 360),
+    createBrickBlock(390, 360),
+    createQuestionBlock(900, 340),
+    createBrickBlock(940, 340),
+    createQuestionBlock(1450, 320),
+    createQuestionBlock(2000, 360),
+    createBrickBlock(2040, 360),
+    createBrickBlock(2080, 360),
+    createQuestionBlock(2600, 340),
+    createQuestionBlock(3200, 320),
+    createBrickBlock(3240, 320),
+    createQuestionBlock(3750, 360),
+    createQuestionBlock(4350, 340),
+    createBrickBlock(4390, 340),
+    createQuestionBlock(5000, 320),
+    createQuestionBlock(5600, 360),
+  ];
+
+  const pipes: Pipe[] = [
+    createPipe(650, true),
+    createPipe(1150, true),
+    createPipe(1750, true),
+    createPipe(2300, true),
+    createPipe(2950, true),
+    createPipe(3450, true),
+    createPipe(4050, true),
+    createPipe(4700, true),
+    createPipe(5300, true),
+  ];
+
+  const fallingHazards: FallingHazard[] = [
+    createFallingHazard(1000, 100, 950),
+    createFallingHazard(2200, 100, 2150),
+    createFallingHazard(3800, 100, 3750),
+    createFallingHazard(5200, 100, 5150),
+  ];
+
+  return {
+    id: 4,
+    name: 'Letter Lane',
+    collectibleType: 'letter',
+    collectibleEmoji: '💌',
+    theme: 'Floating envelopes and messages',
+    platforms,
+    collectibles,
+    enemies,
+    hitBlocks,
+    pipes,
+    fallingHazards,
+    checkpoint: { x: 2700, y: GROUND_Y - 80, activated: false },
+    flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
+    backgroundColor: '#FFF5F5',
+    groundColor: '#C9A0DC',
+    levelWidth: LEVEL_WIDTH,
+  };
+}
+
+function createLevel5(): LevelData {
+  // Level 5: Pearl Ocean - Narrower jumps, moving platforms, more enemies
+  const platforms: Platform[] = [
+    ...createGroundSegments([
+      { start: 0, width: 500 },
+      { start: 650, width: 350 },
+      { start: 1150, width: 400 },
+      { start: 1700, width: 350 },
+      { start: 2200, width: 450 },
+      { start: 2800, width: 350 },
+      { start: 3300, width: 400 },
+      { start: 3850, width: 450 },
+      { start: 4450, width: 400 },
+      { start: 5000, width: 350 },
+      { start: 5500, width: 400 },
+    ]),
+    // Moving platforms (marked as type moving)
+    { x: 550, y: 400, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 2, moveRange: 150, originalX: 550, originalY: 400 },
+    { x: 1100, y: 350, width: 100, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 1.5, moveRange: 100, originalX: 1100, originalY: 350 },
+    createFloatingPlatform(250, 380, 120),
+    createFloatingPlatform(800, 320, 100),
+    createFloatingPlatform(1300, 380, 130),
+    createFloatingPlatform(1550, 280, 100),
+    { x: 1900, y: 400, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 2, moveRange: 120, originalX: 1900, originalY: 400 },
+    createFloatingPlatform(2350, 340, 120),
+    createFloatingPlatform(2600, 280, 100),
+    { x: 2950, y: 380, width: 100, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 1.5, moveRange: 80, originalX: 2950, originalY: 380 },
+    createFloatingPlatform(3450, 320, 120),
+    createFloatingPlatform(3700, 280, 100),
+    { x: 4000, y: 400, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 2.5, moveRange: 140, originalX: 4000, originalY: 400 },
+    createFloatingPlatform(4600, 340, 110),
+    createFloatingPlatform(4900, 280, 100),
+    { x: 5200, y: 380, width: 100, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 2, moveRange: 100, originalX: 5200, originalY: 380 },
+    createFloatingPlatform(5650, 320, 130),
+  ];
+
+  const collectibles: Collectible[] = [];
+  for (let i = 0; i < 55; i++) {
+    const x = 80 + i * 105;
+    if (x < LEVEL_WIDTH - 200) {
+      collectibles.push({
+        x,
+        y: i % 3 === 0 ? 200 + (i % 4) * 45 : GROUND_Y - 60,
+        type: 'pearl',
+        collected: false,
+        animationOffset: i * 0.08,
+      });
+    }
+  }
+  collectibles.push({ x: 2650, y: 220, type: 'cookie', collected: false, animationOffset: 0 });
+
+  const enemies: Enemy[] = [
+    { x: 280, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 450 },
+    { x: 750, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: -1, patrolStart: 680, patrolEnd: 950 },
+    { x: 1250, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: 1, patrolStart: 1180, patrolEnd: 1500 },
+    { x: 1800, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 1730, patrolEnd: 2000 },
+    { x: 2350, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.7, isDefeated: false, direction: 1, patrolStart: 2230, patrolEnd: 2600 },
+    { x: 2950, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: -1, patrolStart: 2830, patrolEnd: 3100 },
+    { x: 3450, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 3330, patrolEnd: 3650 },
+    { x: 4000, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.8, isDefeated: false, direction: -1, patrolStart: 3880, patrolEnd: 4250 },
+    { x: 4550, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: 1, patrolStart: 4480, patrolEnd: 4800 },
+    { x: 5150, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: -1, patrolStart: 5030, patrolEnd: 5300 },
+    { x: 5650, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 5530, patrolEnd: 5850 },
+  ];
+
+  const hitBlocks: HitBlock[] = [
+    createQuestionBlock(320, 340),
+    createBrickBlock(360, 340),
+    createQuestionBlock(850, 320),
+    createQuestionBlock(1350, 340),
+    createBrickBlock(1390, 340),
+    createQuestionBlock(1850, 320),
+    createBrickBlock(1890, 320),
+    createQuestionBlock(2400, 340),
+    createQuestionBlock(3000, 320),
+    createBrickBlock(3040, 320),
+    createBrickBlock(3080, 320),
+    createQuestionBlock(3550, 340),
+    createQuestionBlock(4100, 320),
+    createBrickBlock(4140, 320),
+    createQuestionBlock(4700, 340),
+    createQuestionBlock(5250, 320),
+    createBrickBlock(5290, 320),
+    createQuestionBlock(5700, 340),
+  ];
+
+  const pipes: Pipe[] = [
+    createPipe(600, true),
+    createPipe(1100, true),
+    createPipe(1650, true),
+    createPipe(2150, true),
+    createPipe(2750, true),
+    createPipe(3250, true),
+    createPipe(3800, true),
+    createPipe(4400, true),
+    createPipe(4950, true),
+    createPipe(5450, true),
+  ];
+
+  const fallingHazards: FallingHazard[] = [
+    createFallingHazard(900, 100, 850),
+    createFallingHazard(1500, 100, 1450),
+    createFallingHazard(2500, 100, 2450),
+    createFallingHazard(3600, 100, 3550),
+    createFallingHazard(4800, 100, 4750),
+    createFallingHazard(5600, 100, 5550),
+  ];
+
+  return {
+    id: 5,
+    name: 'Pearl Ocean',
+    collectibleType: 'pearl',
+    collectibleEmoji: '💎',
+    theme: 'Shell platforms and underwater beauty',
+    platforms,
+    collectibles,
+    enemies,
+    hitBlocks,
+    pipes,
+    fallingHazards,
+    checkpoint: { x: 2600, y: GROUND_Y - 80, activated: false },
+    flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
+    backgroundColor: '#E0F7FA',
+    groundColor: '#00ACC1',
+    levelWidth: LEVEL_WIDTH,
+  };
+}
+
+function createLevel6(): LevelData {
+  // Level 6: Golden Palace - Combine hazards, pipes, moving platforms, still fair
+  const platforms: Platform[] = [
+    ...createGroundSegments([
+      { start: 0, width: 450 },
+      { start: 600, width: 300 },
+      { start: 1050, width: 350 },
+      { start: 1550, width: 300 },
+      { start: 2000, width: 400 },
+      { start: 2550, width: 300 },
+      { start: 3000, width: 350 },
+      { start: 3500, width: 400 },
+      { start: 4050, width: 350 },
+      { start: 4550, width: 300 },
+      { start: 5000, width: 400 },
+      { start: 5550, width: 350 },
+    ]),
+    { x: 500, y: 380, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 2.5, moveRange: 120, originalX: 500, originalY: 380 },
+    createFloatingPlatform(750, 320, 110),
+    { x: 1000, y: 400, width: 100, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 2, moveRange: 100, originalX: 1000, originalY: 400 },
+    createFloatingPlatform(1300, 340, 100),
+    { x: 1700, y: 360, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 3, moveRange: 150, originalX: 1700, originalY: 360 },
+    createFloatingPlatform(2150, 300, 120),
+    createFloatingPlatform(2400, 380, 100),
+    { x: 2700, y: 340, width: 100, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 2.5, moveRange: 120, originalX: 2700, originalY: 340 },
+    createFloatingPlatform(3150, 380, 110),
+    { x: 3400, y: 320, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 2, moveRange: 100, originalX: 3400, originalY: 320 },
+    createFloatingPlatform(3750, 360, 120),
+    createFloatingPlatform(4200, 300, 100),
+    { x: 4450, y: 400, width: 100, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 2, moveRange: 90, originalX: 4450, originalY: 400 },
+    createFloatingPlatform(4750, 340, 110),
+    { x: 5100, y: 360, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 2.5, moveRange: 130, originalX: 5100, originalY: 360 },
+    createFloatingPlatform(5450, 300, 120),
+    createFloatingPlatform(5750, 380, 100),
+  ];
+
+  const collectibles: Collectible[] = [];
+  for (let i = 0; i < 58; i++) {
+    const x = 70 + i * 100;
+    if (x < LEVEL_WIDTH - 200) {
+      collectibles.push({
+        x,
+        y: i % 3 === 0 ? 180 + (i % 4) * 50 : GROUND_Y - 60,
+        type: 'ring',
+        collected: false,
+        animationOffset: i * 0.07,
+      });
+    }
+  }
+  collectibles.push({ x: 2200, y: 240, type: 'cookie', collected: false, animationOffset: 0 });
+
+  const enemies: Enemy[] = [
+    { x: 250, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.4, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 400 },
+    { x: 700, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.7, isDefeated: false, direction: -1, patrolStart: 630, patrolEnd: 850 },
+    { x: 1150, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 1080, patrolEnd: 1350 },
+    { x: 1650, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 1580, patrolEnd: 1800 },
+    { x: 2150, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 2030, patrolEnd: 2350 },
+    { x: 2700, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: -1, patrolStart: 2580, patrolEnd: 2850 },
+    { x: 3150, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: 1, patrolStart: 3030, patrolEnd: 3300 },
+    { x: 3650, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.9, isDefeated: false, direction: -1, patrolStart: 3530, patrolEnd: 3850 },
+    { x: 4200, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 4080, patrolEnd: 4350 },
+    { x: 4700, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 4580, patrolEnd: 4800 },
+    { x: 5150, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 5030, patrolEnd: 5350 },
+    { x: 5700, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 5580, patrolEnd: 5850 },
+  ];
+
+  const hitBlocks: HitBlock[] = [
+    createQuestionBlock(300, 340),
+    createBrickBlock(340, 340),
+    createQuestionBlock(800, 300),
+    createBrickBlock(840, 300),
+    createQuestionBlock(1250, 320),
+    createQuestionBlock(1750, 340),
+    createBrickBlock(1790, 340),
+    createBrickBlock(1830, 340),
+    createQuestionBlock(2250, 300),
+    createQuestionBlock(2800, 320),
+    createBrickBlock(2840, 320),
+    createQuestionBlock(3250, 340),
+    createBrickBlock(3290, 340),
+    createQuestionBlock(3800, 320),
+    createQuestionBlock(4300, 340),
+    createBrickBlock(4340, 340),
+    createQuestionBlock(4850, 300),
+    createQuestionBlock(5300, 320),
+    createBrickBlock(5340, 320),
+    createQuestionBlock(5800, 340),
+  ];
+
+  const pipes: Pipe[] = [
+    createPipe(550, true),
+    createPipe(1000, true),
+    createPipe(1500, true),
+    createPipe(1950, true),
+    createPipe(2500, true),
+    createPipe(2950, true),
+    createPipe(3450, true),
+    createPipe(4000, true),
+    createPipe(4500, true),
+    createPipe(4950, true),
+    createPipe(5500, true),
+  ];
+
+  const fallingHazards: FallingHazard[] = [
+    createFallingHazard(850, 100, 800),
+    createFallingHazard(1350, 100, 1300),
+    createFallingHazard(1900, 100, 1850),
+    createFallingHazard(2600, 100, 2550),
+    createFallingHazard(3350, 100, 3300),
+    createFallingHazard(4050, 100, 4000),
+    createFallingHazard(4750, 100, 4700),
+    createFallingHazard(5350, 100, 5300),
+  ];
+
+  return {
+    id: 6,
+    name: 'Golden Palace',
+    collectibleType: 'ring',
+    collectibleEmoji: '💍',
+    theme: 'Jewelry and golden treasures',
+    platforms,
+    collectibles,
+    enemies,
+    hitBlocks,
+    pipes,
+    fallingHazards,
+    checkpoint: { x: 2800, y: GROUND_Y - 80, activated: false },
+    flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
+    backgroundColor: '#FFF8E1',
+    groundColor: '#FFB300',
+    levelWidth: LEVEL_WIDTH,
+  };
+}
+
+function createLevel7(): LevelData {
+  // Level 7: Cupid Sky - Final challenge, best of all mechanics, tighter timing
+  const platforms: Platform[] = [
+    ...createGroundSegments([
+      { start: 0, width: 400 },
+      { start: 550, width: 280 },
+      { start: 980, width: 320 },
+      { start: 1450, width: 280 },
+      { start: 1880, width: 350 },
+      { start: 2380, width: 280 },
+      { start: 2810, width: 320 },
+      { start: 3280, width: 350 },
+      { start: 3780, width: 280 },
+      { start: 4210, width: 320 },
+      { start: 4680, width: 280 },
+      { start: 5110, width: 350 },
+      { start: 5610, width: 300 },
+    ]),
+    { x: 450, y: 380, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 3, moveRange: 100, originalX: 450, originalY: 380 },
+    createFloatingPlatform(700, 320, 90),
+    { x: 900, y: 400, width: 90, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 2.5, moveRange: 120, originalX: 900, originalY: 400 },
+    createFloatingPlatform(1200, 340, 100),
+    { x: 1550, y: 360, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 3.5, moveRange: 130, originalX: 1550, originalY: 360 },
+    createFloatingPlatform(1750, 280, 90),
+    createFloatingPlatform(2050, 340, 100),
+    { x: 2300, y: 380, width: 90, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 3, moveRange: 100, originalX: 2300, originalY: 380 },
+    createFloatingPlatform(2550, 300, 100),
+    { x: 2900, y: 360, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 2.5, moveRange: 120, originalX: 2900, originalY: 360 },
+    createFloatingPlatform(3100, 280, 90),
+    createFloatingPlatform(3400, 340, 100),
+    { x: 3700, y: 400, width: 90, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 3, moveRange: 110, originalX: 3700, originalY: 400 },
+    createFloatingPlatform(3950, 320, 100),
+    { x: 4150, y: 360, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 3, moveRange: 140, originalX: 4150, originalY: 360 },
+    createFloatingPlatform(4450, 280, 90),
+    createFloatingPlatform(4750, 340, 100),
+    { x: 5000, y: 380, width: 90, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 2.5, moveRange: 100, originalX: 5000, originalY: 380 },
+    createFloatingPlatform(5250, 300, 100),
+    { x: 5500, y: 360, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 3, moveRange: 100, originalX: 5500, originalY: 360 },
+    createFloatingPlatform(5750, 320, 110),
+  ];
+
+  const collectibles: Collectible[] = [];
+  for (let i = 0; i < 60; i++) {
+    const x = 60 + i * 95;
+    if (x < LEVEL_WIDTH - 200) {
+      collectibles.push({
+        x,
+        y: i % 3 === 0 ? 160 + (i % 5) * 45 : GROUND_Y - 60,
+        type: 'arrow',
+        collected: false,
+        animationOffset: i * 0.065,
+      });
+    }
+  }
+  collectibles.push({ x: 3150, y: 220, type: 'cookie', collected: false, animationOffset: 0 });
+
+  const enemies: Enemy[] = [
+    { x: 220, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.5, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 350 },
+    { x: 650, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.8, isDefeated: false, direction: -1, patrolStart: 580, patrolEnd: 780 },
+    { x: 1080, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 1010, patrolEnd: 1250 },
+    { x: 1550, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: -1, patrolStart: 1480, patrolEnd: 1680 },
+    { x: 2000, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.9, isDefeated: false, direction: 1, patrolStart: 1910, patrolEnd: 2180 },
+    { x: 2500, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.4, isDefeated: false, direction: -1, patrolStart: 2410, patrolEnd: 2610 },
+    { x: 2950, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 2840, patrolEnd: 3080 },
+    { x: 3400, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 3310, patrolEnd: 3580 },
+    { x: 3900, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 3810, patrolEnd: 4010 },
+    { x: 4350, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 4240, patrolEnd: 4480 },
+    { x: 4800, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.9, isDefeated: false, direction: 1, patrolStart: 4710, patrolEnd: 4910 },
+    { x: 5250, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: -1, patrolStart: 5140, patrolEnd: 5410 },
+    { x: 5750, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 5640, patrolEnd: 5860 },
+  ];
+
+  const hitBlocks: HitBlock[] = [
+    createQuestionBlock(280, 320),
+    createBrickBlock(320, 320),
+    createQuestionBlock(750, 300),
+    createBrickBlock(790, 300),
+    createQuestionBlock(1150, 320),
+    createQuestionBlock(1600, 300),
+    createBrickBlock(1640, 300),
+    createBrickBlock(1680, 300),
+    createQuestionBlock(2100, 320),
+    createBrickBlock(2140, 320),
+    createQuestionBlock(2600, 300),
+    createQuestionBlock(3050, 320),
+    createBrickBlock(3090, 320),
+    createQuestionBlock(3500, 300),
+    createBrickBlock(3540, 300),
+    createQuestionBlock(3950, 320),
+    createQuestionBlock(4400, 300),
+    createBrickBlock(4440, 300),
+    createQuestionBlock(4850, 320),
+    createBrickBlock(4890, 320),
+    createQuestionBlock(5300, 300),
+    createQuestionBlock(5750, 320),
+    createBrickBlock(5790, 320),
+  ];
+
+  const pipes: Pipe[] = [
+    createPipe(500, true),
+    createPipe(930, true),
+    createPipe(1400, true),
+    createPipe(1830, true),
+    createPipe(2330, true),
+    createPipe(2760, true),
+    createPipe(3230, true),
+    createPipe(3730, true),
+    createPipe(4160, true),
+    createPipe(4630, true),
+    createPipe(5060, true),
+    createPipe(5560, true),
+  ];
+
+  const fallingHazards: FallingHazard[] = [
+    createFallingHazard(650, 100, 600),
+    createFallingHazard(1100, 100, 1050),
+    createFallingHazard(1650, 100, 1600),
+    createFallingHazard(2200, 100, 2150),
+    createFallingHazard(2750, 100, 2700),
+    createFallingHazard(3350, 100, 3300),
+    createFallingHazard(3900, 100, 3850),
+    createFallingHazard(4500, 100, 4450),
+    createFallingHazard(5100, 100, 5050),
+    createFallingHazard(5650, 100, 5600),
+  ];
+
+  return {
+    id: 7,
+    name: 'Cupid Sky',
+    collectibleType: 'arrow',
+    collectibleEmoji: '🏹',
+    theme: 'Clouds and love arrows',
+    platforms,
+    collectibles,
+    enemies,
+    hitBlocks,
+    pipes,
+    fallingHazards,
+    checkpoint: { x: 2900, y: GROUND_Y - 80, activated: false },
+    flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
+    backgroundColor: '#FCE4EC',
+    groundColor: '#E91E63',
+    levelWidth: LEVEL_WIDTH,
   };
 }
 
@@ -195,15 +896,15 @@ export function getLevelData(levelId: number): LevelData {
     case 2:
       return createLevel2();
     case 3:
-      return createSimpleLevel(3, 'Toyland', '🧸', 'teddy', '#E8F4FF', '#9B7653');
+      return createLevel3();
     case 4:
-      return createSimpleLevel(4, 'Letter Lane', '💌', 'letter', '#FFF5F5', '#C9A0DC');
+      return createLevel4();
     case 5:
-      return createSimpleLevel(5, 'Pearl Ocean', '💎', 'pearl', '#E0F7FA', '#00ACC1');
+      return createLevel5();
     case 6:
-      return createSimpleLevel(6, 'Golden Palace', '💍', 'ring', '#FFF8E1', '#FFB300');
+      return createLevel6();
     case 7:
-      return createSimpleLevel(7, 'Cupid Sky', '🏹', 'arrow', '#FCE4EC', '#E91E63');
+      return createLevel7();
     default:
       return createLevel1();
   }

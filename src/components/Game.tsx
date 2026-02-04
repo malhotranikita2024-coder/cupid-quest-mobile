@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useGameState } from '@/hooks/useGameState';
+import { useAudio } from '@/hooks/useAudio';
 import { MainMenu } from './screens/MainMenu';
 import { HowToPlayScreen } from './screens/HowToPlayScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
@@ -28,8 +29,11 @@ export function Game() {
     toggleSfx,
     updateTimer,
     restartGame,
+    restartCurrentLevel,
     goToMenu,
   } = useGameState();
+
+  const audio = useAudio(gameState.musicEnabled, gameState.sfxEnabled);
 
   const [isPortrait, setIsPortrait] = useState(false);
   const [showStoryBefore, setShowStoryBefore] = useState(false);
@@ -53,24 +57,28 @@ export function Game() {
 
   // Handle level complete -> show story
   const handleLevelCompleteContinue = () => {
-    if (gameState.currentLevel < 7) {
-      setShowStoryBefore(false);
-      setScreen('story');
-    } else {
+    // If we just completed level 7, go straight to final ending
+    if (gameState.currentLevel === 7) {
       setScreen('finalEnding');
+      return;
     }
+    
+    // Show story screen after completing levels 1-6
+    setShowStoryBefore(false);
+    setScreen('story');
   };
 
   // Handle story continue -> start next level
   const handleStoryContinue = () => {
     if (showStoryBefore) {
-      startLevel(gameState.currentLevel);
+      // Story was for before level 7, now start level 7
+      startLevel(7);
     } else {
-      // After level story, move to next level
+      // Story was after a level, move to next level
       const nextLevelNum = gameState.currentLevel + 1;
       if (nextLevelNum <= 7) {
         if (nextLevelNum === 7) {
-          // Show "before level 7" story
+          // Show "before level 7" story first
           setShowStoryBefore(true);
           setScreen('story');
         } else {
@@ -82,6 +90,7 @@ export function Game() {
 
   // Start game from menu
   const handlePlay = () => {
+    audio.initAudio();
     if (gameState.currentLevel === 1) {
       startGame();
     } else {
@@ -92,6 +101,22 @@ export function Game() {
   // Handle pause resume
   const handleResume = () => {
     togglePause();
+  };
+
+  // Handle game over restart
+  const handleGameOverRestart = () => {
+    audio.playGameOver();
+    restartGame();
+  };
+
+  // Handle losing a life - returns true if game over
+  const handleLoseLife = (): boolean => {
+    return loseLife();
+  };
+
+  // Restart current level after death
+  const handleRestartLevel = () => {
+    restartCurrentLevel();
   };
 
   // Show landscape hint during game
@@ -142,9 +167,10 @@ export function Game() {
           onToggleSfx={toggleSfx}
           onCollectItem={collectItem}
           onCollectCookie={collectFortuneCookie}
-          onLoseLife={loseLife}
+          onLoseLife={handleLoseLife}
           onLevelComplete={completeLevel}
           onUpdateTimer={updateTimer}
+          onRestartLevel={handleRestartLevel}
         />
       )}
 
@@ -173,7 +199,7 @@ export function Game() {
           score={gameState.score}
           level={gameState.currentLevel}
           playerName={gameState.playerName}
-          onRestart={restartGame}
+          onRestart={handleGameOverRestart}
           onMainMenu={goToMenu}
         />
       )}

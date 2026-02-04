@@ -4,8 +4,9 @@ import { MobileControls } from './MobileControls';
 import { GameHUD } from './GameHUD';
 import { PauseMenu } from './PauseMenu';
 import { useTouchControls } from '@/hooks/useTouchControls';
+import { useAudio } from '@/hooks/useAudio';
 import { getLevelData, COLLECTIBLE_EMOJIS } from '@/data/levels';
-import { PlayerState, LevelData } from '@/types/game';
+import { PlayerState, LevelData, Collectible } from '@/types/game';
 
 interface GameEngineProps {
   currentLevel: number;
@@ -23,9 +24,10 @@ interface GameEngineProps {
   onToggleSfx: () => void;
   onCollectItem: () => void;
   onCollectCookie: () => void;
-  onLoseLife: () => void;
+  onLoseLife: () => boolean;
   onLevelComplete: () => void;
   onUpdateTimer: (time: number) => void;
+  onRestartLevel: () => void;
 }
 
 const INITIAL_PLAYER: PlayerState = {
@@ -60,13 +62,16 @@ export function GameEngine({
   onLoseLife,
   onLevelComplete,
   onUpdateTimer,
+  onRestartLevel,
 }: GameEngineProps) {
   const [player, setPlayer] = useState<PlayerState>(INITIAL_PLAYER);
   const [levelData, setLevelData] = useState<LevelData>(() => getLevelData(currentLevel));
   const [cameraX, setCameraX] = useState(0);
   const [checkpointPosition, setCheckpointPosition] = useState({ x: 100, y: 400 });
+  const [showDeathOverlay, setShowDeathOverlay] = useState(false);
   
   const timerRef = useRef<NodeJS.Timeout>();
+  const deathTimeoutRef = useRef<NodeJS.Timeout>();
   
   const {
     controls,
@@ -81,7 +86,9 @@ export function GameEngine({
     resetControls,
   } = useTouchControls();
 
-  // Initialize level
+  const audio = useAudio(musicEnabled, sfxEnabled);
+
+  // Initialize level and start music
   useEffect(() => {
     const data = getLevelData(currentLevel);
     setLevelData(data);
@@ -89,11 +96,20 @@ export function GameEngine({
     setCameraX(0);
     setCheckpointPosition({ x: 100, y: 400 });
     resetControls();
+    setShowDeathOverlay(false);
+    
+    // Start background music
+    audio.initAudio();
+    audio.startBackgroundMusic();
+    
+    return () => {
+      audio.stopBackgroundMusic();
+    };
   }, [currentLevel, resetControls]);
 
   // Timer countdown
   useEffect(() => {
-    if (isPaused) return;
+    if (isPaused || showDeathOverlay) return;
 
     timerRef.current = setInterval(() => {
       onUpdateTimer(Math.max(0, timeRemaining - 1));
@@ -104,25 +120,167 @@ export function GameEngine({
         clearInterval(timerRef.current);
       }
     };
-  }, [isPaused, timeRemaining, onUpdateTimer]);
+  }, [isPaused, showDeathOverlay, timeRemaining, onUpdateTimer]);
 
   // Handle time running out
   useEffect(() => {
-    if (timeRemaining === 0) {
-      onLoseLife();
-      // Respawn at checkpoint
-      setPlayer(prev => ({
-        ...INITIAL_PLAYER,
-        x: checkpointPosition.x,
-        y: checkpointPosition.y,
-      }));
-      onUpdateTimer(300); // Reset timer
+    if (timeRemaining === 0 && !showDeathOverlay) {
+      handlePlayerDeath();
     }
-  }, [timeRemaining, onLoseLife, onUpdateTimer, checkpointPosition]);
+  }, [timeRemaining]);
 
-  // Keyboard controls (for desktop testing)
+  // Update pipe enemies
+  useEffect(() => {
+    if (isPaused || showDeathOverlay) return;
+
+    const interval = setInterval(() => {
+      setLevelData(prev => {
+        const newPipes = prev.pipes.map(pipe => {
+          if (!pipe.hasEnemy) return pipe;
+          
+          let newTimer = pipe.enemyTimer + 1;
+          let newVisible = pipe.enemyVisible;
+          let newDirection = pipe.enemyDirection;
+          
+          // Pop out every ~2-4 seconds (120-240 frames at 60fps)
+          if (newTimer >= 150) {
+            if (!newVisible && newDirection === 'up') {
+              newVisible = true;
+              newDirection = 'down';
+              newTimer = 0;
+            } else if (newVisible && newDirection === 'down') {
+              newVisible = false;
+              newDirection = 'up';
+              newTimer = 0;
+            }
+          }
+          
+          return { ...pipe, enemyTimer: newTimer, enemyVisible: newVisible, enemyDirection: newDirection };
+        });
+        
+        return { ...prev, pipes: newPipes };
+      });
+    }, 1000 / 60);
+
+    return () => clearInterval(interval);
+  }, [isPaused, showDeathOverlay]);
+
+  // Update hit block bounce timers
+  useEffect(() => {
+    if (isPaused || showDeathOverlay) return;
+
+    const interval = setInterval(() => {
+      setLevelData(prev => {
+        const newBlocks = prev.hitBlocks.map(block => {
+          if (block.bounceTimer > 0) {
+            return { ...block, bounceTimer: block.bounceTimer - 1 };
+          }
+          return block;
+        });
+        return { ...prev, hitBlocks: newBlocks };
+      });
+    }, 1000 / 60);
+
+    return () => clearInterval(interval);
+  }, [isPaused, showDeathOverlay]);
+
+  // Update falling hazards
+  useEffect(() => {
+    if (isPaused || showDeathOverlay) return;
+
+    const interval = setInterval(() => {
+      setLevelData(prev => {
+        const newHazards = prev.fallingHazards.map(hazard => {
+          if (!hazard.isActive) return hazard;
+          
+          // Trigger falling when player is near
+          if (!hazard.isFalling && player.x >= hazard.triggerX - 50 && player.x <= hazard.triggerX + 100) {
+            return { ...hazard, isFalling: true };
+          }
+          
+          // Update falling position
+          if (hazard.isFalling) {
+            const newVelocity = hazard.velocityY + 0.5;
+            const newY = hazard.y + newVelocity;
+            
+            // Deactivate when off screen
+            if (newY > 700) {
+              return { ...hazard, isActive: false };
+            }
+            
+            return { ...hazard, y: newY, velocityY: newVelocity };
+          }
+          
+          return hazard;
+        });
+        
+        return { ...prev, fallingHazards: newHazards };
+      });
+    }, 1000 / 60);
+
+    return () => clearInterval(interval);
+  }, [isPaused, showDeathOverlay, player.x]);
+
+  // Update enemy positions
+  useEffect(() => {
+    if (isPaused || showDeathOverlay) return;
+
+    const interval = setInterval(() => {
+      setLevelData(prev => {
+        const newEnemies = prev.enemies.map(enemy => {
+          if (enemy.isDefeated) return enemy;
+          
+          let newX = enemy.x + enemy.velocityX * enemy.direction;
+          let newDirection = enemy.direction;
+          
+          if (newX <= enemy.patrolStart || newX >= enemy.patrolEnd) {
+            newDirection = (enemy.direction * -1) as 1 | -1;
+          }
+          
+          return { ...enemy, x: newX, direction: newDirection };
+        });
+        
+        return { ...prev, enemies: newEnemies };
+      });
+    }, 1000 / 60);
+
+    return () => clearInterval(interval);
+  }, [isPaused, showDeathOverlay]);
+
+  // Update moving platforms
+  useEffect(() => {
+    if (isPaused || showDeathOverlay) return;
+
+    const interval = setInterval(() => {
+      setLevelData(prev => {
+        const newPlatforms = prev.platforms.map(platform => {
+          if (platform.type !== 'moving' || !platform.originalX || !platform.originalY) return platform;
+          
+          const time = Date.now() / 1000;
+          const speed = platform.moveSpeed || 2;
+          const range = platform.moveRange || 100;
+          
+          if (platform.moveDirection === 'horizontal') {
+            const newX = platform.originalX + Math.sin(time * speed) * range;
+            return { ...platform, x: newX };
+          } else {
+            const newY = platform.originalY + Math.sin(time * speed) * range;
+            return { ...platform, y: newY };
+          }
+        });
+        
+        return { ...prev, platforms: newPlatforms };
+      });
+    }, 1000 / 60);
+
+    return () => clearInterval(interval);
+  }, [isPaused, showDeathOverlay]);
+
+  // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (showDeathOverlay) return;
+      
       switch (e.key) {
         case 'ArrowLeft':
         case 'a':
@@ -174,7 +332,24 @@ export function GameEngine({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [handleLeftStart, handleLeftEnd, handleRightStart, handleRightEnd, handleJumpStart, handleJumpEnd, handleRunStart, handleRunEnd, onPause]);
+  }, [handleLeftStart, handleLeftEnd, handleRightStart, handleRightEnd, handleJumpStart, handleJumpEnd, handleRunStart, handleRunEnd, onPause, showDeathOverlay]);
+
+  const handlePlayerDeath = useCallback(() => {
+    if (showDeathOverlay) return;
+    
+    audio.playDeath();
+    setShowDeathOverlay(true);
+    
+    // After death animation, either restart level or game over
+    deathTimeoutRef.current = setTimeout(() => {
+      const isGameOver = onLoseLife();
+      if (!isGameOver) {
+        // Restart current level from beginning
+        setShowDeathOverlay(false);
+        onRestartLevel();
+      }
+    }, 1500);
+  }, [audio, onLoseLife, onRestartLevel, showDeathOverlay]);
 
   const handlePlayerUpdate = useCallback((newPlayer: PlayerState) => {
     setPlayer(newPlayer);
@@ -186,8 +361,9 @@ export function GameEngine({
       newCollectibles[index] = { ...newCollectibles[index], collected: true };
       return { ...prev, collectibles: newCollectibles };
     });
+    audio.playCollect();
     onCollectItem();
-  }, [onCollectItem]);
+  }, [audio, onCollectItem]);
 
   const handleCollectCookie = useCallback((index: number) => {
     setLevelData(prev => {
@@ -195,8 +371,9 @@ export function GameEngine({
       newCollectibles[index] = { ...newCollectibles[index], collected: true };
       return { ...prev, collectibles: newCollectibles };
     });
+    audio.playCookieCollect();
     onCollectCookie();
-  }, [onCollectCookie]);
+  }, [audio, onCollectCookie]);
 
   const handleEnemyDefeated = useCallback((index: number) => {
     setLevelData(prev => {
@@ -204,19 +381,52 @@ export function GameEngine({
       newEnemies[index] = { ...newEnemies[index], isDefeated: true };
       return { ...prev, enemies: newEnemies };
     });
-  }, []);
+    audio.playEnemyStomp();
+  }, [audio]);
 
   const handlePlayerHit = useCallback(() => {
-    onLoseLife();
-    // Respawn at checkpoint
-    setPlayer(prev => ({
-      ...INITIAL_PLAYER,
-      x: checkpointPosition.x,
-      y: checkpointPosition.y,
-      isInvincible: true,
-      invincibleTimer: 120,
-    }));
-  }, [onLoseLife, checkpointPosition]);
+    handlePlayerDeath();
+  }, [handlePlayerDeath]);
+
+  const handleBlockHit = useCallback((index: number) => {
+    setLevelData(prev => {
+      const newBlocks = [...prev.hitBlocks];
+      const block = newBlocks[index];
+      
+      if (block.isHit) return prev;
+      
+      newBlocks[index] = { ...block, isHit: true, bounceTimer: 15 };
+      
+      // Spawn collectible if block has contents
+      let newCollectibles = [...prev.collectibles];
+      if (block.contents === 'collectible') {
+        newCollectibles.push({
+          x: block.x + block.width / 2,
+          y: block.y - 30,
+          type: prev.collectibleType as any,
+          collected: false,
+          animationOffset: 0,
+          fromBlock: true,
+        });
+      } else if (block.contents === 'cookie') {
+        newCollectibles.push({
+          x: block.x + block.width / 2,
+          y: block.y - 30,
+          type: 'cookie',
+          collected: false,
+          animationOffset: 0,
+          fromBlock: true,
+        });
+      }
+      
+      return { ...prev, hitBlocks: newBlocks, collectibles: newCollectibles };
+    });
+    audio.playBlockHit();
+  }, [audio]);
+
+  const handleJump = useCallback(() => {
+    audio.playJump();
+  }, [audio]);
 
   const handleCheckpointReached = useCallback(() => {
     setLevelData(prev => ({
@@ -224,45 +434,22 @@ export function GameEngine({
       checkpoint: { ...prev.checkpoint, activated: true },
     }));
     setCheckpointPosition({ x: levelData.checkpoint.x, y: levelData.checkpoint.y - 50 });
-  }, [levelData.checkpoint]);
+    audio.playCheckpoint();
+  }, [levelData.checkpoint, audio]);
 
   const handleFlagReached = useCallback(() => {
     setLevelData(prev => ({
       ...prev,
       flag: { ...prev.flag, reached: true },
     }));
+    audio.playLevelComplete();
+    audio.stopBackgroundMusic();
     onLevelComplete();
-  }, [onLevelComplete]);
+  }, [audio, onLevelComplete]);
 
   const handleCameraUpdate = useCallback((x: number) => {
     setCameraX(x);
   }, []);
-
-  // Update enemy positions
-  useEffect(() => {
-    if (isPaused) return;
-
-    const interval = setInterval(() => {
-      setLevelData(prev => {
-        const newEnemies = prev.enemies.map(enemy => {
-          if (enemy.isDefeated) return enemy;
-          
-          let newX = enemy.x + enemy.velocityX * enemy.direction;
-          let newDirection = enemy.direction;
-          
-          if (newX <= enemy.patrolStart || newX >= enemy.patrolEnd) {
-            newDirection = (enemy.direction * -1) as 1 | -1;
-          }
-          
-          return { ...enemy, x: newX, direction: newDirection };
-        });
-        
-        return { ...prev, enemies: newEnemies };
-      });
-    }, 1000 / 60);
-
-    return () => clearInterval(interval);
-  }, [isPaused]);
 
   const collectibleEmoji = COLLECTIBLE_EMOJIS[levelData.collectibleType] || '🌹';
 
@@ -279,7 +466,9 @@ export function GameEngine({
         onPlayerHit={handlePlayerHit}
         onCheckpointReached={handleCheckpointReached}
         onFlagReached={handleFlagReached}
-        isPaused={isPaused}
+        onBlockHit={handleBlockHit}
+        onJump={handleJump}
+        isPaused={isPaused || showDeathOverlay}
         cameraX={cameraX}
         onCameraUpdate={handleCameraUpdate}
       />
@@ -294,18 +483,20 @@ export function GameEngine({
         onPause={onPause}
       />
       
-      <MobileControls
-        onLeftStart={handleLeftStart}
-        onLeftEnd={handleLeftEnd}
-        onRightStart={handleRightStart}
-        onRightEnd={handleRightEnd}
-        onJumpStart={handleJumpStart}
-        onJumpEnd={handleJumpEnd}
-        onRunStart={handleRunStart}
-        onRunEnd={handleRunEnd}
-      />
+      {!showDeathOverlay && (
+        <MobileControls
+          onLeftStart={handleLeftStart}
+          onLeftEnd={handleLeftEnd}
+          onRightStart={handleRightStart}
+          onRightEnd={handleRightEnd}
+          onJumpStart={handleJumpStart}
+          onJumpEnd={handleJumpEnd}
+          onRunStart={handleRunStart}
+          onRunEnd={handleRunEnd}
+        />
+      )}
       
-      {isPaused && (
+      {isPaused && !showDeathOverlay && (
         <PauseMenu
           onResume={onResume}
           onMainMenu={onMainMenu}
@@ -314,6 +505,16 @@ export function GameEngine({
           onToggleMusic={onToggleMusic}
           onToggleSfx={onToggleSfx}
         />
+      )}
+      
+      {/* Death overlay */}
+      {showDeathOverlay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+          <div className="text-center">
+            <div className="text-6xl mb-4 animate-bounce">💔</div>
+            <div className="retro-text text-4xl text-white">OUCH!</div>
+          </div>
+        </div>
       )}
     </div>
   );

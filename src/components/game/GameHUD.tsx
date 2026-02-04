@@ -29,59 +29,57 @@ export function GameHUD({
   const levelInfo = LEVEL_INFO[currentLevel - 1] || LEVEL_INFO[0];
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 p-3 flex items-start justify-between pointer-events-none">
+    <div className="fixed top-0 left-0 right-0 z-50 p-2 flex items-start justify-between pointer-events-none">
       {/* Left side - Lives */}
-      <div className="hud-panel flex items-center gap-2 pointer-events-auto">
-        <div className="flex gap-0.5">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <Heart
-              key={i}
-              className={`w-5 h-5 transition-all duration-300 ${
-                i < lives 
-                  ? 'text-red-400 fill-red-400 drop-shadow-[0_0_4px_rgba(255,100,100,0.8)]' 
-                  : 'text-gray-500/50'
-              }`}
-            />
-          ))}
-          {lives > 3 && (
-            <span className="text-red-400 text-sm font-bold ml-1">+{lives - 3}</span>
-          )}
+      <div className="retro-hud-panel pointer-events-auto">
+        <div className="flex items-center gap-1">
+          <span className="retro-text text-sm text-red-400">❤️</span>
+          <span className="retro-text text-sm">×</span>
+          <span className="retro-text text-lg text-white">{lives}</span>
         </div>
       </div>
 
       {/* Center - Level name & Timer */}
       <div className="flex flex-col items-center gap-1">
-        <div className="hud-panel flex items-center gap-2">
-          <span className="text-lg">{levelInfo.emoji}</span>
-          <span className="text-sm font-semibold">{levelInfo.name}</span>
+        <div className="retro-hud-panel">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{levelInfo.emoji}</span>
+            <span className="retro-text text-sm">WORLD {currentLevel}</span>
+          </div>
         </div>
-        <div className={`hud-panel flex items-center gap-2 ${isLowTime ? 'animate-pulse bg-red-600/70' : ''}`}>
-          <Clock className="w-4 h-4" />
-          <span className={`font-mono font-bold ${isLowTime ? 'text-red-300' : ''}`}>
-            {timeString}
-          </span>
+        <div className={`retro-hud-panel ${isLowTime ? 'animate-pulse border-red-500' : ''}`}>
+          <div className="flex items-center gap-2">
+            <span className="retro-text text-xs">TIME</span>
+            <span className={`retro-text text-lg ${isLowTime ? 'text-red-400' : 'text-white'}`}>
+              {timeString}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Right side - Score, Collectibles & Pause */}
       <div className="flex items-center gap-2">
-        <div className="hud-panel flex items-center gap-3">
-          <div className="flex items-center gap-1">
-            <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-            <span className="font-bold">{score}</span>
+        <div className="retro-hud-panel">
+          <div className="flex flex-col items-end">
+            <div className="flex items-center gap-1">
+              <span className="retro-text text-xs text-yellow-400">SCORE</span>
+            </div>
+            <span className="retro-text text-lg text-white">{score.toString().padStart(6, '0')}</span>
           </div>
-          <div className="w-px h-4 bg-white/30" />
+        </div>
+        
+        <div className="retro-hud-panel">
           <div className="flex items-center gap-1">
             <span className="text-lg">{collectibleEmoji}</span>
-            <span className="font-bold">{collectibles}</span>
+            <span className="retro-text text-lg text-white">×{collectibles}</span>
           </div>
         </div>
         
         <button
-          className="hud-panel pointer-events-auto hover:bg-black/60 transition-colors"
+          className="retro-hud-panel pointer-events-auto hover:bg-gray-700 transition-colors cursor-pointer"
           onClick={onPause}
         >
-          <Pause className="w-5 h-5" />
+          <Pause className="w-5 h-5 text-white" />
         </button>
       </div>
     </div>
