@@ -28,6 +28,16 @@ function createBrickBlock(x: number, y: number): HitBlock {
   return { x, y, width: 40, height: 40, type: 'brick', isHit: false, contents: 'none', bounceTimer: 0 };
 }
 
+// Helper to create a row of blocks with question block in the middle
+function createBlockRow(x: number, y: number, pattern: ('brick' | 'question')[] = ['brick', 'question', 'brick'], contents: 'collectible' | 'cookie' | 'none' = 'collectible'): HitBlock[] {
+  return pattern.map((type, i) => {
+    if (type === 'question') {
+      return createQuestionBlock(x + i * 40, y, contents);
+    }
+    return createBrickBlock(x + i * 40, y);
+  });
+}
+
 // Helper to create pipe with enemy
 function createPipe(x: number, hasEnemy: boolean = true, hasFire: boolean = false): Pipe {
   return { x, y: GROUND_Y - 80, width: 60, height: 80, hasEnemy: hasEnemy && !hasFire, hasFire, fireTimer: 0, fireActive: false, enemyTimer: 0, enemyVisible: false, enemyDirection: 'up' };
@@ -102,14 +112,12 @@ function createLevel1(): LevelData {
   ];
 
   const hitBlocks: HitBlock[] = [
-    createQuestionBlock(500, 380),
-    createQuestionBlock(1150, 340),
-    createBrickBlock(1190, 340),
-    createQuestionBlock(2500, 360),
-    createQuestionBlock(3600, 340),
-    createBrickBlock(3640, 340),
-    createQuestionBlock(4600, 360),
-    createQuestionBlock(5400, 340),
+    ...createBlockRow(460, 380, ['brick', 'question', 'brick']),
+    ...createBlockRow(1110, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(2460, 360, ['brick', 'question', 'brick']),
+    ...createBlockRow(3560, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(4560, 360, ['brick', 'question', 'brick']),
+    ...createBlockRow(5360, 340, ['brick', 'question', 'brick']),
   ];
 
   const pipes: Pipe[] = [
@@ -201,20 +209,14 @@ function createLevel2(): LevelData {
   ];
 
   const hitBlocks: HitBlock[] = [
-    createQuestionBlock(400, 380),
-    createBrickBlock(440, 380),
-    createQuestionBlock(480, 380),
-    createQuestionBlock(1000, 340),
-    createBrickBlock(1040, 340),
-    createQuestionBlock(1600, 360),
-    createQuestionBlock(2300, 340),
-    createBrickBlock(2340, 340),
-    createBrickBlock(2380, 340),
-    createQuestionBlock(3000, 360),
-    createQuestionBlock(3800, 340),
-    createBrickBlock(3840, 340),
-    createQuestionBlock(4500, 360),
-    createQuestionBlock(5200, 340),
+    ...createBlockRow(360, 380, ['brick', 'question', 'brick', 'question', 'brick']),
+    ...createBlockRow(960, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(1560, 360, ['brick', 'question', 'brick']),
+    ...createBlockRow(2260, 340, ['brick', 'brick', 'question', 'brick', 'brick']),
+    ...createBlockRow(2960, 360, ['brick', 'question', 'brick']),
+    ...createBlockRow(3760, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(4460, 360, ['brick', 'question', 'brick']),
+    ...createBlockRow(5160, 340, ['brick', 'question', 'brick']),
   ];
 
   const pipes: Pipe[] = [
@@ -318,21 +320,15 @@ function createLevel3(): LevelData {
   ];
 
   const hitBlocks: HitBlock[] = [
-    createQuestionBlock(450, 360),
-    createBrickBlock(490, 360),
-    createQuestionBlock(950, 340),
-    createQuestionBlock(1550, 340),
-    createBrickBlock(1590, 340),
-    createQuestionBlock(2250, 360),
-    createBrickBlock(2290, 360),
-    createBrickBlock(2330, 360),
-    createQuestionBlock(2950, 340),
-    createQuestionBlock(3550, 360),
-    createBrickBlock(3590, 360),
-    createQuestionBlock(4150, 340),
-    createQuestionBlock(4850, 360),
-    createQuestionBlock(5450, 340),
-    createBrickBlock(5490, 340),
+    ...createBlockRow(410, 360, ['brick', 'question', 'brick']),
+    ...createBlockRow(910, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(1510, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(2210, 360, ['brick', 'brick', 'question', 'brick', 'brick']),
+    ...createBlockRow(2910, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(3510, 360, ['brick', 'question', 'brick']),
+    ...createBlockRow(4110, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(4810, 360, ['brick', 'question', 'brick']),
+    ...createBlockRow(5410, 340, ['brick', 'question', 'brick']),
   ];
 
   const pipes: Pipe[] = [
@@ -436,22 +432,16 @@ function createLevel4(): LevelData {
   ];
 
   const hitBlocks: HitBlock[] = [
-    createQuestionBlock(350, 360),
-    createBrickBlock(390, 360),
-    createQuestionBlock(900, 340),
-    createBrickBlock(940, 340),
-    createQuestionBlock(1450, 320),
-    createQuestionBlock(2000, 360),
-    createBrickBlock(2040, 360),
-    createBrickBlock(2080, 360),
-    createQuestionBlock(2600, 340),
-    createQuestionBlock(3200, 320),
-    createBrickBlock(3240, 320),
-    createQuestionBlock(3750, 360),
-    createQuestionBlock(4350, 340),
-    createBrickBlock(4390, 340),
-    createQuestionBlock(5000, 320),
-    createQuestionBlock(5600, 360),
+    ...createBlockRow(310, 360, ['brick', 'question', 'brick']),
+    ...createBlockRow(860, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(1410, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(1960, 360, ['brick', 'brick', 'question', 'brick', 'brick']),
+    ...createBlockRow(2560, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(3160, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(3710, 360, ['brick', 'question', 'brick']),
+    ...createBlockRow(4310, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(4960, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(5560, 360, ['brick', 'question', 'brick']),
   ];
 
   const pipes: Pipe[] = [
@@ -561,24 +551,17 @@ function createLevel5(): LevelData {
   ];
 
   const hitBlocks: HitBlock[] = [
-    createQuestionBlock(320, 340),
-    createBrickBlock(360, 340),
-    createQuestionBlock(850, 320),
-    createQuestionBlock(1350, 340),
-    createBrickBlock(1390, 340),
-    createQuestionBlock(1850, 320),
-    createBrickBlock(1890, 320),
-    createQuestionBlock(2400, 340),
-    createQuestionBlock(3000, 320),
-    createBrickBlock(3040, 320),
-    createBrickBlock(3080, 320),
-    createQuestionBlock(3550, 340),
-    createQuestionBlock(4100, 320),
-    createBrickBlock(4140, 320),
-    createQuestionBlock(4700, 340),
-    createQuestionBlock(5250, 320),
-    createBrickBlock(5290, 320),
-    createQuestionBlock(5700, 340),
+    ...createBlockRow(280, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(810, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(1310, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(1810, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(2360, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(2960, 320, ['brick', 'brick', 'question', 'brick', 'brick']),
+    ...createBlockRow(3510, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(4060, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(4660, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(5210, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(5660, 340, ['brick', 'question', 'brick']),
   ];
 
   const pipes: Pipe[] = [
@@ -693,26 +676,18 @@ function createLevel6(): LevelData {
   ];
 
   const hitBlocks: HitBlock[] = [
-    createQuestionBlock(300, 340),
-    createBrickBlock(340, 340),
-    createQuestionBlock(800, 300),
-    createBrickBlock(840, 300),
-    createQuestionBlock(1250, 320),
-    createQuestionBlock(1750, 340),
-    createBrickBlock(1790, 340),
-    createBrickBlock(1830, 340),
-    createQuestionBlock(2250, 300),
-    createQuestionBlock(2800, 320),
-    createBrickBlock(2840, 320),
-    createQuestionBlock(3250, 340),
-    createBrickBlock(3290, 340),
-    createQuestionBlock(3800, 320),
-    createQuestionBlock(4300, 340),
-    createBrickBlock(4340, 340),
-    createQuestionBlock(4850, 300),
-    createQuestionBlock(5300, 320),
-    createBrickBlock(5340, 320),
-    createQuestionBlock(5800, 340),
+    ...createBlockRow(260, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(760, 300, ['brick', 'question', 'brick']),
+    ...createBlockRow(1210, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(1710, 340, ['brick', 'brick', 'question', 'brick', 'brick']),
+    ...createBlockRow(2210, 300, ['brick', 'question', 'brick']),
+    ...createBlockRow(2760, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(3210, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(3760, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(4260, 340, ['brick', 'question', 'brick']),
+    ...createBlockRow(4810, 300, ['brick', 'question', 'brick']),
+    ...createBlockRow(5260, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(5760, 340, ['brick', 'question', 'brick']),
   ];
 
   const pipes: Pipe[] = [
@@ -840,29 +815,19 @@ function createLevel7(): LevelData {
   ];
 
   const hitBlocks: HitBlock[] = [
-    createQuestionBlock(280, 320),
-    createBrickBlock(320, 320),
-    createQuestionBlock(750, 300),
-    createBrickBlock(790, 300),
-    createQuestionBlock(1150, 320),
-    createQuestionBlock(1600, 300),
-    createBrickBlock(1640, 300),
-    createBrickBlock(1680, 300),
-    createQuestionBlock(2100, 320),
-    createBrickBlock(2140, 320),
-    createQuestionBlock(2600, 300),
-    createQuestionBlock(3050, 320),
-    createBrickBlock(3090, 320),
-    createQuestionBlock(3500, 300),
-    createBrickBlock(3540, 300),
-    createQuestionBlock(3950, 320),
-    createQuestionBlock(4400, 300),
-    createBrickBlock(4440, 300),
-    createQuestionBlock(4850, 320),
-    createBrickBlock(4890, 320),
-    createQuestionBlock(5300, 300),
-    createQuestionBlock(5750, 320),
-    createBrickBlock(5790, 320),
+    ...createBlockRow(240, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(710, 300, ['brick', 'question', 'brick']),
+    ...createBlockRow(1110, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(1560, 300, ['brick', 'brick', 'question', 'brick', 'brick']),
+    ...createBlockRow(2060, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(2560, 300, ['brick', 'question', 'brick']),
+    ...createBlockRow(3010, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(3460, 300, ['brick', 'question', 'brick']),
+    ...createBlockRow(3910, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(4360, 300, ['brick', 'question', 'brick']),
+    ...createBlockRow(4810, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(5260, 300, ['brick', 'question', 'brick']),
+    ...createBlockRow(5710, 320, ['brick', 'question', 'brick']),
   ];
 
   const pipes: Pipe[] = [
