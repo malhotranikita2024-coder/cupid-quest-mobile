@@ -1,4 +1,4 @@
-import { LevelData, Platform, Collectible, Enemy, HitBlock, Pipe, FallingHazard } from '@/types/game';
+import { LevelData, Platform, Collectible, Enemy, HitBlock, Pipe, FallingHazard, Fireball } from '@/types/game';
 
 const GROUND_Y = 520;
 const LEVEL_WIDTH = 6000; // Extended level width for 4-5 min gameplay
@@ -29,8 +29,13 @@ function createBrickBlock(x: number, y: number): HitBlock {
 }
 
 // Helper to create pipe with enemy
-function createPipe(x: number, hasEnemy: boolean = true): Pipe {
-  return { x, y: GROUND_Y - 80, width: 60, height: 80, hasEnemy, enemyTimer: 0, enemyVisible: false, enemyDirection: 'up' };
+function createPipe(x: number, hasEnemy: boolean = true, hasFire: boolean = false): Pipe {
+  return { x, y: GROUND_Y - 80, width: 60, height: 80, hasEnemy: hasEnemy && !hasFire, hasFire, fireTimer: 0, fireActive: false, enemyTimer: 0, enemyVisible: false, enemyDirection: 'up' };
+}
+
+// Helper to create fire pipe
+function createFirePipe(x: number): Pipe {
+  return createPipe(x, false, true);
 }
 
 // Helper to create falling hazard
@@ -127,6 +132,7 @@ function createLevel1(): LevelData {
     hitBlocks,
     pipes,
     fallingHazards,
+    fireballs: [],
     checkpoint: { x: 2800, y: GROUND_Y - 80, activated: false },
     flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
     backgroundColor: '#FFE4EC',
@@ -232,6 +238,7 @@ function createLevel2(): LevelData {
     hitBlocks,
     pipes,
     fallingHazards,
+    fireballs: [],
     checkpoint: { x: 2500, y: GROUND_Y - 80, activated: false },
     flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
     backgroundColor: '#FFF0E6',
@@ -298,13 +305,14 @@ function createLevel3(): LevelData {
   collectibles.push({ x: 380, y: 120, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
-    { x: 350, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 150, patrolEnd: 550 },
+    // Single enemies - some can shoot fireballs (2-3 out of ~10)
+    { x: 350, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 150, patrolEnd: 550, canShoot: true },
     { x: 850, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.4, isDefeated: false, direction: -1, patrolStart: 780, patrolEnd: 1150 },
     { x: 1450, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 1380, patrolEnd: 1850 },
-    { x: 2200, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 2050, patrolEnd: 2450 },
+    { x: 2200, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 2050, patrolEnd: 2450, canShoot: true },
     { x: 2800, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.5, isDefeated: false, direction: 1, patrolStart: 2650, patrolEnd: 3100 },
     { x: 3500, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 3350, patrolEnd: 3700 },
-    { x: 4000, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: 1, patrolStart: 3900, patrolEnd: 4350 },
+    { x: 4000, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: 1, patrolStart: 3900, patrolEnd: 4350, canShoot: true },
     { x: 4700, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: -1, patrolStart: 4550, patrolEnd: 5050 },
     { x: 5400, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 5250, patrolEnd: 5800 },
   ];
@@ -331,7 +339,7 @@ function createLevel3(): LevelData {
     createPipe(700, true),
     createPipe(1300, true),
     createPipe(1950, true),
-    createPipe(2550, true),
+    createFirePipe(2550), // Fire pipe guarding fortune cookie area
     createPipe(3250, true),
     createPipe(4450, true),
     createPipe(5100, true),
@@ -351,6 +359,7 @@ function createLevel3(): LevelData {
     hitBlocks,
     pipes,
     fallingHazards,
+    fireballs: [],
     checkpoint: { x: 2400, y: GROUND_Y - 80, activated: false },
     flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
     backgroundColor: '#E8F4FF',
@@ -411,16 +420,19 @@ function createLevel4(): LevelData {
   collectibles.push({ x: 1650, y: 220, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
-    { x: 300, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 500 },
+    // Single enemies with more fireball shooters
+    { x: 300, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 500, canShoot: true },
     { x: 800, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.5, isDefeated: false, direction: -1, patrolStart: 720, patrolEnd: 1050 },
-    { x: 1350, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 1230, patrolEnd: 1650 },
+    { x: 1350, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 1230, patrolEnd: 1650, canShoot: true },
     { x: 1950, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: -1, patrolStart: 1830, patrolEnd: 2200 },
-    { x: 2500, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: 1, patrolStart: 2380, patrolEnd: 2850 },
-    { x: 3150, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 3030, patrolEnd: 3350 },
+    // Enemy group (no shooting for groups)
+    { x: 2500, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: 1, patrolStart: 2450, patrolEnd: 2650, isGrouped: true },
+    { x: 2550, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.6, isDefeated: false, direction: 1, patrolStart: 2450, patrolEnd: 2650, isGrouped: true },
+    { x: 3150, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 3030, patrolEnd: 3350, canShoot: true },
     { x: 3650, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 3530, patrolEnd: 3950 },
-    { x: 4250, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.7, isDefeated: false, direction: -1, patrolStart: 4130, patrolEnd: 4600 },
+    { x: 4250, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.7, isDefeated: false, direction: -1, patrolStart: 4130, patrolEnd: 4600, canShoot: true },
     { x: 4900, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 4780, patrolEnd: 5200 },
-    { x: 5500, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: -1, patrolStart: 5380, patrolEnd: 5800 },
+    { x: 5500, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: -1, patrolStart: 5380, patrolEnd: 5800, canShoot: true },
   ];
 
   const hitBlocks: HitBlock[] = [
@@ -444,10 +456,10 @@ function createLevel4(): LevelData {
 
   const pipes: Pipe[] = [
     createPipe(650, true),
-    createPipe(1150, true),
+    createFirePipe(1150), // Fire pipe
     createPipe(1750, true),
     createPipe(2300, true),
-    createPipe(2950, true),
+    createFirePipe(2950), // Fire pipe guarding cookie
     createPipe(3450, true),
     createPipe(4050, true),
     createPipe(4700, true),
@@ -473,6 +485,7 @@ function createLevel4(): LevelData {
     hitBlocks,
     pipes,
     fallingHazards,
+    fireballs: [],
     checkpoint: { x: 2700, y: GROUND_Y - 80, activated: false },
     flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
     backgroundColor: '#FFF5F5',
@@ -533,17 +546,18 @@ function createLevel5(): LevelData {
   collectibles.push({ x: 2650, y: 220, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
-    { x: 280, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 450 },
+    { x: 280, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 450, canShoot: true },
     { x: 750, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: -1, patrolStart: 680, patrolEnd: 950 },
-    { x: 1250, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: 1, patrolStart: 1180, patrolEnd: 1500 },
+    { x: 1250, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: 1, patrolStart: 1180, patrolEnd: 1500, canShoot: true },
     { x: 1800, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 1730, patrolEnd: 2000 },
-    { x: 2350, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.7, isDefeated: false, direction: 1, patrolStart: 2230, patrolEnd: 2600 },
-    { x: 2950, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: -1, patrolStart: 2830, patrolEnd: 3100 },
-    { x: 3450, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 3330, patrolEnd: 3650 },
+    { x: 2350, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.7, isDefeated: false, direction: 1, patrolStart: 2300, patrolEnd: 2500, isGrouped: true },
+    { x: 2400, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.7, isDefeated: false, direction: 1, patrolStart: 2300, patrolEnd: 2500, isGrouped: true },
+    { x: 2950, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: -1, patrolStart: 2830, patrolEnd: 3100, canShoot: true },
+    { x: 3450, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 3330, patrolEnd: 3650, canShoot: true },
     { x: 4000, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.8, isDefeated: false, direction: -1, patrolStart: 3880, patrolEnd: 4250 },
-    { x: 4550, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: 1, patrolStart: 4480, patrolEnd: 4800 },
+    { x: 4550, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: 1, patrolStart: 4480, patrolEnd: 4800, canShoot: true },
     { x: 5150, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: -1, patrolStart: 5030, patrolEnd: 5300 },
-    { x: 5650, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 5530, patrolEnd: 5850 },
+    { x: 5650, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 5530, patrolEnd: 5850, canShoot: true },
   ];
 
   const hitBlocks: HitBlock[] = [
@@ -569,12 +583,12 @@ function createLevel5(): LevelData {
 
   const pipes: Pipe[] = [
     createPipe(600, true),
-    createPipe(1100, true),
+    createFirePipe(1100),
     createPipe(1650, true),
-    createPipe(2150, true),
+    createFirePipe(2150),
     createPipe(2750, true),
     createPipe(3250, true),
-    createPipe(3800, true),
+    createFirePipe(3800),
     createPipe(4400, true),
     createPipe(4950, true),
     createPipe(5450, true),
@@ -601,6 +615,7 @@ function createLevel5(): LevelData {
     hitBlocks,
     pipes,
     fallingHazards,
+    fireballs: [],
     checkpoint: { x: 2600, y: GROUND_Y - 80, activated: false },
     flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
     backgroundColor: '#E0F7FA',
@@ -661,18 +676,20 @@ function createLevel6(): LevelData {
   collectibles.push({ x: 2200, y: 240, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
-    { x: 250, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.4, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 400 },
+    { x: 250, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.4, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 400, canShoot: true },
     { x: 700, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.7, isDefeated: false, direction: -1, patrolStart: 630, patrolEnd: 850 },
-    { x: 1150, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 1080, patrolEnd: 1350 },
-    { x: 1650, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 1580, patrolEnd: 1800 },
-    { x: 2150, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 2030, patrolEnd: 2350 },
-    { x: 2700, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: -1, patrolStart: 2580, patrolEnd: 2850 },
+    { x: 1150, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 1100, patrolEnd: 1300, isGrouped: true },
+    { x: 1200, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 1100, patrolEnd: 1300, isGrouped: true },
+    { x: 1650, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 1580, patrolEnd: 1800, canShoot: true },
+    { x: 2150, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 2030, patrolEnd: 2350, canShoot: true },
+    { x: 2700, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: -1, patrolStart: 2580, patrolEnd: 2850, canShoot: true },
     { x: 3150, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: 1, patrolStart: 3030, patrolEnd: 3300 },
-    { x: 3650, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.9, isDefeated: false, direction: -1, patrolStart: 3530, patrolEnd: 3850 },
-    { x: 4200, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 4080, patrolEnd: 4350 },
-    { x: 4700, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 4580, patrolEnd: 4800 },
+    { x: 3650, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.9, isDefeated: false, direction: -1, patrolStart: 3600, patrolEnd: 3800, isGrouped: true },
+    { x: 3700, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: -1, patrolStart: 3600, patrolEnd: 3800, isGrouped: true },
+    { x: 4200, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 4080, patrolEnd: 4350, canShoot: true },
+    { x: 4700, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 4580, patrolEnd: 4800, canShoot: true },
     { x: 5150, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 5030, patrolEnd: 5350 },
-    { x: 5700, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 5580, patrolEnd: 5850 },
+    { x: 5700, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 5580, patrolEnd: 5850, canShoot: true },
   ];
 
   const hitBlocks: HitBlock[] = [
@@ -699,14 +716,14 @@ function createLevel6(): LevelData {
   ];
 
   const pipes: Pipe[] = [
-    createPipe(550, true),
+    createFirePipe(550),
     createPipe(1000, true),
-    createPipe(1500, true),
+    createFirePipe(1500),
     createPipe(1950, true),
     createPipe(2500, true),
-    createPipe(2950, true),
+    createFirePipe(2950),
     createPipe(3450, true),
-    createPipe(4000, true),
+    createFirePipe(4000),
     createPipe(4500, true),
     createPipe(4950, true),
     createPipe(5500, true),
@@ -735,6 +752,7 @@ function createLevel6(): LevelData {
     hitBlocks,
     pipes,
     fallingHazards,
+    fireballs: [],
     checkpoint: { x: 2800, y: GROUND_Y - 80, activated: false },
     flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
     backgroundColor: '#FFF8E1',
@@ -800,19 +818,25 @@ function createLevel7(): LevelData {
   collectibles.push({ x: 3150, y: 220, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
-    { x: 220, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.5, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 350 },
+    // Level 7 - Final challenge, best of all mechanics
+    { x: 220, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.5, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 350, canShoot: true },
     { x: 650, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.8, isDefeated: false, direction: -1, patrolStart: 580, patrolEnd: 780 },
-    { x: 1080, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 1010, patrolEnd: 1250 },
-    { x: 1550, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: -1, patrolStart: 1480, patrolEnd: 1680 },
-    { x: 2000, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.9, isDefeated: false, direction: 1, patrolStart: 1910, patrolEnd: 2180 },
-    { x: 2500, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.4, isDefeated: false, direction: -1, patrolStart: 2410, patrolEnd: 2610 },
-    { x: 2950, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 2840, patrolEnd: 3080 },
-    { x: 3400, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 3310, patrolEnd: 3580 },
-    { x: 3900, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 3810, patrolEnd: 4010 },
-    { x: 4350, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 4240, patrolEnd: 4480 },
+    // Enemy group
+    { x: 1080, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 1030, patrolEnd: 1200, isGrouped: true },
+    { x: 1130, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 1030, patrolEnd: 1200, isGrouped: true },
+    { x: 1550, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: -1, patrolStart: 1480, patrolEnd: 1680, canShoot: true },
+    { x: 2000, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.9, isDefeated: false, direction: 1, patrolStart: 1910, patrolEnd: 2180, canShoot: true },
+    { x: 2500, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.4, isDefeated: false, direction: -1, patrolStart: 2410, patrolEnd: 2610, canShoot: true },
+    // Triple enemy group
+    { x: 2950, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 2900, patrolEnd: 3100, isGrouped: true },
+    { x: 3000, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 2900, patrolEnd: 3100, isGrouped: true },
+    { x: 3050, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 2900, patrolEnd: 3100, isGrouped: true },
+    { x: 3400, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 3310, patrolEnd: 3580, canShoot: true },
+    { x: 3900, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 3810, patrolEnd: 4010, canShoot: true },
+    { x: 4350, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 4240, patrolEnd: 4480, canShoot: true },
     { x: 4800, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1.9, isDefeated: false, direction: 1, patrolStart: 4710, patrolEnd: 4910 },
-    { x: 5250, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: -1, patrolStart: 5140, patrolEnd: 5410 },
-    { x: 5750, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 5640, patrolEnd: 5860 },
+    { x: 5250, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: -1, patrolStart: 5140, patrolEnd: 5410, canShoot: true },
+    { x: 5750, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 5640, patrolEnd: 5860, canShoot: true },
   ];
 
   const hitBlocks: HitBlock[] = [
@@ -842,15 +866,15 @@ function createLevel7(): LevelData {
   ];
 
   const pipes: Pipe[] = [
-    createPipe(500, true),
+    createFirePipe(500), // Fire pipe
     createPipe(930, true),
-    createPipe(1400, true),
+    createFirePipe(1400), // Fire pipe
     createPipe(1830, true),
-    createPipe(2330, true),
+    createFirePipe(2330), // Fire pipe
     createPipe(2760, true),
-    createPipe(3230, true),
+    createFirePipe(3230), // Fire pipe guarding cookie
     createPipe(3730, true),
-    createPipe(4160, true),
+    createFirePipe(4160), // Fire pipe
     createPipe(4630, true),
     createPipe(5060, true),
     createPipe(5560, true),
@@ -881,6 +905,7 @@ function createLevel7(): LevelData {
     hitBlocks,
     pipes,
     fallingHazards,
+    fireballs: [],
     checkpoint: { x: 2900, y: GROUND_Y - 80, activated: false },
     flag: { x: LEVEL_WIDTH - 150, y: GROUND_Y - 120, reached: false },
     backgroundColor: '#FCE4EC',

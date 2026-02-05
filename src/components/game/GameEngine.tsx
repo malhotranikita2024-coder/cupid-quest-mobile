@@ -6,7 +6,7 @@ import { PauseMenu } from './PauseMenu';
 import { useTouchControls } from '@/hooks/useTouchControls';
 import { useAudio } from '@/hooks/useAudio';
 import { getLevelData, COLLECTIBLE_EMOJIS } from '@/data/levels';
-import { PlayerState, LevelData, Collectible } from '@/types/game';
+import { PlayerState, LevelData, Collectible, Fireball } from '@/types/game';
 
 interface GameEngineProps {
   currentLevel: number;
@@ -136,23 +136,42 @@ export function GameEngine({
     const interval = setInterval(() => {
       setLevelData(prev => {
         const newPipes = prev.pipes.map(pipe => {
+          // Handle fire pipes
+          if (pipe.hasFire) {
+            let newFireTimer = (pipe.fireTimer || 0) + 1;
+            let newFireActive = pipe.fireActive || false;
+            
+            // Fire shoots every 3 seconds (180 frames), stays on for 1.5 seconds
+            if (newFireTimer >= 180) {
+              newFireActive = true;
+              if (newFireTimer >= 270) {
+                newFireActive = false;
+                newFireTimer = 0;
+              }
+            }
+            
+            return { ...pipe, fireTimer: newFireTimer, fireActive: newFireActive };
+          }
+          
           if (!pipe.hasEnemy) return pipe;
           
           let newTimer = pipe.enemyTimer + 1;
           let newVisible = pipe.enemyVisible;
           let newDirection = pipe.enemyDirection;
           
-          // Pop out every ~2-4 seconds (120-240 frames at 60fps)
-          if (newTimer >= 150) {
+          // Pop out every ~2-4 seconds, stay visible longer for readability
+          if (newTimer >= 120) {
             if (!newVisible && newDirection === 'up') {
               newVisible = true;
               newDirection = 'down';
               newTimer = 0;
-            } else if (newVisible && newDirection === 'down') {
+            }
+          }
+          // Stay visible for 2 seconds before retreating
+          if (newVisible && newDirection === 'down' && newTimer >= 120) {
               newVisible = false;
               newDirection = 'up';
               newTimer = 0;
-            }
           }
           
           return { ...pipe, enemyTimer: newTimer, enemyVisible: newVisible, enemyDirection: newDirection };
@@ -164,6 +183,56 @@ export function GameEngine({
 
     return () => clearInterval(interval);
   }, [isPaused, showDeathOverlay]);
+
+  // Update enemy fireballs
+  useEffect(() => {
+    if (isPaused || showDeathOverlay) return;
+
+    const interval = setInterval(() => {
+      setLevelData(prev => {
+        // Update existing fireballs
+        let newFireballs = (prev.fireballs || []).map(fb => {
+          if (!fb.isActive) return fb;
+          const newX = fb.x + fb.velocityX;
+          // Deactivate if off screen
+          if (newX < cameraX - 100 || newX > cameraX + window.innerWidth + 100) {
+            return { ...fb, isActive: false };
+          }
+          return { ...fb, x: newX };
+        }).filter(fb => fb.isActive);
+
+        // Check if enemies should shoot
+        const newEnemies = prev.enemies.map(enemy => {
+          if (enemy.isDefeated || !enemy.canShoot || enemy.isGrouped) return enemy;
+          
+          let newShootTimer = (enemy.shootTimer || 0) + 1;
+          
+          // Shoot every 2-3 seconds based on level
+          const shootInterval = 180 - (prev.id * 10); // Faster at higher levels
+          
+          if (newShootTimer >= Math.max(120, shootInterval)) {
+            // Spawn fireball
+            const direction = enemy.direction;
+            newFireballs.push({
+              x: enemy.x + (direction === 1 ? enemy.width : 0),
+              y: enemy.y + enemy.height / 2,
+              velocityX: direction * 4,
+              width: 20,
+              height: 20,
+              isActive: true,
+            });
+            newShootTimer = 0;
+          }
+          
+          return { ...enemy, shootTimer: newShootTimer };
+        });
+
+        return { ...prev, fireballs: newFireballs, enemies: newEnemies };
+      });
+    }, 1000 / 60);
+
+    return () => clearInterval(interval);
+  }, [isPaused, showDeathOverlay, cameraX]);
 
   // Update hit block bounce timers
   useEffect(() => {
@@ -397,7 +466,7 @@ export function GameEngine({
       
       newBlocks[index] = { ...block, isHit: true, bounceTimer: 15 };
       
-      // Spawn collectible if block has contents
+      // Spawn MOVING collectible if block has contents
       let newCollectibles = [...prev.collectibles];
       if (block.contents === 'collectible') {
         newCollectibles.push({
@@ -407,6 +476,8 @@ export function GameEngine({
           collected: false,
           animationOffset: 0,
           fromBlock: true,
+          velocityX: 2, // Moving collectible
+          velocityY: -5, // Pop up effect
         });
       } else if (block.contents === 'cookie') {
         newCollectibles.push({
@@ -416,6 +487,8 @@ export function GameEngine({
           collected: false,
           animationOffset: 0,
           fromBlock: true,
+          velocityX: 0,
+          velocityY: -8, // Higher pop for cookie
         });
       }
       
@@ -471,6 +544,7 @@ export function GameEngine({
         isPaused={isPaused || showDeathOverlay}
         cameraX={cameraX}
         onCameraUpdate={handleCameraUpdate}
+        onFireballHit={handlePlayerHit}
       />
       
       <GameHUD

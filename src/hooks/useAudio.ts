@@ -152,6 +152,29 @@ class RetroAudioEngine {
     setTimeout(() => this.playTone(659, 0.2, 'square', 0.15), 200);
   }
 
+  playFireball() {
+    if (!this.sfxEnabled) return;
+    this.init();
+    // Whoosh sound for fireball
+    const ctx = this.audioContext;
+    if (!ctx || !this.masterGain) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(300, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.15);
+    
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+    
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.15);
+  }
+
   startBackgroundMusic() {
     if (!this.musicEnabled) return;
     this.init();
@@ -272,6 +295,10 @@ export function useAudio(musicEnabled: boolean, sfxEnabled: boolean) {
     audioEngine.playCheckpoint();
   }, []);
 
+  const playFireball = useCallback(() => {
+    audioEngine.playFireball();
+  }, []);
+
   const startBackgroundMusic = useCallback(() => {
     audioEngine.startBackgroundMusic();
   }, []);
@@ -291,6 +318,7 @@ export function useAudio(musicEnabled: boolean, sfxEnabled: boolean) {
     playGameOver,
     playLevelComplete,
     playCheckpoint,
+    playFireball,
     startBackgroundMusic,
     stopBackgroundMusic,
   };

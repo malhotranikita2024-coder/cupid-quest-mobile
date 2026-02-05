@@ -68,6 +68,9 @@ export interface Pipe {
   width: number;
   height: number;
   hasEnemy: boolean;
+  hasFire?: boolean;
+  fireActive?: boolean;
+  fireTimer?: number;
   enemyTimer: number;
   enemyVisible: boolean;
   enemyDirection: 'up' | 'down';
@@ -91,6 +94,8 @@ export interface Collectible {
   collected: boolean;
   animationOffset: number;
   fromBlock?: boolean;
+  velocityX?: number;
+  velocityY?: number;
 }
 
 export interface Enemy {
@@ -104,6 +109,18 @@ export interface Enemy {
   direction: 1 | -1;
   patrolStart: number;
   patrolEnd: number;
+  canShoot?: boolean;
+  shootTimer?: number;
+  isGrouped?: boolean;
+}
+
+export interface Fireball {
+  x: number;
+  y: number;
+  velocityX: number;
+  width: number;
+  height: number;
+  isActive: boolean;
 }
 
 export interface Checkpoint {
@@ -130,6 +147,7 @@ export interface LevelData {
   hitBlocks: HitBlock[];
   pipes: Pipe[];
   fallingHazards: FallingHazard[];
+  fireballs: Fireball[];
   checkpoint: Checkpoint;
   flag: LevelFlag;
   backgroundColor: string;
