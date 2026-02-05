@@ -449,16 +449,26 @@ export function GameCanvas({
     ctx.fillStyle = levelData.backgroundColor;
     ctx.fillRect(0, 0, width, height);
 
-    // Parallax background - cleaner, no floating hearts
+    // === PARALLAX BACKGROUND LAYERS ===
     const bgOffset = cameraX * 0.2;
+    const midOffset = cameraX * 0.4;
     
-    // Distant clouds only
+    // Layer 1: Distant hills (very back)
+    drawDistantHills(ctx, width, height, bgOffset * 0.5, levelData.id);
+    
+    // Layer 2: Mid-ground hills
+    drawMidHills(ctx, width, height, bgOffset * 0.8, levelData.id);
+    
+    // Layer 3: Clouds (parallax)
     ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    for (let i = 0; i < 8; i++) {
-      const cloudX = (i * 550 - bgOffset) % (width + 400) - 200;
-      const cloudY = 40 + (i % 3) * 40;
+    for (let i = 0; i < 10; i++) {
+      const cloudX = (i * 450 - bgOffset) % (width + 500) - 250;
+      const cloudY = 30 + (i % 4) * 35;
       drawCloud(ctx, cloudX, cloudY, 60 + (i % 2) * 30);
     }
+    
+    // Layer 4: Background bushes/trees (behind gameplay)
+    drawBackgroundVegetation(ctx, width, height, midOffset, levelData.id);
 
     ctx.save();
     ctx.translate(-cameraX, 0);
@@ -486,8 +496,28 @@ export function GameCanvas({
       ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
       ctx.fillRect(platform.x, platform.y, platform.width, 4);
       
-      // Brick pattern for floating platforms
-      if (platform.type === 'floating') {
+      // Enhanced ground texture with brick pattern
+      if (platform.type === 'ground') {
+        // Brick pattern for ground
+        ctx.strokeStyle = 'rgba(101, 67, 33, 0.5)';
+        ctx.lineWidth = 1;
+        const brickWidth = 40;
+        const brickHeight = 20;
+        for (let by = platform.y; by < platform.y + platform.height; by += brickHeight) {
+          const offset = (Math.floor((by - platform.y) / brickHeight) % 2) * (brickWidth / 2);
+          for (let bx = platform.x - offset; bx < platform.x + platform.width; bx += brickWidth) {
+            const drawX = Math.max(bx, platform.x);
+            const drawWidth = Math.min(bx + brickWidth, platform.x + platform.width) - drawX;
+            if (drawWidth > 0) {
+              ctx.strokeRect(drawX, by, drawWidth, brickHeight);
+            }
+          }
+        }
+        // Top highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.fillRect(platform.x, platform.y, platform.width, 3);
+      } else if (platform.type === 'floating') {
+        // Brick pattern for floating platforms
         ctx.strokeStyle = '#654321';
         ctx.lineWidth = 2;
         for (let bx = platform.x; bx < platform.x + platform.width; bx += 32) {
@@ -503,11 +533,8 @@ export function GameCanvas({
       }
       
       if (platform.type === 'ground') {
-        ctx.fillStyle = '#90EE90';
-        for (let i = 0; i < platform.width; i += 20) {
-          const grassHeight = 8 + Math.sin(i) * 3;
-          ctx.fillRect(platform.x + i, platform.y - grassHeight, 3, grassHeight);
-        }
+        // Improved grass on top of ground
+        drawGrass(ctx, platform.x, platform.y, platform.width);
       }
     });
 
@@ -830,4 +857,160 @@ function drawHeart(ctx: CanvasRenderingContext2D, x: number, y: number, size: nu
   ctx.bezierCurveTo(x, y + size, x + size, y + size * 0.6, x + size, y + size * 0.3);
   ctx.bezierCurveTo(x + size, y, x, y, x, y + size * 0.3);
   ctx.fill();
+}
+
+// Helper: Draw distant hills (very subtle, low contrast)
+function drawDistantHills(ctx: CanvasRenderingContext2D, width: number, height: number, offset: number, levelId: number) {
+  // Color based on level theme (subtle variations)
+  const hillColors: Record<number, string> = {
+    1: 'rgba(200, 180, 200, 0.3)', // Rose Garden - soft lavender
+    2: 'rgba(210, 190, 170, 0.3)', // Candyland - warm beige
+    3: 'rgba(180, 200, 220, 0.3)', // Toyland - soft blue
+    4: 'rgba(190, 200, 180, 0.3)', // Letter Lane - sage green
+    5: 'rgba(200, 190, 210, 0.3)', // Pearl Beach - soft purple
+    6: 'rgba(220, 200, 180, 0.3)', // Ring Mountain - warm gold
+    7: 'rgba(210, 180, 190, 0.3)', // Love Castle - romantic pink
+  };
+  
+  ctx.fillStyle = hillColors[levelId] || 'rgba(200, 200, 200, 0.3)';
+  
+  // Draw multiple distant hill silhouettes
+  ctx.beginPath();
+  ctx.moveTo(0, height);
+  
+  for (let x = 0; x <= width + 200; x += 10) {
+    const hillY = height * 0.55 + 
+      Math.sin((x + offset) * 0.003) * 40 + 
+      Math.sin((x + offset) * 0.007) * 25 +
+      Math.sin((x + offset) * 0.002) * 60;
+    ctx.lineTo(x, hillY);
+  }
+  
+  ctx.lineTo(width + 200, height);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// Helper: Draw mid-ground hills (slightly more visible)
+function drawMidHills(ctx: CanvasRenderingContext2D, width: number, height: number, offset: number, levelId: number) {
+  const hillColors: Record<number, string> = {
+    1: 'rgba(150, 180, 150, 0.25)', // Rose Garden - soft green
+    2: 'rgba(180, 160, 140, 0.25)', // Candyland - brown tint
+    3: 'rgba(160, 180, 170, 0.25)', // Toyland - muted teal
+    4: 'rgba(170, 180, 160, 0.25)', // Letter Lane - green
+    5: 'rgba(160, 170, 190, 0.25)', // Pearl Beach - blue-gray
+    6: 'rgba(180, 170, 150, 0.25)', // Ring Mountain - earth tone
+    7: 'rgba(180, 160, 170, 0.25)', // Love Castle - mauve
+  };
+  
+  ctx.fillStyle = hillColors[levelId] || 'rgba(170, 180, 160, 0.25)';
+  
+  ctx.beginPath();
+  ctx.moveTo(0, height);
+  
+  for (let x = 0; x <= width + 200; x += 8) {
+    const hillY = height * 0.65 + 
+      Math.sin((x + offset * 1.2) * 0.005) * 35 + 
+      Math.sin((x + offset * 1.2) * 0.012) * 20;
+    ctx.lineTo(x, hillY);
+  }
+  
+  ctx.lineTo(width + 200, height);
+  ctx.closePath();
+  ctx.fill();
+}
+
+// Helper: Draw background vegetation (bushes and trees behind gameplay)
+function drawBackgroundVegetation(ctx: CanvasRenderingContext2D, width: number, height: number, offset: number, levelId: number) {
+  // Tree/bush colors based on level
+  const treeColors: Record<number, { trunk: string; leaves: string }> = {
+    1: { trunk: 'rgba(101, 67, 33, 0.3)', leaves: 'rgba(60, 120, 60, 0.35)' },
+    2: { trunk: 'rgba(110, 70, 40, 0.3)', leaves: 'rgba(70, 110, 50, 0.35)' },
+    3: { trunk: 'rgba(90, 60, 40, 0.3)', leaves: 'rgba(50, 130, 80, 0.35)' },
+    4: { trunk: 'rgba(100, 65, 35, 0.3)', leaves: 'rgba(55, 115, 55, 0.35)' },
+    5: { trunk: 'rgba(95, 60, 45, 0.3)', leaves: 'rgba(60, 100, 70, 0.35)' },
+    6: { trunk: 'rgba(105, 70, 35, 0.3)', leaves: 'rgba(65, 105, 50, 0.35)' },
+    7: { trunk: 'rgba(100, 60, 50, 0.3)', leaves: 'rgba(70, 120, 60, 0.35)' },
+  };
+  
+  const colors = treeColors[levelId] || treeColors[1];
+  const groundY = height * 0.82; // Where vegetation sits
+  
+  // Draw bushes at regular intervals
+  for (let i = 0; i < 15; i++) {
+    const bushX = ((i * 350 - offset * 0.6) % (width + 400)) - 100;
+    const bushSize = 35 + (i % 3) * 15;
+    
+    // Draw bush (cluster of circles)
+    ctx.fillStyle = colors.leaves;
+    ctx.beginPath();
+    ctx.arc(bushX, groundY, bushSize, 0, Math.PI * 2);
+    ctx.arc(bushX - bushSize * 0.6, groundY + 5, bushSize * 0.7, 0, Math.PI * 2);
+    ctx.arc(bushX + bushSize * 0.6, groundY + 5, bushSize * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Draw distant trees (taller, further back)
+  for (let i = 0; i < 8; i++) {
+    const treeX = ((i * 550 + 200 - offset * 0.4) % (width + 600)) - 100;
+    const treeHeight = 80 + (i % 3) * 30;
+    const trunkWidth = 12 + (i % 2) * 4;
+    
+    // Trunk
+    ctx.fillStyle = colors.trunk;
+    ctx.fillRect(treeX - trunkWidth / 2, groundY - treeHeight * 0.4, trunkWidth, treeHeight * 0.5);
+    
+    // Foliage (triangular for conifers, rounded for deciduous)
+    ctx.fillStyle = colors.leaves;
+    if (i % 2 === 0) {
+      // Rounded tree top
+      ctx.beginPath();
+      ctx.arc(treeX, groundY - treeHeight * 0.5, treeHeight * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(treeX - 15, groundY - treeHeight * 0.35, treeHeight * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(treeX + 15, groundY - treeHeight * 0.35, treeHeight * 0.3, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Triangular pine tree
+      ctx.beginPath();
+      ctx.moveTo(treeX, groundY - treeHeight);
+      ctx.lineTo(treeX - treeHeight * 0.35, groundY - treeHeight * 0.3);
+      ctx.lineTo(treeX + treeHeight * 0.35, groundY - treeHeight * 0.3);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+}
+
+// Helper: Draw improved grass on ground platforms
+function drawGrass(ctx: CanvasRenderingContext2D, x: number, y: number, width: number) {
+  // Base grass layer
+  const grassGradient = ctx.createLinearGradient(x, y - 12, x, y);
+  grassGradient.addColorStop(0, '#7CCD7C');
+  grassGradient.addColorStop(0.5, '#5CB85C');
+  grassGradient.addColorStop(1, '#4CAF50');
+  ctx.fillStyle = grassGradient;
+  ctx.fillRect(x, y - 8, width, 8);
+  
+  // Grass blades
+  ctx.fillStyle = '#90EE90';
+  for (let i = 0; i < width; i += 8) {
+    const bladeHeight = 6 + Math.sin(i * 0.5) * 3 + Math.random() * 2;
+    const bladeWidth = 2 + Math.random();
+    ctx.fillRect(x + i, y - 8 - bladeHeight, bladeWidth, bladeHeight);
+  }
+  
+  // Darker grass accents
+  ctx.fillStyle = '#228B22';
+  for (let i = 5; i < width; i += 15) {
+    const bladeHeight = 4 + Math.sin(i * 0.3) * 2;
+    ctx.fillRect(x + i, y - 8 - bladeHeight, 2, bladeHeight);
+  }
+  
+  // Subtle highlight on top edge
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+  ctx.fillRect(x, y - 8, width, 2);
 }
