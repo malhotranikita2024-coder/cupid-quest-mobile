@@ -955,19 +955,19 @@ function drawFlyingCreatures(ctx: CanvasRenderingContext2D, width: number, heigh
   
   const birdColor = 'rgba(60, 60, 80, 0.4)';
   
-  // Number of creatures
-  const creatureCount = 5 + (levelId % 3);
+  // Just 1-2 creatures flying slowly
+  const creatureCount = 2;
   
   for (let i = 0; i < creatureCount; i++) {
     // Each creature has its own flight pattern
     const seed = levelId * 1000 + i * 123;
-    const speedMultiplier = 0.3 + (seed % 10) / 20; // 0.3 - 0.8
-    const baseX = ((time * speedMultiplier + seed * 50) % (width + 300)) - 150;
-    const baseY = 60 + (seed % 150);
+    const speedMultiplier = 0.08 + (i * 0.02); // Very slow: 0.08 - 0.1
+    const baseX = ((time * speedMultiplier + seed * 100) % (width + 600)) - 200;
+    const baseY = 50 + (i * 80); // Spread them out vertically
     
-    // Gentle wave motion
-    const waveY = Math.sin(time / 500 + i * 2) * 15;
-    const waveX = Math.sin(time / 800 + i * 1.5) * 8;
+    // Very gentle wave motion
+    const waveY = Math.sin(time / 1500 + i * 2) * 10;
+    const waveX = Math.sin(time / 2000 + i * 1.5) * 5;
     
     const x = baseX + waveX;
     const y = baseY + waveY;
@@ -976,8 +976,8 @@ function drawFlyingCreatures(ctx: CanvasRenderingContext2D, width: number, heigh
       // Draw butterfly
       const colors = butterflyColors[levelId] || butterflyColors[1];
       const color = colors[i % colors.length];
-      const wingFlap = Math.sin(time / 80 + i * 3) * 0.5 + 0.5; // 0-1 flap cycle
-      const size = 8 + (i % 3) * 2;
+      const wingFlap = Math.sin(time / 150 + i * 3) * 0.5 + 0.5; // Slower flap cycle
+      const size = 10 + (i * 2);
       
       ctx.fillStyle = color;
       
@@ -1006,8 +1006,8 @@ function drawFlyingCreatures(ctx: CanvasRenderingContext2D, width: number, heigh
       ctx.fill();
     } else {
       // Draw bird (simple V shape)
-      const wingAngle = Math.sin(time / 100 + i * 2) * 0.4; // Wing flap
-      const size = 10 + (i % 4) * 3;
+      const wingAngle = Math.sin(time / 200 + i * 2) * 0.3; // Slower, gentler wing flap
+      const size = 12 + (i * 3);
       
       ctx.strokeStyle = birdColor;
       ctx.lineWidth = 2;
