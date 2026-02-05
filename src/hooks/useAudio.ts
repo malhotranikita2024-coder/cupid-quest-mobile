@@ -203,6 +203,45 @@ class RetroAudioEngine {
     osc.stop(ctx.currentTime + 0.15);
   }
 
+   playShieldActivate() {
+     if (!this.sfxEnabled) return;
+     this.init();
+     const ctx = this.audioContext;
+     if (!ctx || !this.masterGain) return;
+ 
+     // Magical ascending arpeggio with shimmer effect
+     const notes = [440, 554, 659, 880, 1047, 1319];
+     notes.forEach((freq, i) => {
+       setTimeout(() => {
+         if (!ctx || !this.masterGain) return;
+         
+         // Main tone
+         const osc = ctx.createOscillator();
+         const gain = ctx.createGain();
+         osc.connect(gain);
+         gain.connect(this.masterGain!);
+         osc.type = 'sine';
+         osc.frequency.value = freq;
+         gain.gain.setValueAtTime(0.2, ctx.currentTime);
+         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+         osc.start(ctx.currentTime);
+         osc.stop(ctx.currentTime + 0.2);
+ 
+         // Shimmer harmonic
+         const shimmer = ctx.createOscillator();
+         const shimmerGain = ctx.createGain();
+         shimmer.connect(shimmerGain);
+         shimmerGain.connect(this.masterGain!);
+         shimmer.type = 'triangle';
+         shimmer.frequency.value = freq * 2;
+         shimmerGain.gain.setValueAtTime(0.1, ctx.currentTime);
+         shimmerGain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+         shimmer.start(ctx.currentTime);
+         shimmer.stop(ctx.currentTime + 0.15);
+       }, i * 50);
+     });
+   }
+ 
   startBackgroundMusic() {
     if (!this.musicEnabled) return;
     this.init();
@@ -479,6 +518,10 @@ export function useAudio(musicEnabled: boolean, sfxEnabled: boolean) {
     audioEngine.playFireball();
   }, []);
 
+   const playShieldActivate = useCallback(() => {
+     audioEngine.playShieldActivate();
+   }, []);
+ 
   const startBackgroundMusic = useCallback(() => {
     audioEngine.startBackgroundMusic();
   }, []);
@@ -512,6 +555,7 @@ export function useAudio(musicEnabled: boolean, sfxEnabled: boolean) {
     playLevelComplete,
     playCheckpoint,
     playFireball,
+     playShieldActivate,
     startBackgroundMusic,
     stopBackgroundMusic,
     startMenuMusic,

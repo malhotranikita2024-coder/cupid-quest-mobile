@@ -471,7 +471,7 @@ export function GameEngine({
       audio.playCollect();
       onCollectBurst(5);
     } else {
-      audio.playCookieCollect(); // Special sound for shield
+       audio.playShieldActivate(); // Special shield activation sound
       onCollectShield();
     }
   }, [audio, hasShield, onCollectShield, onCollectBurst]);
