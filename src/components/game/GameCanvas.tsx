@@ -668,10 +668,12 @@ export function GameCanvas({
       const bobY = Math.sin(time / 300 + collectible.animationOffset * Math.PI) * 5;
       const emoji = COLLECTIBLE_EMOJIS[collectible.type] || '🌹';
       
-      // Sharp, clean emoji rendering - no blur effects
+      // Boost saturation and contrast for vivid colors
+      ctx.filter = 'saturate(1.8) contrast(1.3)';
       ctx.font = collectible.type === 'cookie' ? '40px Arial' : '36px Arial';
       ctx.textAlign = 'center';
       ctx.fillText(emoji, collectible.x, collectible.y + bobY);
+      ctx.filter = 'none';
     });
 
     // Draw enemies
@@ -681,7 +683,8 @@ export function GameCanvas({
       const wobble = Math.sin(time / 200) * 3;
       const enemyX = enemy.x + enemy.width / 2;
       
-      // Sharp, clean emoji rendering - no blur effects
+      // Boost saturation and contrast for vivid enemy colors
+      ctx.filter = 'saturate(2.0) contrast(1.4)';
       ctx.font = '48px Arial';
       ctx.textAlign = 'center';
       
@@ -704,6 +707,7 @@ export function GameCanvas({
         ctx.font = '40px Arial';
         ctx.fillText('☁️', enemyX, enemy.y + 45 + wobble);
       }
+      ctx.filter = 'none';
     });
 
     // Draw checkpoint
