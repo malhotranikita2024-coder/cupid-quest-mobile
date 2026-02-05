@@ -142,6 +142,10 @@ export interface LevelFlag {
   reached: boolean;
   // Shake animation when player reaches without mid-flag
   shakeTimer?: number;
+  // Flag planting animation
+  isPlanting?: boolean;
+  plantProgress?: number;
+  plantedFlag?: boolean;
 }
 
 export interface MidLevelFlag {
