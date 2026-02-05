@@ -1176,58 +1176,64 @@ function drawMidHills(ctx: CanvasRenderingContext2D, width: number, height: numb
   ctx.fill();
 }
 
-// Helper: Draw background vegetation (bushes and trees behind gameplay)
+// Helper: Draw background meadows (rolling green fields)
 function drawBackgroundVegetation(ctx: CanvasRenderingContext2D, width: number, height: number, offset: number, levelId: number) {
-  // Simple, faded silhouette colors - very subtle for distant background
-  const silhouetteColors: Record<number, string> = {
-    1: 'rgba(100, 130, 100, 0.2)',  // Rose Garden - soft green
-    2: 'rgba(110, 125, 95, 0.2)',   // Candyland - warm green
-    3: 'rgba(90, 135, 110, 0.2)',   // Toyland - teal green
-    4: 'rgba(95, 130, 95, 0.2)',    // Letter Lane - forest green
-    5: 'rgba(100, 120, 110, 0.2)',  // Pearl Beach - blue-green
-    6: 'rgba(105, 125, 90, 0.2)',   // Ring Mountain - olive
-    7: 'rgba(110, 130, 105, 0.2)',  // Love Castle - sage
+  // Meadow colors - soft greens that blend with the sky
+  const meadowColors: Record<number, { back: string; mid: string; front: string }> = {
+    1: { back: 'rgba(140, 180, 120, 0.25)', mid: 'rgba(120, 170, 100, 0.3)', front: 'rgba(100, 160, 90, 0.35)' },
+    2: { back: 'rgba(150, 175, 110, 0.25)', mid: 'rgba(130, 165, 95, 0.3)', front: 'rgba(115, 155, 85, 0.35)' },
+    3: { back: 'rgba(130, 185, 130, 0.25)', mid: 'rgba(110, 175, 115, 0.3)', front: 'rgba(95, 165, 105, 0.35)' },
+    4: { back: 'rgba(135, 175, 115, 0.25)', mid: 'rgba(115, 165, 100, 0.3)', front: 'rgba(100, 155, 90, 0.35)' },
+    5: { back: 'rgba(130, 170, 130, 0.25)', mid: 'rgba(110, 160, 115, 0.3)', front: 'rgba(95, 150, 100, 0.35)' },
+    6: { back: 'rgba(145, 170, 105, 0.25)', mid: 'rgba(125, 160, 90, 0.3)', front: 'rgba(110, 150, 80, 0.35)' },
+    7: { back: 'rgba(140, 175, 120, 0.25)', mid: 'rgba(120, 165, 105, 0.3)', front: 'rgba(105, 155, 95, 0.35)' },
   };
   
-  const silhouetteColor = silhouetteColors[levelId] || silhouetteColors[1];
-  const groundY = height * 0.78;
+  const colors = meadowColors[levelId] || meadowColors[1];
   
-  // Draw a continuous treeline silhouette - like a distant forest
-  ctx.fillStyle = silhouetteColor;
+  // Back meadow layer (most distant, lightest)
+  ctx.fillStyle = colors.back;
   ctx.beginPath();
-  ctx.moveTo(-100, groundY);
+  ctx.moveTo(-50, height);
   
-  // Create organic bumpy treeline using sine waves
-  for (let x = -100; x <= width + 100; x += 3) {
-    const adjustedX = x + offset * 0.3;
-    // Combine multiple sine waves for natural look
-    const y = groundY - 40 
-      - Math.abs(Math.sin(adjustedX * 0.008) * 35)
-      - Math.abs(Math.sin(adjustedX * 0.02 + 1) * 20)
-      - Math.abs(Math.sin(adjustedX * 0.05 + 2) * 10);
+  for (let x = -50; x <= width + 50; x += 4) {
+    const adjustedX = x + offset * 0.15;
+    // Gentle rolling hills
+    const y = height * 0.62 + Math.sin(adjustedX * 0.004) * 25 + Math.sin(adjustedX * 0.01) * 12;
     ctx.lineTo(x, y);
   }
   
-  ctx.lineTo(width + 100, groundY);
+  ctx.lineTo(width + 50, height);
   ctx.closePath();
   ctx.fill();
   
-  // Add a slightly darker/closer treeline in front
-  const frontColor = silhouetteColor.replace('0.2)', '0.25)');
-  ctx.fillStyle = frontColor;
+  // Middle meadow layer
+  ctx.fillStyle = colors.mid;
   ctx.beginPath();
-  ctx.moveTo(-100, groundY + 15);
+  ctx.moveTo(-50, height);
   
-  for (let x = -100; x <= width + 100; x += 3) {
-    const adjustedX = x + offset * 0.5 + 200;
-    const y = groundY + 10
-      - Math.abs(Math.sin(adjustedX * 0.01) * 30)
-      - Math.abs(Math.sin(adjustedX * 0.025 + 0.5) * 18)
-      - Math.abs(Math.sin(adjustedX * 0.06 + 1.5) * 8);
+  for (let x = -50; x <= width + 50; x += 4) {
+    const adjustedX = x + offset * 0.25 + 150;
+    const y = height * 0.68 + Math.sin(adjustedX * 0.005) * 20 + Math.sin(adjustedX * 0.012 + 1) * 10;
     ctx.lineTo(x, y);
   }
   
-  ctx.lineTo(width + 100, groundY + 15);
+  ctx.lineTo(width + 50, height);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Front meadow layer (closest, darkest green)
+  ctx.fillStyle = colors.front;
+  ctx.beginPath();
+  ctx.moveTo(-50, height);
+  
+  for (let x = -50; x <= width + 50; x += 4) {
+    const adjustedX = x + offset * 0.35 + 300;
+    const y = height * 0.74 + Math.sin(adjustedX * 0.006) * 15 + Math.sin(adjustedX * 0.015 + 2) * 8;
+    ctx.lineTo(x, y);
+  }
+  
+  ctx.lineTo(width + 50, height);
   ctx.closePath();
   ctx.fill();
 }
