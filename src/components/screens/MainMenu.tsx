@@ -115,6 +115,12 @@ export function MainMenu({
           0%, 90%, 100% { opacity: 1; }
           95% { opacity: 0.3; }
         }
+        @keyframes tree-sway {
+          0%, 100% { transform: rotate(0deg) scaleY(1); }
+          25% { transform: rotate(1.5deg) scaleY(0.99); }
+          50% { transform: rotate(0deg) scaleY(1); }
+          75% { transform: rotate(-1.5deg) scaleY(0.99); }
+        }
       `}</style>
       
       {/* LEFT ISLAND */}
@@ -136,10 +142,22 @@ export function MainMenu({
           }}
         />
         {/* Trees/bushes */}
-        <div className="absolute bottom-[70%] left-[15%] w-14 h-16 bg-gradient-to-b from-[#2E7D32] to-[#1B5E20] rounded-full" />
-        <div className="absolute bottom-[75%] left-[30%] w-18 h-20 bg-gradient-to-b from-[#388E3C] to-[#2E7D32] rounded-full" />
-        <div className="absolute bottom-[68%] left-[50%] w-12 h-14 bg-gradient-to-b from-[#43A047] to-[#2E7D32] rounded-full" />
-        <div className="absolute bottom-[72%] left-[65%] w-10 h-12 bg-gradient-to-b from-[#4CAF50] to-[#388E3C] rounded-full" />
+        <div 
+          className="absolute bottom-[70%] left-[15%] w-14 h-16 bg-gradient-to-b from-[#2E7D32] to-[#1B5E20] rounded-full"
+          style={{ transformOrigin: 'bottom center', animation: 'tree-sway 4s ease-in-out infinite' }}
+        />
+        <div 
+          className="absolute bottom-[75%] left-[30%] w-18 h-20 bg-gradient-to-b from-[#388E3C] to-[#2E7D32] rounded-full"
+          style={{ transformOrigin: 'bottom center', animation: 'tree-sway 4.5s ease-in-out infinite', animationDelay: '0.5s' }}
+        />
+        <div 
+          className="absolute bottom-[68%] left-[50%] w-12 h-14 bg-gradient-to-b from-[#43A047] to-[#2E7D32] rounded-full"
+          style={{ transformOrigin: 'bottom center', animation: 'tree-sway 3.8s ease-in-out infinite', animationDelay: '1s' }}
+        />
+        <div 
+          className="absolute bottom-[72%] left-[65%] w-10 h-12 bg-gradient-to-b from-[#4CAF50] to-[#388E3C] rounded-full"
+          style={{ transformOrigin: 'bottom center', animation: 'tree-sway 4.2s ease-in-out infinite', animationDelay: '0.3s' }}
+        />
         
         {/* Golden winding path */}
         <div className="absolute bottom-[50%] left-[20%] w-2 h-16 bg-gradient-to-b from-[#FFD700] to-[#DAA520] rounded-full rotate-12 opacity-80" />
@@ -165,8 +183,14 @@ export function MainMenu({
           }}
         />
         {/* Trees */}
-        <div className="absolute bottom-[65%] right-[55%] w-12 h-14 bg-gradient-to-b from-[#388E3C] to-[#2E7D32] rounded-full" />
-        <div className="absolute bottom-[68%] right-[40%] w-14 h-16 bg-gradient-to-b from-[#43A047] to-[#2E7D32] rounded-full" />
+        <div 
+          className="absolute bottom-[65%] right-[55%] w-12 h-14 bg-gradient-to-b from-[#388E3C] to-[#2E7D32] rounded-full"
+          style={{ transformOrigin: 'bottom center', animation: 'tree-sway 4.3s ease-in-out infinite', animationDelay: '0.7s' }}
+        />
+        <div 
+          className="absolute bottom-[68%] right-[40%] w-14 h-16 bg-gradient-to-b from-[#43A047] to-[#2E7D32] rounded-full"
+          style={{ transformOrigin: 'bottom center', animation: 'tree-sway 3.9s ease-in-out infinite', animationDelay: '1.2s' }}
+        />
         
         {/* CASTLE */}
         <div className="absolute bottom-[60%] right-[10%] w-24">
