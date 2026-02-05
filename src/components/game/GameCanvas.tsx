@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { PlayerState, TouchControls, LevelData, HitBlock, Pipe, FallingHazard, Fireball } from '@/types/game';
+import { PlayerState, TouchControls, LevelData, HitBlock, Pipe, FallingHazard, Fireball, LevelFlag } from '@/types/game';
 import { COLLECTIBLE_EMOJIS } from '@/data/levels';
 
 interface GameCanvasProps {
@@ -22,6 +22,7 @@ interface GameCanvasProps {
   onCameraUpdate: (x: number) => void;
   onFireballHit?: () => void;
   hasShield: boolean;
+  hasFlag: boolean;
 }
 
 const GRAVITY = 0.6;
@@ -52,6 +53,7 @@ export function GameCanvas({
   onCameraUpdate,
   onFireballHit,
   hasShield,
+  hasFlag,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
@@ -865,24 +867,88 @@ export function GameCanvas({
     // Draw flag
     const flagReached = levelData.flag.reached;
     const flagWave = Math.sin(time / 200) * 5;
+    const flagX = levelData.flag.x;
+    const flagY = levelData.flag.y;
     
-    // Flag pole
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(levelData.flag.x + 25, levelData.flag.y, 10, 120);
-    
-    // Flag (red before touch, green after)
-    ctx.fillStyle = flagReached ? '#4CAF50' : '#FF4444';
-    ctx.beginPath();
-    ctx.moveTo(levelData.flag.x + 35, levelData.flag.y + 10);
-    ctx.lineTo(levelData.flag.x + 80 + flagWave, levelData.flag.y + 30);
-    ctx.lineTo(levelData.flag.x + 35, levelData.flag.y + 50);
-    ctx.closePath();
-    ctx.fill();
-    
-    // Heart on flag
-    ctx.font = '24px Arial';
-    ctx.textAlign = 'center';
-    ctx.fillText(flagReached ? '💚' : '❤️', levelData.flag.x + 55 + flagWave, levelData.flag.y + 35);
+    // Only draw flag at location if not yet collected
+    if (!flagReached) {
+      // GLOW EFFECT - pulsing golden glow behind flag
+      const glowPulse = 0.6 + Math.sin(time / 300) * 0.4;
+      const glowRadius = 60 + Math.sin(time / 200) * 10;
+      
+      const glowGradient = ctx.createRadialGradient(
+        flagX + 50, flagY + 40, 5,
+        flagX + 50, flagY + 40, glowRadius
+      );
+      glowGradient.addColorStop(0, `rgba(255, 215, 0, ${glowPulse * 0.8})`);
+      glowGradient.addColorStop(0.5, `rgba(255, 100, 50, ${glowPulse * 0.4})`);
+      glowGradient.addColorStop(1, 'rgba(255, 50, 50, 0)');
+      
+      ctx.beginPath();
+      ctx.arc(flagX + 50, flagY + 40, glowRadius, 0, Math.PI * 2);
+      ctx.fillStyle = glowGradient;
+      ctx.fill();
+      
+      // Flag pole with outline
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 4;
+      ctx.fillStyle = '#FFD700'; // Golden pole
+      ctx.beginPath();
+      ctx.roundRect(flagX + 23, flagY - 10, 14, 140, 3);
+      ctx.stroke();
+      ctx.fill();
+      
+      // Flag cloth - BRIGHT RED with dark outline
+      ctx.strokeStyle = '#660000';
+      ctx.lineWidth = 3;
+      ctx.fillStyle = '#FF0000'; // Bright red
+      ctx.beginPath();
+      ctx.moveTo(flagX + 37, flagY);
+      ctx.lineTo(flagX + 95 + flagWave, flagY + 25);
+      ctx.lineTo(flagX + 37, flagY + 50);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fill();
+      
+      // White outline for extra visibility
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(flagX + 39, flagY + 3);
+      ctx.lineTo(flagX + 90 + flagWave, flagY + 25);
+      ctx.lineTo(flagX + 39, flagY + 47);
+      ctx.closePath();
+      ctx.stroke();
+      
+      // Heart on flag with glow
+      ctx.font = 'bold 28px Arial';
+      ctx.textAlign = 'center';
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 4;
+      ctx.strokeText('❤️', flagX + 62 + flagWave * 0.5, flagY + 33);
+      ctx.fillText('❤️', flagX + 62 + flagWave * 0.5, flagY + 33);
+      
+      // Sparkles around flag
+      const sparkleCount = 5;
+      for (let i = 0; i < sparkleCount; i++) {
+        const sparkleAngle = (time / 500) + (i * Math.PI * 2 / sparkleCount);
+        const sparkleRadius = 45 + Math.sin(time / 200 + i) * 10;
+        const sparkleX = flagX + 55 + Math.cos(sparkleAngle) * sparkleRadius;
+        const sparkleY = flagY + 30 + Math.sin(sparkleAngle) * sparkleRadius * 0.6;
+        const sparkleSize = 12 + Math.sin(time / 100 + i * 2) * 4;
+        
+        ctx.font = `${sparkleSize}px Arial`;
+        ctx.fillText('✨', sparkleX, sparkleY);
+      }
+      
+      // "GOAL" text above flag
+      ctx.font = 'bold 16px Arial';
+      ctx.fillStyle = '#FFD700';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 3;
+      ctx.strokeText('GOAL', flagX + 55, flagY - 20);
+      ctx.fillText('GOAL', flagX + 55, flagY - 20);
+    }
 
     // Draw player
     const blinkVisible = !player.isInvincible || Math.floor(time / 100) % 2 === 0;
@@ -970,6 +1036,51 @@ export function GameCanvas({
       ctx.font = '14px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('❤️', player.x + PLAYER_WIDTH / 2, player.y + 35);
+      
+      // Draw carried flag if player has collected it
+      if (hasFlag) {
+        ctx.save();
+        // Small flag on player's back
+        const flagPoleX = player.facingRight ? player.x - 5 : player.x + PLAYER_WIDTH + 5;
+        const smallFlagWave = Math.sin(time / 150) * 3;
+        
+        // Small pole
+        ctx.fillStyle = '#FFD700';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(flagPoleX - 2, player.y - 25, 6, 55, 2);
+        ctx.stroke();
+        ctx.fill();
+        
+        // Small green flag (captured state)
+        ctx.fillStyle = '#00CC00';
+        ctx.strokeStyle = '#006600';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (player.facingRight) {
+          ctx.moveTo(flagPoleX + 4, player.y - 22);
+          ctx.lineTo(flagPoleX + 30 + smallFlagWave, player.y - 12);
+          ctx.lineTo(flagPoleX + 4, player.y - 2);
+        } else {
+          ctx.moveTo(flagPoleX - 2, player.y - 22);
+          ctx.lineTo(flagPoleX - 28 - smallFlagWave, player.y - 12);
+          ctx.lineTo(flagPoleX - 2, player.y - 2);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        ctx.fill();
+        
+        // Small heart
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        if (player.facingRight) {
+          ctx.fillText('💚', flagPoleX + 15 + smallFlagWave * 0.5, player.y - 9);
+        } else {
+          ctx.fillText('💚', flagPoleX - 13 - smallFlagWave * 0.5, player.y - 9);
+        }
+        ctx.restore();
+      }
       
       ctx.restore();
     }

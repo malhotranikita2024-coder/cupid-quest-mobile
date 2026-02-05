@@ -845,6 +845,7 @@ export function GameEngine({
         onCameraUpdate={handleCameraUpdate}
         onFireballHit={handlePlayerHit}
         hasShield={hasShield}
+        hasFlag={levelData.flag.reached}
       />
       
       <GameHUD

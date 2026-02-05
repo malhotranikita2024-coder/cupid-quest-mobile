@@ -140,6 +140,8 @@ export interface LevelFlag {
   x: number;
   y: number;
   reached: boolean;
+  // Platform the flag is on (for rendering flag on elevated positions)
+  platformY?: number;
 }
 
 export interface LevelData {
