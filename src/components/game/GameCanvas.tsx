@@ -452,6 +452,9 @@ export function GameCanvas({
     // === STARS IN THE SKY ===
     drawStars(ctx, width, height, cameraX * 0.05, levelData.id);
 
+    // === SUN OR MOON ===
+    drawCelestialBody(ctx, width, height, cameraX * 0.02, levelData.id);
+
     // === PARALLAX BACKGROUND LAYERS ===
     const bgOffset = cameraX * 0.2;
     const midOffset = cameraX * 0.4;
@@ -931,6 +934,87 @@ function drawStars(ctx: CanvasRenderingContext2D, width: number, height: number,
     ctx.lineTo(starX + size * 2, starY);
     ctx.lineTo(starX, starY - size * 0.3);
     ctx.closePath();
+    ctx.fill();
+  }
+}
+
+// Helper: Draw sun or moon based on level theme
+function drawCelestialBody(ctx: CanvasRenderingContext2D, width: number, height: number, offset: number, levelId: number) {
+  // Determine if sun or moon based on level atmosphere
+  const isMoon = levelId === 5 || levelId === 6 || levelId === 7; // Pearl Beach, Ring Mountain, Love Castle get moon
+  
+  // Position with very slow parallax
+  const baseX = width * 0.75;
+  const x = baseX - offset * 0.5;
+  const y = 80 + (levelId % 3) * 20;
+  const size = 45;
+  
+  if (isMoon) {
+    // Draw moon
+    // Outer glow
+    const moonGlow = ctx.createRadialGradient(x, y, size * 0.5, x, y, size * 2);
+    moonGlow.addColorStop(0, 'rgba(255, 255, 240, 0.15)');
+    moonGlow.addColorStop(0.5, 'rgba(255, 255, 240, 0.05)');
+    moonGlow.addColorStop(1, 'rgba(255, 255, 240, 0)');
+    ctx.fillStyle = moonGlow;
+    ctx.beginPath();
+    ctx.arc(x, y, size * 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Moon body
+    const moonGradient = ctx.createRadialGradient(x - size * 0.3, y - size * 0.3, 0, x, y, size);
+    moonGradient.addColorStop(0, 'rgba(255, 255, 250, 0.95)');
+    moonGradient.addColorStop(0.7, 'rgba(230, 230, 220, 0.9)');
+    moonGradient.addColorStop(1, 'rgba(200, 200, 190, 0.85)');
+    ctx.fillStyle = moonGradient;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Subtle craters
+    ctx.fillStyle = 'rgba(180, 180, 170, 0.3)';
+    ctx.beginPath();
+    ctx.arc(x - size * 0.3, y - size * 0.2, size * 0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + size * 0.2, y + size * 0.3, size * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x + size * 0.4, y - size * 0.1, size * 0.08, 0, Math.PI * 2);
+    ctx.fill();
+  } else {
+    // Draw sun
+    // Outer glow
+    const sunGlow = ctx.createRadialGradient(x, y, size * 0.5, x, y, size * 3);
+    sunGlow.addColorStop(0, 'rgba(255, 230, 150, 0.25)');
+    sunGlow.addColorStop(0.4, 'rgba(255, 220, 100, 0.1)');
+    sunGlow.addColorStop(1, 'rgba(255, 200, 50, 0)');
+    ctx.fillStyle = sunGlow;
+    ctx.beginPath();
+    ctx.arc(x, y, size * 3, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Sun rays (subtle)
+    ctx.strokeStyle = 'rgba(255, 220, 100, 0.15)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2;
+      const innerRadius = size * 1.2;
+      const outerRadius = size * 1.8;
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(angle) * innerRadius, y + Math.sin(angle) * innerRadius);
+      ctx.lineTo(x + Math.cos(angle) * outerRadius, y + Math.sin(angle) * outerRadius);
+      ctx.stroke();
+    }
+    
+    // Sun body
+    const sunGradient = ctx.createRadialGradient(x - size * 0.3, y - size * 0.3, 0, x, y, size);
+    sunGradient.addColorStop(0, 'rgba(255, 255, 200, 0.9)');
+    sunGradient.addColorStop(0.5, 'rgba(255, 230, 120, 0.85)');
+    sunGradient.addColorStop(1, 'rgba(255, 200, 80, 0.8)');
+    ctx.fillStyle = sunGradient;
+    ctx.beginPath();
+    ctx.arc(x, y, size, 0, Math.PI * 2);
     ctx.fill();
   }
 }
