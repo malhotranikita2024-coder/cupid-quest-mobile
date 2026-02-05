@@ -668,17 +668,21 @@ export function GameCanvas({
       const bobY = Math.sin(time / 300 + collectible.animationOffset * Math.PI) * 5;
       const emoji = COLLECTIBLE_EMOJIS[collectible.type] || '🌹';
       
-      // Large, bold emoji with drop shadow for depth
       ctx.save();
-      
-      // Draw dark shadow underneath for contrast
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
       ctx.font = collectible.type === 'cookie' ? '42px Arial' : '38px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText(emoji, collectible.x + 2, collectible.y + bobY + 2);
       
-      // Draw main emoji on top
-      ctx.font = collectible.type === 'cookie' ? '42px Arial' : '38px Arial';
+      // White outline - draw emoji 8 times around the center
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 4;
+      ctx.miterLimit = 2;
+      const outlineOffsets = [[-2,0], [2,0], [0,-2], [0,2], [-1,-1], [1,-1], [-1,1], [1,1]];
+      outlineOffsets.forEach(([ox, oy]) => {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(emoji, collectible.x + ox, collectible.y + bobY + oy);
+      });
+      
+      // Main emoji on top
       ctx.fillText(emoji, collectible.x, collectible.y + bobY);
       
       ctx.restore();
@@ -694,15 +698,22 @@ export function GameCanvas({
       ctx.save();
       ctx.textAlign = 'center';
       
+      // White outline offsets
+      const outlineOffsets = [[-2,0], [2,0], [0,-2], [0,2], [-1,-1], [1,-1], [-1,1], [1,1]];
+      
       if (enemy.type === 'heartBug') {
-        // Dark shadow for depth
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        // White outline for heart
         ctx.font = '52px Arial';
-        ctx.fillText('💗', enemyX + 2, enemy.y - 3 + wobble);
+        ctx.fillStyle = '#FFFFFF';
+        outlineOffsets.forEach(([ox, oy]) => {
+          ctx.fillText('💗', enemyX + ox, enemy.y - 5 + wobble + oy);
+        });
         ctx.font = '38px Arial';
-        ctx.fillText('🐛', enemyX + 2, enemy.y + 24 + wobble);
+        outlineOffsets.forEach(([ox, oy]) => {
+          ctx.fillText('🐛', enemyX + ox, enemy.y + 22 + wobble + oy);
+        });
         
-        // Main emoji on top
+        // Main emojis
         ctx.font = '52px Arial';
         ctx.fillText('💗', enemyX, enemy.y - 5 + wobble);
         ctx.font = '38px Arial';
@@ -713,12 +724,14 @@ export function GameCanvas({
           ctx.fillText('🔥', enemyX + 18, enemy.y - 10);
         }
       } else if (enemy.type === 'brokenHeartSlime') {
-        // Dark shadow for depth
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        // White outline
         ctx.font = '52px Arial';
-        ctx.fillText('💔', enemyX + 2, enemy.y + 17 + wobble);
+        ctx.fillStyle = '#FFFFFF';
+        outlineOffsets.forEach(([ox, oy]) => {
+          ctx.fillText('💔', enemyX + ox, enemy.y + 15 + wobble + oy);
+        });
         
-        // Main emoji on top
+        // Main emoji
         ctx.font = '52px Arial';
         ctx.fillText('💔', enemyX, enemy.y + 15 + wobble);
         
@@ -727,12 +740,18 @@ export function GameCanvas({
           ctx.fillText('🔥', enemyX + 18, enemy.y - 10);
         }
       } else if (enemy.type === 'jealousCloud') {
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        // White outline
+        ctx.fillStyle = '#FFFFFF';
         ctx.font = '48px Arial';
-        ctx.fillText('😤', enemyX + 2, enemy.y + 22 + wobble);
+        outlineOffsets.forEach(([ox, oy]) => {
+          ctx.fillText('😤', enemyX + ox, enemy.y + 20 + wobble + oy);
+        });
         ctx.font = '42px Arial';
-        ctx.fillText('☁️', enemyX + 2, enemy.y + 47 + wobble);
+        outlineOffsets.forEach(([ox, oy]) => {
+          ctx.fillText('☁️', enemyX + ox, enemy.y + 45 + wobble + oy);
+        });
         
+        // Main emojis
         ctx.font = '48px Arial';
         ctx.fillText('😤', enemyX, enemy.y + 20 + wobble);
         ctx.font = '42px Arial';
