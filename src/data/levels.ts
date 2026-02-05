@@ -148,8 +148,8 @@ function createLevel1(): LevelData {
     checkpoint: { x: 2800, y: GROUND_Y - 80, activated: false },
     // Simple end flag at level end
     flag: { x: 5850, y: GROUND_Y - 80, reached: false },
-    // Mid-level flag - on elevated platform, requires platforming to reach
-    midFlag: { x: 2950, y: 230, collected: false },
+    // Mid-level flag - on high platform past checkpoint, requires climbing
+    midFlag: { x: 4380, y: 230, collected: false },
     backgroundColor: '#FFE4EC',
     groundColor: '#8B4557',
     levelWidth: LEVEL_WIDTH,
@@ -251,8 +251,8 @@ function createLevel2(): LevelData {
     checkpoint: { x: 2500, y: GROUND_Y - 80, activated: false },
     // Simple end flag at level end
     flag: { x: 5850, y: GROUND_Y - 80, reached: false },
-    // Mid-level flag - on floating platform near enemy patrol
-    midFlag: { x: 3250, y: 230, collected: false },
+    // Mid-level flag - on elevated platform past midpoint
+    midFlag: { x: 4620, y: 250, collected: false },
     backgroundColor: '#FFF0E6',
     groundColor: '#8B5A2B',
     levelWidth: LEVEL_WIDTH,
@@ -369,8 +369,8 @@ function createLevel3(): LevelData {
     checkpoint: { x: 2400, y: GROUND_Y - 80, activated: false },
     // Simple end flag at level end
     flag: { x: 5850, y: GROUND_Y - 80, reached: false },
-    // Mid-level flag - on vertical section platform
-    midFlag: { x: 380, y: 130, collected: false },
+    // Mid-level flag - on elevated platform past fire pipe
+    midFlag: { x: 4320, y: 250, collected: false },
     backgroundColor: '#E8F4FF',
     groundColor: '#9B7653',
     levelWidth: LEVEL_WIDTH,
@@ -492,8 +492,8 @@ function createLevel4(): LevelData {
     checkpoint: { x: 2700, y: GROUND_Y - 80, activated: false },
     // Simple end flag at level end
     flag: { x: 5850, y: GROUND_Y - 80, reached: false },
-    // Mid-level flag - near fire pipe, requires timing
-    midFlag: { x: 1630, y: 230, collected: false },
+    // Mid-level flag - past falling hazard area
+    midFlag: { x: 4570, y: 250, collected: false },
     backgroundColor: '#FFF5F5',
     groundColor: '#C9A0DC',
     levelWidth: LEVEL_WIDTH,
@@ -618,8 +618,8 @@ function createLevel5(): LevelData {
     checkpoint: { x: 2600, y: GROUND_Y - 80, activated: false },
     // Simple end flag at level end
     flag: { x: 5850, y: GROUND_Y - 80, reached: false },
-    // Mid-level flag - on moving platform area
-    midFlag: { x: 2620, y: 230, collected: false },
+    // Mid-level flag - on elevated platform near moving platform
+    midFlag: { x: 4620, y: 230, collected: false },
     backgroundColor: '#E0F7FA',
     groundColor: '#00ACC1',
     levelWidth: LEVEL_WIDTH,
@@ -750,8 +750,8 @@ function createLevel6(): LevelData {
     checkpoint: { x: 2800, y: GROUND_Y - 80, activated: false },
     // Simple end flag at level end
     flag: { x: 5850, y: GROUND_Y - 80, reached: false },
-    // Mid-level flag - on elevated platform, guarded by hazards
-    midFlag: { x: 2170, y: 250, collected: false },
+    // Mid-level flag - past multiple hazards
+    midFlag: { x: 4770, y: 290, collected: false },
     backgroundColor: '#FFF8E1',
     groundColor: '#FFB300',
     levelWidth: LEVEL_WIDTH,
@@ -896,8 +896,8 @@ function createLevel7(): LevelData {
     checkpoint: { x: 2900, y: GROUND_Y - 80, activated: false },
     // Simple end flag at level end
     flag: { x: 5850, y: GROUND_Y - 80, reached: false },
-    // Mid-level flag - final challenge, on high platform near moving platforms
-    midFlag: { x: 3120, y: 230, collected: false },
+    // Mid-level flag - final challenge, past triple enemy group
+    midFlag: { x: 4470, y: 230, collected: false },
     backgroundColor: '#FCE4EC',
     groundColor: '#E91E63',
     levelWidth: LEVEL_WIDTH,
