@@ -436,10 +436,22 @@ export function GameCanvas({
     if (!levelData.flag.reached) {
       const fx = levelData.flag.x;
       const fy = levelData.flag.y;
+      
+      // Find the end platform (elevated platform at the end of the level, around x=5750)
+      const endPlatform = levelData.platforms.find(p => 
+        p.x >= 5700 && p.x <= 5800 && p.type === 'ground' && p.height === 60
+      );
+      
+      // Player must be standing on the end platform to trigger flag planting
+      const isOnEndPlatform = endPlatform && newPlayer.isGrounded &&
+        newPlayer.x + PLAYER_WIDTH > endPlatform.x &&
+        newPlayer.x < endPlatform.x + endPlatform.width &&
+        Math.abs((newPlayer.y + PLAYER_HEIGHT) - endPlatform.y) < 10;
+      
       if (
-        newPlayer.x + PLAYER_WIDTH > fx &&
-        newPlayer.x < fx + 60 &&
-        newPlayer.y + PLAYER_HEIGHT > fy
+        isOnEndPlatform &&
+        newPlayer.x + PLAYER_WIDTH > fx - 50 &&
+        newPlayer.x < fx + 80
       ) {
         // Only complete level if mid-flag is collected
         if (levelData.midFlag.collected) {
@@ -903,12 +915,15 @@ export function GameCanvas({
     ctx.save();
     ctx.translate(flagX + flagShake, 0);
     
-   // Get ground level from platform data (fallback to 520)
-   const groundY = levelData.platforms.find(p => p.type === 'ground')?.y ?? 520;
+   // Get ground level from end platform (elevated brick platform at end of level)
+   const endPlatform = levelData.platforms.find(p => 
+     p.x >= 5700 && p.x <= 5800 && p.type === 'ground' && p.height === 60
+   );
+   const groundY = endPlatform?.y ?? 460; // End platform is at GROUND_Y - 60 = 460
    
    // Finish zone ground indicator (checkered pattern behind flag)
    const finishZoneX = flagX - 30;
-   const finishZoneWidth = 120;
+   const finishZoneWidth = 160;
    ctx.fillStyle = '#FFD700';
    ctx.fillRect(finishZoneX - cameraX, groundY - 8, finishZoneWidth, 8);
    

@@ -66,6 +66,8 @@ function createLevel1(): LevelData {
       { start: 4300, width: 700 },
       { start: 5100, width: 800 },
     ]),
+    // End platform - wide brick platform for flag planting
+    { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
     // Floating platforms - generous spacing, no crowding
     // Only 2 height tiers: y=380 (low) and y=280 (high) - 100px apart for clear jumps
     createFloatingPlatform(400, 380, 120),    // Low tier
@@ -146,8 +148,8 @@ function createLevel1(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2800, y: GROUND_Y - 80, activated: false },
-    // Simple end flag at level end
-    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // End flag on end platform
+    flag: { x: 5850, y: GROUND_Y - 60 - 80, reached: false },
     // Mid-level flag - on high platform past checkpoint, requires climbing
     midFlag: { x: 4380, y: 230, collected: false },
     backgroundColor: '#FFE4EC',
@@ -170,6 +172,8 @@ function createLevel2(): LevelData {
       { start: 4800, width: 600 },
       { start: 5500, width: 400 },
     ]),
+    // End platform - wide brick platform for flag planting
+    { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
     createFloatingPlatform(350, 420, 130),
     createFloatingPlatform(550, 350, 100),
     createFloatingPlatform(900, 400, 150),
@@ -249,8 +253,8 @@ function createLevel2(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2500, y: GROUND_Y - 80, activated: false },
-    // Simple end flag at level end
-    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // End flag on end platform
+    flag: { x: 5850, y: GROUND_Y - 60 - 80, reached: false },
     // Mid-level flag - on elevated platform past midpoint
     midFlag: { x: 4620, y: 250, collected: false },
     backgroundColor: '#FFF0E6',
@@ -273,6 +277,8 @@ function createLevel3(): LevelData {
       { start: 4500, width: 600 },
       { start: 5200, width: 700 },
     ]),
+    // End platform - wide brick platform for flag planting
+    { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
     // Vertical section - stacked platforms
     createFloatingPlatform(300, 420, 120),
     createFloatingPlatform(350, 340, 100),
@@ -367,8 +373,8 @@ function createLevel3(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2400, y: GROUND_Y - 80, activated: false },
-    // Simple end flag at level end
-    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // End flag on end platform
+    flag: { x: 5850, y: GROUND_Y - 60 - 80, reached: false },
     // Mid-level flag - on elevated platform past fire pipe
     midFlag: { x: 4320, y: 250, collected: false },
     backgroundColor: '#E8F4FF',
@@ -392,6 +398,8 @@ function createLevel4(): LevelData {
       { start: 4750, width: 500 },
       { start: 5350, width: 550 },
     ]),
+    // End platform - wide brick platform for flag planting
+    { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
     createFloatingPlatform(280, 400, 130),
     createFloatingPlatform(500, 320, 110),
     createFloatingPlatform(800, 380, 140),
@@ -490,8 +498,8 @@ function createLevel4(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2700, y: GROUND_Y - 80, activated: false },
-    // Simple end flag at level end
-    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // End flag on end platform
+    flag: { x: 5850, y: GROUND_Y - 60 - 80, reached: false },
     // Mid-level flag - past falling hazard area
     midFlag: { x: 4570, y: 250, collected: false },
     backgroundColor: '#FFF5F5',
@@ -516,6 +524,8 @@ function createLevel5(): LevelData {
       { start: 5000, width: 350 },
       { start: 5500, width: 400 },
     ]),
+    // End platform - wide brick platform for flag planting
+    { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
     // Moving platforms (marked as type moving)
     { x: 550, y: 400, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 2, moveRange: 150, originalX: 550, originalY: 400 },
     { x: 1100, y: 350, width: 100, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 1.5, moveRange: 100, originalX: 1100, originalY: 350 },
@@ -616,8 +626,8 @@ function createLevel5(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2600, y: GROUND_Y - 80, activated: false },
-    // Simple end flag at level end
-    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // End flag on end platform
+    flag: { x: 5850, y: GROUND_Y - 60 - 80, reached: false },
     // Mid-level flag - on elevated platform near moving platform
     midFlag: { x: 4620, y: 230, collected: false },
     backgroundColor: '#E0F7FA',
@@ -643,6 +653,8 @@ function createLevel6(): LevelData {
       { start: 5000, width: 400 },
       { start: 5550, width: 350 },
     ]),
+    // End platform - wide brick platform for flag planting
+    { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
     { x: 500, y: 380, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 2.5, moveRange: 120, originalX: 500, originalY: 380 },
     createFloatingPlatform(750, 320, 110),
     { x: 1000, y: 400, width: 100, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 2, moveRange: 100, originalX: 1000, originalY: 400 },
@@ -748,8 +760,8 @@ function createLevel6(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2800, y: GROUND_Y - 80, activated: false },
-    // Simple end flag at level end
-    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // End flag on end platform
+    flag: { x: 5850, y: GROUND_Y - 60 - 80, reached: false },
     // Mid-level flag - past multiple hazards
     midFlag: { x: 4770, y: 290, collected: false },
     backgroundColor: '#FFF8E1',
@@ -776,6 +788,8 @@ function createLevel7(): LevelData {
       { start: 5110, width: 350 },
       { start: 5610, width: 300 },
     ]),
+    // End platform - wide brick platform for flag planting
+    { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
     { x: 450, y: 380, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 3, moveRange: 100, originalX: 450, originalY: 380 },
     createFloatingPlatform(700, 320, 90),
     { x: 900, y: 400, width: 90, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 2.5, moveRange: 120, originalX: 900, originalY: 400 },
@@ -894,8 +908,8 @@ function createLevel7(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2900, y: GROUND_Y - 80, activated: false },
-    // Simple end flag at level end
-    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // End flag on end platform
+    flag: { x: 5850, y: GROUND_Y - 60 - 80, reached: false },
     // Mid-level flag - final challenge, past triple enemy group
     midFlag: { x: 4470, y: 230, collected: false },
     backgroundColor: '#FCE4EC',
