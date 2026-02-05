@@ -47,17 +47,51 @@ export function MainMenu({
         <div className="absolute top-[25%] right-[20%] w-20 h-10 bg-white rounded-full opacity-85" />
         
         {/* Sparkle stars */}
-        <div className="absolute top-[8%] left-[30%] text-white text-xl">✦</div>
-        <div className="absolute top-[12%] left-[45%] text-white text-sm">✦</div>
-        <div className="absolute top-[6%] right-[35%] text-white text-lg">✦</div>
-        <div className="absolute top-[10%] right-[20%] text-pink-300 text-xl">✦</div>
-        <div className="absolute top-[14%] left-[20%] text-pink-200 text-sm">✦</div>
+        <div className="absolute top-[8%] left-[30%] text-white text-xl animate-pulse" style={{ animationDuration: '2s' }}>✦</div>
+        <div className="absolute top-[12%] left-[45%] text-white text-sm animate-pulse" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }}>✦</div>
+        <div className="absolute top-[6%] right-[35%] text-white text-lg animate-pulse" style={{ animationDuration: '1.8s', animationDelay: '0.3s' }}>✦</div>
+        <div className="absolute top-[10%] right-[20%] text-pink-300 text-xl animate-pulse" style={{ animationDuration: '2.2s', animationDelay: '0.7s' }}>✦</div>
+        <div className="absolute top-[14%] left-[20%] text-pink-200 text-sm animate-pulse" style={{ animationDuration: '2s', animationDelay: '1s' }}>✦</div>
         
         {/* Floating hearts in sky */}
-        <div className="absolute top-[25%] left-[25%] text-red-400 text-lg opacity-70">❤</div>
-        <div className="absolute top-[30%] right-[30%] text-red-400 text-sm opacity-60">❤</div>
-        <div className="absolute top-[35%] left-[40%] text-pink-400 text-xs opacity-50">❤</div>
+        <div 
+          className="absolute top-[25%] left-[25%] text-red-400 text-lg opacity-70"
+          style={{ 
+            animation: 'float 4s ease-in-out infinite',
+          }}
+        >❤</div>
+        <div 
+          className="absolute top-[30%] right-[30%] text-red-400 text-sm opacity-60"
+          style={{ 
+            animation: 'float 5s ease-in-out infinite',
+            animationDelay: '1s',
+          }}
+        >❤</div>
+        <div 
+          className="absolute top-[35%] left-[40%] text-pink-400 text-xs opacity-50"
+          style={{ 
+            animation: 'float 3.5s ease-in-out infinite',
+            animationDelay: '0.5s',
+          }}
+        >❤</div>
+        <div 
+          className="absolute top-[20%] right-[45%] text-pink-300 text-sm opacity-50"
+          style={{ 
+            animation: 'float 4.5s ease-in-out infinite',
+            animationDelay: '2s',
+          }}
+        >❤</div>
       </div>
+      
+      {/* Keyframe animation styles */}
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          25% { transform: translateY(-8px) rotate(3deg); }
+          50% { transform: translateY(-4px) rotate(-2deg); }
+          75% { transform: translateY(-10px) rotate(2deg); }
+        }
+      `}</style>
       
       {/* LEFT ISLAND */}
       <div className="absolute bottom-[15%] left-0 w-[38%] h-[50%]">
