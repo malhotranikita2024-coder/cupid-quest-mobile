@@ -66,23 +66,24 @@ function createLevel1(): LevelData {
       { start: 4300, width: 700 },
       { start: 5100, width: 800 },
     ]),
-    // Floating platforms - well spaced, no overlaps
-    createFloatingPlatform(350, 420, 120),    // Low platform for easy access
-    createFloatingPlatform(600, 340, 100),    // Mid-height, clear of first
-    createFloatingPlatform(1050, 400, 150),   // Ground section 2
-    createFloatingPlatform(1350, 320, 120),   // Higher, well spaced
-    createFloatingPlatform(1750, 420, 130),   // Low platform
-    createFloatingPlatform(2050, 340, 110),   // Mid-height
-    createFloatingPlatform(2500, 400, 140),   // Ground section 4
-    createFloatingPlatform(2850, 320, 120),   // Higher platform
-    createFloatingPlatform(3200, 400, 130),   // Ground section 5
-    createFloatingPlatform(3500, 300, 110),   // High platform for cookie
-    createFloatingPlatform(3900, 420, 120),   // Low platform
-    createFloatingPlatform(4200, 340, 110),   // Mid-height
-    createFloatingPlatform(4600, 400, 130),   // Ground section 7
-    createFloatingPlatform(4950, 320, 110),   // Higher platform
-    createFloatingPlatform(5300, 400, 130),   // Ground section 8
-    createFloatingPlatform(5600, 340, 110),   // Final stretch
+    // Floating platforms - generous spacing, no crowding
+    // Only 2 height tiers: y=380 (low) and y=280 (high) - 100px apart for clear jumps
+    createFloatingPlatform(400, 380, 120),    // Low tier
+    createFloatingPlatform(700, 280, 100),    // High tier - well separated
+    createFloatingPlatform(1100, 380, 140),   // Low tier
+    createFloatingPlatform(1400, 280, 110),   // High tier
+    createFloatingPlatform(1800, 380, 130),   // Low tier
+    createFloatingPlatform(2100, 280, 100),   // High tier
+    createFloatingPlatform(2550, 380, 130),   // Low tier
+    createFloatingPlatform(2900, 280, 110),   // High tier
+    createFloatingPlatform(3250, 380, 120),   // Low tier
+    createFloatingPlatform(3550, 250, 100),   // Extra high for cookie
+    createFloatingPlatform(3950, 380, 120),   // Low tier
+    createFloatingPlatform(4350, 280, 100),   // High tier
+    createFloatingPlatform(4700, 380, 130),   // Low tier
+    createFloatingPlatform(5050, 280, 100),   // High tier
+    createFloatingPlatform(5350, 380, 130),   // Low tier
+    createFloatingPlatform(5700, 280, 100),   // High tier - final
   ];
 
   const collectibles: Collectible[] = [];
@@ -100,7 +101,7 @@ function createLevel1(): LevelData {
     }
   }
   // Fortune cookie - hidden on high platform
-  collectibles.push({ x: 3450, y: 220, type: 'cookie', collected: false, animationOffset: 0 });
+  collectibles.push({ x: 3580, y: 190, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
     { x: 500, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 300, patrolEnd: 700 },
@@ -112,15 +113,15 @@ function createLevel1(): LevelData {
   ];
 
   const hitBlocks: HitBlock[] = [
-    // Golden blocks at y=400 (120px above ground) - easily reachable by jump
-    // Player jumps ~150px, so y=400 from ground (y=520) gives 120px clearance
-    ...createBlockRow(200, 400, ['brick', 'question', 'brick']),
-    ...createBlockRow(750, 400, ['brick', 'question', 'brick']),
-    ...createBlockRow(1200, 400, ['brick', 'question', 'brick']),
-    ...createBlockRow(2400, 400, ['brick', 'question', 'brick']),
-    ...createBlockRow(3300, 400, ['brick', 'question', 'brick']),
-    ...createBlockRow(4500, 400, ['brick', 'question', 'brick']),
-    ...createBlockRow(5400, 400, ['brick', 'question', 'brick']),
+    // Golden blocks at y=420 (100px above ground at y=520) - easy to hit from below
+    // Positioned away from floating platforms for clear access
+    ...createBlockRow(150, 420, ['brick', 'question', 'brick']),
+    ...createBlockRow(950, 420, ['brick', 'question', 'brick']),
+    ...createBlockRow(1650, 420, ['brick', 'question', 'brick']),
+    ...createBlockRow(2350, 420, ['brick', 'question', 'brick']),
+    ...createBlockRow(3100, 420, ['brick', 'question', 'brick']),
+    ...createBlockRow(4150, 420, ['brick', 'question', 'brick']),
+    ...createBlockRow(5200, 420, ['brick', 'question', 'brick']),
   ];
 
   const pipes: Pipe[] = [

@@ -670,17 +670,17 @@ export function GameCanvas({
       
       if (collectible.type === 'cookie') {
         ctx.shadowColor = '#FFD700';
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 25;
       } else if (collectible.type === 'rose') {
-        // Vibrant red glow for roses - high visibility
-        ctx.shadowColor = '#FF1744';
-        ctx.shadowBlur = 15;
+        // MAXIMUM visibility red glow for roses
+        ctx.shadowColor = '#FF0000';
+        ctx.shadowBlur = 20;
       } else {
         ctx.shadowColor = '#FF69B4';
         ctx.shadowBlur = 12;
       }
       
-      ctx.font = collectible.type === 'cookie' ? '36px Arial' : '28px Arial';
+      ctx.font = collectible.type === 'cookie' ? '38px Arial' : '32px Arial';
       ctx.textAlign = 'center';
       ctx.fillText(emoji, collectible.x, collectible.y + bobY);
       ctx.shadowBlur = 0;
@@ -691,36 +691,41 @@ export function GameCanvas({
       if (enemy.isDefeated) return;
       
       const wobble = Math.sin(time / 200) * 3;
-      // Vibrant enemies with strong glow for visibility
-      ctx.shadowColor = '#FF0066';
-      ctx.shadowBlur = 12;
-      ctx.font = '40px Arial';
+      // MAXIMUM contrast enemies - bright glows
+      ctx.font = '44px Arial';
       ctx.textAlign = 'center';
       
       if (enemy.type === 'heartBug') {
-        ctx.shadowColor = '#FF1493';
-        ctx.shadowBlur = 15;
+        // Bright magenta glow
+        ctx.shadowColor = '#FF00FF';
+        ctx.shadowBlur = 20;
         ctx.fillText('💗', enemy.x + enemy.width / 2, enemy.y - 5 + wobble);
-        ctx.shadowBlur = 8;
-        ctx.font = '28px Arial';
+        ctx.shadowBlur = 12;
+        ctx.font = '32px Arial';
         ctx.fillText('🐛', enemy.x + enemy.width / 2, enemy.y + 22 + wobble);
         // Show fireball indicator for shooting enemies
         if (enemy.canShoot) {
+          ctx.shadowColor = '#FF4500';
+          ctx.shadowBlur = 10;
           ctx.font = '16px Arial';
           ctx.fillText('🔥', enemy.x + enemy.width / 2 + 15, enemy.y - 10);
         }
       } else if (enemy.type === 'brokenHeartSlime') {
-        ctx.shadowColor = '#9C27B0';
-        ctx.shadowBlur = 15;
+        // Bright purple glow
+        ctx.shadowColor = '#FF00FF';
+        ctx.shadowBlur = 20;
         ctx.fillText('💔', enemy.x + enemy.width / 2, enemy.y + 15 + wobble);
         if (enemy.canShoot) {
-          ctx.shadowBlur = 8;
+          ctx.shadowColor = '#FF4500';
+          ctx.shadowBlur = 10;
           ctx.font = '16px Arial';
           ctx.fillText('🔥', enemy.x + enemy.width / 2 + 15, enemy.y - 10);
         }
       } else if (enemy.type === 'jealousCloud') {
+        ctx.shadowColor = '#00BFFF';
+        ctx.shadowBlur = 15;
         ctx.fillText('😤', enemy.x + enemy.width / 2, enemy.y + 20 + wobble);
-        ctx.font = '32px Arial';
+        ctx.font = '36px Arial';
         ctx.fillText('☁️', enemy.x + enemy.width / 2, enemy.y + 45 + wobble);
       }
       ctx.shadowBlur = 0;
