@@ -91,6 +91,10 @@ export function MainMenu({
           50% { transform: translateY(-4px) rotate(-2deg); }
           75% { transform: translateY(-10px) rotate(2deg); }
         }
+        @keyframes hero-bob {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-4px); }
+        }
       `}</style>
       
       {/* LEFT ISLAND */}
@@ -287,7 +291,10 @@ export function MainMenu({
         </div>
         
         {/* HERO CHARACTER - cute, holding flag */}
-        <div className="absolute bottom-[100%] right-[35%]">
+        <div 
+          className="absolute bottom-[100%] right-[35%]"
+          style={{ animation: 'hero-bob 2s ease-in-out infinite' }}
+        >
           <div className="relative w-14 h-16">
             {/* Head - large round */}
             <div 
