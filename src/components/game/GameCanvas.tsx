@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { PlayerState, TouchControls, LevelData, HitBlock, Pipe, FallingHazard } from '@/types/game';
+import { PlayerState, TouchControls, LevelData, HitBlock, Pipe, FallingHazard, Fireball } from '@/types/game';
 import { COLLECTIBLE_EMOJIS } from '@/data/levels';
 
 interface GameCanvasProps {
@@ -18,6 +18,7 @@ interface GameCanvasProps {
   isPaused: boolean;
   cameraX: number;
   onCameraUpdate: (x: number) => void;
+  onFireballHit?: () => void;
 }
 
 const GRAVITY = 0.6;
@@ -44,6 +45,7 @@ export function GameCanvas({
   isPaused,
   cameraX,
   onCameraUpdate,
+  onFireballHit,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
@@ -348,6 +350,55 @@ export function GameCanvas({
       }
     });
 
+    // Fireball collision
+    levelData.fireballs?.forEach(fireball => {
+      if (!fireball.isActive) return;
+      
+      const playerLeft = newPlayer.x;
+      const playerRight = newPlayer.x + PLAYER_WIDTH;
+      const playerTop = newPlayer.y;
+      const playerBottom = newPlayer.y + PLAYER_HEIGHT;
+
+      if (
+        playerRight > fireball.x &&
+        playerLeft < fireball.x + fireball.width &&
+        playerBottom > fireball.y &&
+        playerTop < fireball.y + fireball.height &&
+        !newPlayer.isInvincible
+      ) {
+        onPlayerHit();
+        newPlayer.isInvincible = true;
+        newPlayer.invincibleTimer = 120;
+      }
+    });
+
+    // Fire pipe collision
+    levelData.pipes.forEach(pipe => {
+      if (!pipe.hasFire || !pipe.fireActive) return;
+      
+      const fireX = pipe.x + 10;
+      const fireY = pipe.y - 80;
+      const fireWidth = pipe.width - 20;
+      const fireHeight = 80;
+
+      const playerLeft = newPlayer.x;
+      const playerRight = newPlayer.x + PLAYER_WIDTH;
+      const playerTop = newPlayer.y;
+      const playerBottom = newPlayer.y + PLAYER_HEIGHT;
+
+      if (
+        playerRight > fireX &&
+        playerLeft < fireX + fireWidth &&
+        playerBottom > fireY &&
+        playerTop < fireY + fireHeight &&
+        !newPlayer.isInvincible
+      ) {
+        onPlayerHit();
+        newPlayer.isInvincible = true;
+        newPlayer.invincibleTimer = 120;
+      }
+    });
+
     // Checkpoint collision
     if (!levelData.checkpoint.activated) {
       const cx = levelData.checkpoint.x;
@@ -385,7 +436,7 @@ export function GameCanvas({
     onCameraUpdate(newCameraX);
 
     onPlayerUpdate(newPlayer);
-  }, [player, controls, levelData, isPaused, onPlayerUpdate, onCollectItem, onCollectCookie, onEnemyDefeated, onPlayerHit, onCheckpointReached, onFlagReached, onBlockHit, onJump, onCameraUpdate]);
+  }, [player, controls, levelData, isPaused, onPlayerUpdate, onCollectItem, onCollectCookie, onEnemyDefeated, onPlayerHit, onCheckpointReached, onFlagReached, onBlockHit, onJump, onCameraUpdate, onFireballHit]);
 
   const draw = useCallback((ctx: CanvasRenderingContext2D, time: number) => {
     const canvas = canvasRef.current;
@@ -398,23 +449,15 @@ export function GameCanvas({
     ctx.fillStyle = levelData.backgroundColor;
     ctx.fillRect(0, 0, width, height);
 
-    // Parallax background
-    const bgOffset = cameraX * 0.3;
+    // Parallax background - cleaner, no floating hearts
+    const bgOffset = cameraX * 0.2;
     
-    // Clouds
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    for (let i = 0; i < 12; i++) {
-      const cloudX = (i * 450 - bgOffset) % (width + 300) - 150;
-      const cloudY = 50 + (i % 3) * 50;
-      drawCloud(ctx, cloudX, cloudY, 80 + (i % 2) * 40);
-    }
-
-    // Hearts
-    ctx.fillStyle = 'rgba(255, 182, 193, 0.3)';
-    for (let i = 0; i < 15; i++) {
-      const heartX = (i * 350 - bgOffset * 0.5) % (width + 200) - 100;
-      const heartY = 100 + (i % 4) * 70 + Math.sin(time / 1000 + i) * 10;
-      drawHeart(ctx, heartX, heartY, 12 + (i % 3) * 5);
+    // Distant clouds only
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    for (let i = 0; i < 8; i++) {
+      const cloudX = (i * 550 - bgOffset) % (width + 400) - 200;
+      const cloudY = 40 + (i % 3) * 40;
+      drawCloud(ctx, cloudX, cloudY, 60 + (i % 2) * 30);
     }
 
     ctx.save();
@@ -427,18 +470,37 @@ export function GameCanvas({
       
       const gradient = ctx.createLinearGradient(platform.x, platform.y, platform.x, platform.y + platform.height);
       if (platform.type === 'ground') {
-        gradient.addColorStop(0, '#7B3F50');
-        gradient.addColorStop(0.3, levelData.groundColor);
-        gradient.addColorStop(1, '#5C2E3B');
+        // Brown ground like classic Mario
+        gradient.addColorStop(0, '#8B4513');
+        gradient.addColorStop(0.3, '#A0522D');
+        gradient.addColorStop(1, '#654321');
       } else {
-        gradient.addColorStop(0, '#FFB6C1');
-        gradient.addColorStop(1, '#FF8DA1');
+        // Brown brick platforms
+        gradient.addColorStop(0, '#CD853F');
+        gradient.addColorStop(0.5, '#A0522D');
+        gradient.addColorStop(1, '#8B4513');
       }
       ctx.fillStyle = gradient;
       ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
       
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
       ctx.fillRect(platform.x, platform.y, platform.width, 4);
+      
+      // Brick pattern for floating platforms
+      if (platform.type === 'floating') {
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 2;
+        for (let bx = platform.x; bx < platform.x + platform.width; bx += 32) {
+          ctx.beginPath();
+          ctx.moveTo(bx, platform.y);
+          ctx.lineTo(bx, platform.y + platform.height);
+          ctx.stroke();
+        }
+        ctx.beginPath();
+        ctx.moveTo(platform.x, platform.y + platform.height / 2);
+        ctx.lineTo(platform.x + platform.width, platform.y + platform.height / 2);
+        ctx.stroke();
+      }
       
       if (platform.type === 'ground') {
         ctx.fillStyle = '#90EE90';
@@ -451,26 +513,45 @@ export function GameCanvas({
 
     // Draw pipes
     levelData.pipes.forEach(pipe => {
-      // Pipe body (Valentine pink/magenta)
+      // Pipe body (Classic green with higher saturation)
       const pipeGradient = ctx.createLinearGradient(pipe.x, pipe.y, pipe.x + pipe.width, pipe.y);
-      pipeGradient.addColorStop(0, '#FF69B4');
-      pipeGradient.addColorStop(0.3, '#FF1493');
-      pipeGradient.addColorStop(0.7, '#FF1493');
-      pipeGradient.addColorStop(1, '#C71585');
+      pipeGradient.addColorStop(0, '#4CAF50');
+      pipeGradient.addColorStop(0.3, '#2E7D32');
+      pipeGradient.addColorStop(0.7, '#2E7D32');
+      pipeGradient.addColorStop(1, '#1B5E20');
       ctx.fillStyle = pipeGradient;
       ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
       
       // Pipe rim
-      ctx.fillStyle = '#FF69B4';
+      ctx.fillStyle = '#4CAF50';
       ctx.fillRect(pipe.x - 5, pipe.y, pipe.width + 10, 15);
       ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
       ctx.fillRect(pipe.x - 5, pipe.y, pipe.width + 10, 4);
 
       // Pipe enemy
       if (pipe.hasEnemy && pipe.enemyVisible) {
+        // Larger enemy - 90-120% of player height (50px)
+        ctx.font = '48px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🌵', pipe.x + pipe.width / 2, pipe.y - 20);
+      }
+
+      // Fire pipe
+      if (pipe.hasFire && pipe.fireActive) {
+        // Draw fire shooting up
+        const fireHeight = 80;
+        for (let i = 0; i < fireHeight; i += 15) {
+          const fireAlpha = 1 - (i / fireHeight) * 0.5;
+          const wobble = Math.sin(time / 50 + i * 0.2) * 5;
+          ctx.fillStyle = `rgba(255, ${100 + i}, 0, ${fireAlpha})`;
+          ctx.beginPath();
+          ctx.arc(pipe.x + pipe.width / 2 + wobble, pipe.y - i, 15 - i * 0.1, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // Fire emoji at top
         ctx.font = '28px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('🌵', pipe.x + pipe.width / 2, pipe.y - 10);
+        ctx.fillText('🔥', pipe.x + pipe.width / 2, pipe.y - 50);
       }
     });
 
@@ -480,30 +561,44 @@ export function GameCanvas({
       const blockY = block.y - bounceOffset;
       
       if (block.type === 'question' && !block.isHit) {
-        // Question block - Valentine themed
-        ctx.fillStyle = '#FFD700';
+        // Golden question block - bright and visible
+        const goldGradient = ctx.createLinearGradient(block.x, blockY, block.x, blockY + block.height);
+        goldGradient.addColorStop(0, '#FFD700');
+        goldGradient.addColorStop(0.5, '#FFA500');
+        goldGradient.addColorStop(1, '#FF8C00');
+        ctx.fillStyle = goldGradient;
         ctx.fillRect(block.x, blockY, block.width, block.height);
-        ctx.fillStyle = '#DAA520';
+        ctx.fillStyle = '#B8860B';
         ctx.fillRect(block.x, blockY + block.height - 5, block.width, 5);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.fillRect(block.x, blockY, block.width, 5);
         
-        // Heart instead of ?
-        ctx.font = '24px Arial';
+        // Question mark with heart
+        ctx.font = 'bold 22px Arial';
+        ctx.fillStyle = '#8B4513';
         ctx.textAlign = 'center';
-        ctx.fillText('💗', block.x + block.width / 2, blockY + 30);
+        ctx.fillText('?', block.x + block.width / 2, blockY + 28);
+        ctx.font = '12px Arial';
+        ctx.fillText('💗', block.x + block.width / 2, blockY + 12);
       } else if (block.type === 'brick') {
-        // Brick block
-        ctx.fillStyle = '#CD5C5C';
+        // Brown brick block
+        const brickGradient = ctx.createLinearGradient(block.x, blockY, block.x, blockY + block.height);
+        brickGradient.addColorStop(0, '#CD853F');
+        brickGradient.addColorStop(1, '#8B4513');
+        ctx.fillStyle = brickGradient;
         ctx.fillRect(block.x, blockY, block.width, block.height);
-        ctx.fillStyle = '#8B0000';
+        ctx.fillStyle = '#654321';
         ctx.fillRect(block.x, blockY + block.height - 4, block.width, 4);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.fillRect(block.x, blockY, block.width, 4);
         // Brick lines
-        ctx.strokeStyle = '#8B4513';
+        ctx.strokeStyle = '#654321';
         ctx.lineWidth = 2;
         ctx.strokeRect(block.x + 2, blockY + 2, block.width - 4, block.height - 4);
+        ctx.beginPath();
+        ctx.moveTo(block.x + block.width / 2, blockY);
+        ctx.lineTo(block.x + block.width / 2, blockY + block.height);
+        ctx.stroke();
       } else {
         // Used block
         ctx.fillStyle = '#8B7355';
@@ -511,6 +606,15 @@ export function GameCanvas({
         ctx.fillStyle = '#6B5344';
         ctx.fillRect(block.x, blockY + block.height - 4, block.width, 4);
       }
+    });
+
+    // Draw fireballs (from enemies)
+    levelData.fireballs?.forEach(fireball => {
+      if (!fireball.isActive) return;
+      const wobble = Math.sin(time / 50) * 3;
+      ctx.font = '24px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('🔥', fireball.x + fireball.width / 2, fireball.y + wobble + 15);
     });
 
     // Draw falling hazards
@@ -547,18 +651,29 @@ export function GameCanvas({
       if (enemy.isDefeated) return;
       
       const wobble = Math.sin(time / 200) * 3;
-      ctx.font = '32px Arial';
+      // Larger, more readable enemies with higher contrast
+      ctx.font = '40px Arial';
       ctx.textAlign = 'center';
       
       if (enemy.type === 'heartBug') {
-        ctx.fillText('💗', enemy.x + enemy.width / 2, enemy.y + wobble);
-        ctx.font = '24px Arial';
-        ctx.fillText('🐛', enemy.x + enemy.width / 2, enemy.y + 25 + wobble);
+        ctx.fillText('💗', enemy.x + enemy.width / 2, enemy.y - 5 + wobble);
+        ctx.font = '28px Arial';
+        ctx.fillText('🐛', enemy.x + enemy.width / 2, enemy.y + 22 + wobble);
+        // Show fireball indicator for shooting enemies
+        if (enemy.canShoot) {
+          ctx.font = '16px Arial';
+          ctx.fillText('🔥', enemy.x + enemy.width / 2 + 15, enemy.y - 10);
+        }
       } else if (enemy.type === 'brokenHeartSlime') {
-        ctx.fillText('💔', enemy.x + enemy.width / 2, enemy.y + 20 + wobble);
+        ctx.fillText('💔', enemy.x + enemy.width / 2, enemy.y + 15 + wobble);
+        if (enemy.canShoot) {
+          ctx.font = '16px Arial';
+          ctx.fillText('🔥', enemy.x + enemy.width / 2 + 15, enemy.y - 10);
+        }
       } else if (enemy.type === 'jealousCloud') {
         ctx.fillText('😤', enemy.x + enemy.width / 2, enemy.y + 20 + wobble);
-        ctx.fillText('☁️', enemy.x + enemy.width / 2, enemy.y + 40 + wobble);
+        ctx.font = '32px Arial';
+        ctx.fillText('☁️', enemy.x + enemy.width / 2, enemy.y + 45 + wobble);
       }
     });
 
@@ -574,12 +689,26 @@ export function GameCanvas({
     }
 
     // Draw flag
+    const flagReached = levelData.flag.reached;
     const flagWave = Math.sin(time / 200) * 5;
-    ctx.font = '50px Arial';
+    
+    // Flag pole
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(levelData.flag.x + 25, levelData.flag.y, 10, 120);
+    
+    // Flag (red before touch, green after)
+    ctx.fillStyle = flagReached ? '#4CAF50' : '#FF4444';
+    ctx.beginPath();
+    ctx.moveTo(levelData.flag.x + 35, levelData.flag.y + 10);
+    ctx.lineTo(levelData.flag.x + 80 + flagWave, levelData.flag.y + 30);
+    ctx.lineTo(levelData.flag.x + 35, levelData.flag.y + 50);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Heart on flag
+    ctx.font = '24px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('❤️', levelData.flag.x + 30 + flagWave, levelData.flag.y + 30);
-    ctx.font = '36px Arial';
-    ctx.fillText('🏁', levelData.flag.x + 30, levelData.flag.y + 70);
+    ctx.fillText(flagReached ? '💚' : '❤️', levelData.flag.x + 55 + flagWave, levelData.flag.y + 35);
 
     // Draw player
     const blinkVisible = !player.isInvincible || Math.floor(time / 100) % 2 === 0;
@@ -597,17 +726,27 @@ export function GameCanvas({
         ctx.translate(-player.x, 0);
       }
       
+      // Higher contrast player - red outfit
       const bodyGradient = ctx.createLinearGradient(player.x, player.y, player.x, player.y + PLAYER_HEIGHT);
-      bodyGradient.addColorStop(0, '#FF6B9D');
-      bodyGradient.addColorStop(1, '#FF4081');
+      bodyGradient.addColorStop(0, '#FF2222');
+      bodyGradient.addColorStop(1, '#CC0000');
       ctx.fillStyle = bodyGradient;
+      
+      // Body outline for better visibility
+      ctx.strokeStyle = '#880000';
+      ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.roundRect(player.x + 5, player.y + 15, PLAYER_WIDTH - 10, PLAYER_HEIGHT - 20, 10);
+      ctx.stroke();
       ctx.fill();
       
-      ctx.fillStyle = '#FFE4C4';
+      // Face with higher contrast
+      ctx.fillStyle = '#FFDBAC';
+      ctx.strokeStyle = '#CC9966';
+      ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(player.x + PLAYER_WIDTH / 2, player.y + 12, 14, 0, Math.PI * 2);
+      ctx.stroke();
       ctx.fill();
       
       ctx.fillStyle = '#333';
@@ -622,6 +761,7 @@ export function GameCanvas({
       ctx.arc(player.x + PLAYER_WIDTH / 2, player.y + 14, 5, 0.2, Math.PI - 0.2);
       ctx.stroke();
       
+      // Heart emblem on body
       ctx.font = '14px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('❤️', player.x + PLAYER_WIDTH / 2, player.y + 35);
