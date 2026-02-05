@@ -100,12 +100,16 @@ export function GameEngine({
     
     // Start background music
     audio.initAudio();
-    audio.startBackgroundMusic();
+    // Small delay to ensure audio context is ready
+    const musicTimeout = setTimeout(() => {
+      audio.startBackgroundMusic();
+    }, 100);
     
     return () => {
+      clearTimeout(musicTimeout);
       audio.stopBackgroundMusic();
     };
-  }, [currentLevel, resetControls]);
+  }, [currentLevel, resetControls, audio]);
 
   // Timer countdown
   useEffect(() => {
