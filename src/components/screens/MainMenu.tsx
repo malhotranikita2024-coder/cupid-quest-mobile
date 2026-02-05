@@ -105,6 +105,16 @@ export function MainMenu({
           50% { transform: skewX(3deg) scaleX(1.02); }
           75% { transform: skewX(-3deg) scaleX(0.98); }
         }
+        @keyframes enemy-waddle {
+          0%, 100% { transform: translateX(0) rotate(0deg); }
+          25% { transform: translateX(-2px) rotate(-3deg); }
+          50% { transform: translateX(0) rotate(0deg); }
+          75% { transform: translateX(2px) rotate(3deg); }
+        }
+        @keyframes enemy-blink {
+          0%, 90%, 100% { opacity: 1; }
+          95% { opacity: 0.3; }
+        }
       `}</style>
       
       {/* LEFT ISLAND */}
@@ -381,24 +391,30 @@ export function MainMenu({
         </div>
         
         {/* Dark enemy near hero */}
-        <div className="absolute bottom-[100%] right-[18%]">
+        <div 
+          className="absolute bottom-[100%] right-[18%]"
+          style={{ animation: 'enemy-waddle 1.2s ease-in-out infinite' }}
+        >
           <div 
             className="w-7 h-7 rounded-md"
             style={{ background: 'linear-gradient(180deg, #5C5C8A 0%, #3D3D6B 50%, #2E2E5E 100%)' }}
           >
-            <div className="absolute top-2 left-1 w-1.5 h-1.5 bg-[#FFD700] rounded-full" />
-            <div className="absolute top-2 right-1 w-1.5 h-1.5 bg-[#FFD700] rounded-full" />
+            <div className="absolute top-2 left-1 w-1.5 h-1.5 bg-[#FFD700] rounded-full" style={{ animation: 'enemy-blink 3s infinite' }} />
+            <div className="absolute top-2 right-1 w-1.5 h-1.5 bg-[#FFD700] rounded-full" style={{ animation: 'enemy-blink 3s infinite' }} />
           </div>
         </div>
         
         {/* Second enemy */}
-        <div className="absolute bottom-[100%] right-[5%]">
+        <div 
+          className="absolute bottom-[100%] right-[5%]"
+          style={{ animation: 'enemy-waddle 1.4s ease-in-out infinite', animationDelay: '0.3s' }}
+        >
           <div 
             className="w-6 h-6 rounded-md"
             style={{ background: 'linear-gradient(180deg, #5C5C8A 0%, #3D3D6B 50%, #2E2E5E 100%)' }}
           >
-            <div className="absolute top-1.5 left-0.5 w-1.5 h-1.5 bg-[#FFD700] rounded-full" />
-            <div className="absolute top-1.5 right-0.5 w-1.5 h-1.5 bg-[#FFD700] rounded-full" />
+            <div className="absolute top-1.5 left-0.5 w-1.5 h-1.5 bg-[#FFD700] rounded-full" style={{ animation: 'enemy-blink 2.5s infinite', animationDelay: '0.5s' }} />
+            <div className="absolute top-1.5 right-0.5 w-1.5 h-1.5 bg-[#FFD700] rounded-full" style={{ animation: 'enemy-blink 2.5s infinite', animationDelay: '0.5s' }} />
           </div>
         </div>
       </div>
