@@ -928,7 +928,9 @@ export function GameCanvas({
    const stairCount = 4;
    const stairWidth = 35;
    const stairHeight = 15;
-   const stairsStartX = finishZoneX - stairCount * stairWidth - 10;
+   // Stairs should be positioned just before the end platform (which starts at x=5750)
+   const endPlatformX = endPlatform?.x ?? 5750;
+   const stairsStartX = endPlatformX - stairCount * stairWidth;
    const baseGroundY = 520; // Regular ground level
    
    for (let i = 0; i < stairCount; i++) {
