@@ -939,44 +939,44 @@ export function GameCanvas({
     // Draw MID-LEVEL flag with elaborate visuals
     const midFlag = levelData.midFlag;
     if (!midFlag.collected) {
-      const midFlagWave = Math.sin(time / 150) * 4;
+      const midFlagWave = Math.sin(time / 150) * 2.5;
       const midFlagX = midFlag.x;
       const midFlagY = midFlag.y;
       
-      // GLOW EFFECT - pulsing golden glow behind mid-flag
+      // Subtle pink glow effect (40% smaller = 0.6 scale)
       const glowPulse = 0.6 + Math.sin(time / 300) * 0.4;
-      const glowRadius = 50 + Math.sin(time / 200) * 8;
+      const glowRadius = 30 + Math.sin(time / 200) * 5;
       
       const glowGradient = ctx.createRadialGradient(
-        midFlagX, midFlagY + 35, 5,
-        midFlagX, midFlagY + 35, glowRadius
+        midFlagX, midFlagY + 20, 3,
+        midFlagX, midFlagY + 20, glowRadius
       );
-      glowGradient.addColorStop(0, `rgba(255, 215, 0, ${glowPulse * 0.8})`);
-      glowGradient.addColorStop(0.5, `rgba(255, 100, 50, ${glowPulse * 0.4})`);
-      glowGradient.addColorStop(1, 'rgba(255, 50, 50, 0)');
+      glowGradient.addColorStop(0, `rgba(255, 100, 200, ${glowPulse * 0.6})`);
+      glowGradient.addColorStop(0.5, `rgba(255, 50, 150, ${glowPulse * 0.3})`);
+      glowGradient.addColorStop(1, 'rgba(255, 100, 200, 0)');
       
       ctx.beginPath();
-      ctx.arc(midFlagX, midFlagY + 35, glowRadius, 0, Math.PI * 2);
+      ctx.arc(midFlagX, midFlagY + 20, glowRadius, 0, Math.PI * 2);
       ctx.fillStyle = glowGradient;
       ctx.fill();
       
-      // Flag pole with outline - golden
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 3;
-      ctx.fillStyle = '#FFD700';
+      // Flag pole - sleek silver/white (40% smaller)
+      ctx.strokeStyle = '#333333';
+      ctx.lineWidth = 2;
+      ctx.fillStyle = '#E0E0E0';
       ctx.beginPath();
-      ctx.roundRect(midFlagX - 5, midFlagY, 10, 90, 3);
+      ctx.roundRect(midFlagX - 3, midFlagY, 6, 54, 2);
       ctx.stroke();
       ctx.fill();
       
-      // Flag cloth - BRIGHT ORANGE with dark outline
-      ctx.strokeStyle = '#993300';
-      ctx.lineWidth = 3;
-      ctx.fillStyle = '#FF6600';
+      // Flag cloth - vibrant pink/magenta pennant (40% smaller)
+      ctx.strokeStyle = '#880055';
+      ctx.lineWidth = 2;
+      ctx.fillStyle = '#FF1493';
       ctx.beginPath();
-      ctx.moveTo(midFlagX + 5, midFlagY + 5);
-      ctx.lineTo(midFlagX + 55 + midFlagWave, midFlagY + 25);
-      ctx.lineTo(midFlagX + 5, midFlagY + 45);
+      ctx.moveTo(midFlagX + 3, midFlagY + 3);
+      ctx.lineTo(midFlagX + 33 + midFlagWave, midFlagY + 15);
+      ctx.lineTo(midFlagX + 3, midFlagY + 27);
       ctx.closePath();
       ctx.stroke();
       ctx.fill();
@@ -985,40 +985,29 @@ export function GameCanvas({
       ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(midFlagX + 7, midFlagY + 8);
-      ctx.lineTo(midFlagX + 50 + midFlagWave, midFlagY + 25);
-      ctx.lineTo(midFlagX + 7, midFlagY + 42);
+      ctx.moveTo(midFlagX + 5, midFlagY + 6);
+      ctx.lineTo(midFlagX + 28 + midFlagWave, midFlagY + 15);
+      ctx.lineTo(midFlagX + 5, midFlagY + 24);
       ctx.closePath();
       ctx.stroke();
       
-      // Star on flag
-      ctx.font = 'bold 20px Arial';
+      // Small heart on flag
+      ctx.font = '12px Arial';
       ctx.textAlign = 'center';
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 3;
-      ctx.strokeText('⭐', midFlagX + 28 + midFlagWave * 0.5, midFlagY + 32);
-      ctx.fillText('⭐', midFlagX + 28 + midFlagWave * 0.5, midFlagY + 32);
+      ctx.fillText('💗', midFlagX + 16 + midFlagWave * 0.5, midFlagY + 19);
       
-      // Sparkles around mid-flag
-      const sparkleCount = 4;
+      // Subtle sparkles (fewer, smaller)
+      const sparkleCount = 3;
       for (let i = 0; i < sparkleCount; i++) {
-        const sparkleAngle = (time / 400) + (i * Math.PI * 2 / sparkleCount);
-        const sparkleRadius = 35 + Math.sin(time / 200 + i) * 8;
-        const sparkleX = midFlagX + 15 + Math.cos(sparkleAngle) * sparkleRadius;
-        const sparkleY = midFlagY + 25 + Math.sin(sparkleAngle) * sparkleRadius * 0.6;
-        const sparkleSize = 10 + Math.sin(time / 100 + i * 2) * 3;
+        const sparkleAngle = (time / 500) + (i * Math.PI * 2 / sparkleCount);
+        const sparkleRadius = 22 + Math.sin(time / 200 + i) * 5;
+        const sparkleX = midFlagX + 10 + Math.cos(sparkleAngle) * sparkleRadius;
+        const sparkleY = midFlagY + 15 + Math.sin(sparkleAngle) * sparkleRadius * 0.5;
+        const sparkleSize = 8 + Math.sin(time / 100 + i * 2) * 2;
         
         ctx.font = `${sparkleSize}px Arial`;
         ctx.fillText('✨', sparkleX, sparkleY);
       }
-      
-      // "COLLECT" text above mid-flag
-      ctx.font = 'bold 12px Arial';
-      ctx.fillStyle = '#FFD700';
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 2;
-      ctx.strokeText('COLLECT', midFlagX + 20, midFlagY - 8);
-      ctx.fillText('COLLECT', midFlagX + 20, midFlagY - 8);
     }
 
     // Draw player
