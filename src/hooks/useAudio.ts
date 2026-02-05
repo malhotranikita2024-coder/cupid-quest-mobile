@@ -1,4 +1,5 @@
 import { useRef, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 
 // Simple 8-bit style audio generation using Web Audio API
 class RetroAudioEngine {
@@ -11,22 +12,38 @@ class RetroAudioEngine {
   private bgMusicInterval: number | null = null;
   private menuMusicInterval: number | null = null;
   private menuMusicGain: GainNode | null = null;
+  private menuMusicPlaying: boolean = false;
 
   init() {
     if (this.audioContext) return;
     try {
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      // Resume context if suspended (for autoplay policy)
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume();
+      }
       this.masterGain = this.audioContext.createGain();
       this.masterGain.connect(this.audioContext.destination);
-      this.masterGain.gain.value = 0.3;
+      this.masterGain.gain.value = 0.5;
     } catch (e) {
       console.warn('Web Audio API not supported');
     }
   }
 
+  isInitialized(): boolean {
+    return this.audioContext !== null && this.audioContext.state === 'running';
+  }
+
+  isMenuMusicPlaying(): boolean {
+    return this.menuMusicPlaying;
+  }
+
   setMusicEnabled(enabled: boolean) {
     this.musicEnabled = enabled;
-    if (!enabled) this.stopBackgroundMusic();
+    if (!enabled) {
+      this.stopBackgroundMusic();
+      this.stopMenuMusic(false);
+    }
   }
 
   setSfxEnabled(enabled: boolean) {
@@ -244,13 +261,23 @@ class RetroAudioEngine {
     if (!this.musicEnabled) return;
     this.init();
     if (!this.audioContext || !this.masterGain) return;
+    
+    // Resume audio context if suspended
+    if (this.audioContext.state === 'suspended') {
+      this.audioContext.resume();
+    }
+    
+    // Don't restart if already playing
+    if (this.menuMusicPlaying) return;
 
     // Stop existing menu music
-    this.stopMenuMusic();
+    this.stopMenuMusic(false);
 
     this.menuMusicGain = this.audioContext.createGain();
     this.menuMusicGain.connect(this.masterGain);
-    this.menuMusicGain.gain.value = 0.06; // Moderate volume
+    this.menuMusicGain.gain.value = 0.4;
+    
+    this.menuMusicPlaying = true;
 
     // Cheerful Mario-style menu melody
     // C major scale with happy bouncy feel
@@ -298,7 +325,7 @@ class RetroAudioEngine {
         bassGainNode.connect(this.menuMusicGain);
         bassOsc.type = 'triangle';
         bassOsc.frequency.value = bassNote.note;
-        bassGainNode.gain.setValueAtTime(0.25, currentTime);
+        bassGainNode.gain.setValueAtTime(0.35, currentTime);
         bassGainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + bassNote.dur);
         bassOsc.start(currentTime);
         bassOsc.stop(currentTime + bassNote.dur);
@@ -315,7 +342,7 @@ class RetroAudioEngine {
           melodyGainNode.connect(this.menuMusicGain);
           melodyOsc.type = 'square';
           melodyOsc.frequency.value = melodyNote.note;
-          melodyGainNode.gain.setValueAtTime(0.12, currentTime);
+          melodyGainNode.gain.setValueAtTime(0.2, currentTime);
           melodyGainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + melodyNote.dur);
           melodyOsc.start(currentTime);
           melodyOsc.stop(currentTime + melodyNote.dur);
@@ -327,7 +354,7 @@ class RetroAudioEngine {
           harmonyGainNode.connect(this.menuMusicGain);
           harmonyOsc.type = 'sine';
           harmonyOsc.frequency.value = melodyNote.note * 0.5; // Octave below
-          harmonyGainNode.gain.setValueAtTime(0.06, currentTime);
+          harmonyGainNode.gain.setValueAtTime(0.1, currentTime);
           harmonyGainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + melodyNote.dur * 0.8);
           harmonyOsc.start(currentTime);
           harmonyOsc.stop(currentTime + melodyNote.dur * 0.8);
@@ -338,16 +365,24 @@ class RetroAudioEngine {
     }, 200); // Tempo: 300 BPM feel (upbeat)
   }
 
-  stopMenuMusic(fadeOut: boolean = false) {
-    if (this.menuMusicInterval) {
-      clearInterval(this.menuMusicInterval);
-      this.menuMusicInterval = null;
-    }
-    
-    // Fade out the gain if requested
-    if (fadeOut && this.menuMusicGain && this.audioContext) {
-      this.menuMusicGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.5);
-    }
+  stopMenuMusic(fadeOut: boolean = false): Promise<void> {
+    return new Promise((resolve) => {
+      this.menuMusicPlaying = false;
+      
+      const fadeTime = fadeOut ? 600 : 0;
+      
+      if (fadeOut && this.menuMusicGain && this.audioContext) {
+        this.menuMusicGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.6);
+      }
+      
+      setTimeout(() => {
+        if (this.menuMusicInterval) {
+          clearInterval(this.menuMusicInterval);
+          this.menuMusicInterval = null;
+        }
+        resolve();
+      }, fadeTime);
+    });
   }
 }
 
@@ -355,6 +390,7 @@ const audioEngine = new RetroAudioEngine();
 
 export function useAudio(musicEnabled: boolean, sfxEnabled: boolean) {
   const initializedRef = useRef(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   useEffect(() => {
     audioEngine.setMusicEnabled(musicEnabled);
@@ -369,6 +405,14 @@ export function useAudio(musicEnabled: boolean, sfxEnabled: boolean) {
       audioEngine.init();
       initializedRef.current = true;
     }
+  }, []);
+
+  const isAudioReady = useCallback(() => {
+    return audioEngine.isInitialized();
+  }, []);
+
+  const isMenuMusicPlaying = useCallback(() => {
+    return audioEngine.isMenuMusicPlaying();
   }, []);
 
   const playJump = useCallback(() => {
@@ -421,14 +465,19 @@ export function useAudio(musicEnabled: boolean, sfxEnabled: boolean) {
 
   const startMenuMusic = useCallback(() => {
     audioEngine.startMenuMusic();
+    setIsPlaying(true);
   }, []);
 
   const stopMenuMusic = useCallback((fadeOut: boolean = false) => {
     audioEngine.stopMenuMusic(fadeOut);
+    setIsPlaying(false);
   }, []);
 
   return {
     initAudio,
+    isAudioReady,
+    isMenuMusicPlaying,
+    isPlaying,
     playJump,
     playCollect,
     playCookieCollect,

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Play, HelpCircle, Settings, User } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Play, HelpCircle, Settings, User, Volume2, VolumeX } from 'lucide-react';
 
 interface MainMenuProps {
   playerName: string;
@@ -7,6 +7,9 @@ interface MainMenuProps {
   onPlay: () => void;
   onHowToPlay: () => void;
   onSettings: () => void;
+  musicEnabled: boolean;
+  onToggleMusic: () => void;
+  onFirstInteraction: () => void;
 }
 
 export function MainMenu({
@@ -15,8 +18,20 @@ export function MainMenu({
   onPlay,
   onHowToPlay,
   onSettings,
+  musicEnabled,
+  onToggleMusic,
+  onFirstInteraction,
 }: MainMenuProps) {
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const hasInteractedRef = useRef(false);
+
+  // Handle first interaction to start music
+  const handleFirstInteraction = () => {
+    if (!hasInteractedRef.current) {
+      hasInteractedRef.current = true;
+      onFirstInteraction();
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +41,11 @@ export function MainMenu({
   };
 
   return (
-    <div className="fixed inset-0 overflow-hidden select-none">
+    <div 
+      className="fixed inset-0 overflow-hidden select-none"
+      onClick={handleFirstInteraction}
+      onTouchStart={handleFirstInteraction}
+    >
       {/* Sky gradient background - vibrant blue to pink sunset */}
       <div 
         className="absolute inset-0"
@@ -528,6 +547,27 @@ export function MainMenu({
       
       {/* 7-HEART PROGRESS BAR - Golden pill at top */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30">
+        {/* Sound toggle button - top right of the golden bar */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleFirstInteraction();
+            onToggleMusic();
+          }}
+          className="absolute -right-14 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full transition-transform hover:scale-110 active:scale-95"
+          style={{
+            background: 'linear-gradient(180deg, #FFE55C 0%, #FFD700 40%, #DAA520 100%)',
+            border: '3px solid #B8860B',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+          }}
+          title={musicEnabled ? 'Music On' : 'Music Off'}
+        >
+          {musicEnabled ? (
+            <Volume2 className="w-5 h-5 text-[#5D4E37]" />
+          ) : (
+            <VolumeX className="w-5 h-5 text-[#5D4E37]" />
+          )}
+        </button>
         <div 
           className="px-4 py-2 flex items-center gap-1.5 overflow-hidden"
           style={{
