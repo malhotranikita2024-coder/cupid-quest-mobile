@@ -129,6 +129,10 @@ export function MainMenu({
           0%, 100% { opacity: 0.3; }
           50% { opacity: 0.6; }
         }
+        @keyframes tower-glow {
+          0%, 100% { box-shadow: 0 0 8px rgba(255,105,180,0.3); }
+          50% { box-shadow: 0 0 16px rgba(255,105,180,0.6), 0 0 24px rgba(255,182,193,0.4); }
+        }
       `}</style>
       
       {/* LEFT ISLAND */}
@@ -210,11 +214,17 @@ export function MainMenu({
             <div className="absolute top-16 left-1/2 -translate-x-1/2 text-red-400 text-sm">❤</div>
           </div>
           {/* Left tower */}
-          <div className="absolute -left-2 bottom-16 w-8 h-16 bg-gradient-to-b from-[#FFB6C1] to-[#F5E6D3]">
+          <div 
+            className="absolute -left-2 bottom-16 w-8 h-16 bg-gradient-to-b from-[#FFB6C1] to-[#F5E6D3]"
+            style={{ animation: 'tower-glow 3s ease-in-out infinite' }}
+          >
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-r-[10px] border-b-[14px] border-transparent border-b-[#FF69B4]" />
           </div>
           {/* Right tower */}
-          <div className="absolute -right-2 bottom-20 w-8 h-20 bg-gradient-to-b from-[#FFB6C1] to-[#F5E6D3]">
+          <div 
+            className="absolute -right-2 bottom-20 w-8 h-20 bg-gradient-to-b from-[#FFB6C1] to-[#F5E6D3]"
+            style={{ animation: 'tower-glow 3s ease-in-out infinite', animationDelay: '1.5s' }}
+          >
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[10px] border-r-[10px] border-b-[14px] border-transparent border-b-[#FF69B4]" />
             {/* Flag */}
             <div className="absolute -top-8 left-1/2 -translate-x-1/2">
