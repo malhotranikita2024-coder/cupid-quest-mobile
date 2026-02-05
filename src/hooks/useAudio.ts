@@ -13,9 +13,16 @@ class RetroAudioEngine {
   private menuMusicInterval: number | null = null;
   private menuMusicGain: GainNode | null = null;
   private menuMusicPlaying: boolean = false;
+  private bgMusicPlaying: boolean = false;
 
   init() {
-    if (this.audioContext) return;
+    if (this.audioContext) {
+      // Resume if suspended
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume();
+      }
+      return;
+    }
     try {
       this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
       // Resume context if suspended (for autoplay policy)
@@ -24,14 +31,15 @@ class RetroAudioEngine {
       }
       this.masterGain = this.audioContext.createGain();
       this.masterGain.connect(this.audioContext.destination);
-      this.masterGain.gain.value = 0.5;
+      this.masterGain.gain.value = 0.8; // Higher master volume
+      console.log('Audio engine initialized successfully');
     } catch (e) {
       console.warn('Web Audio API not supported');
     }
   }
 
   isInitialized(): boolean {
-    return this.audioContext !== null && this.audioContext.state === 'running';
+    return this.audioContext !== null;
   }
 
   isMenuMusicPlaying(): boolean {
@@ -40,6 +48,7 @@ class RetroAudioEngine {
 
   setMusicEnabled(enabled: boolean) {
     this.musicEnabled = enabled;
+    console.log('Music enabled set to:', enabled);
     if (!enabled) {
       this.stopBackgroundMusic();
       this.stopMenuMusic(false);
@@ -198,23 +207,36 @@ class RetroAudioEngine {
     if (!this.musicEnabled) return;
     this.init();
     if (!this.audioContext || !this.masterGain) return;
+    
+    // Resume audio context if suspended
+    if (this.audioContext.state === 'suspended') {
+      this.audioContext.resume();
+    }
+    
+    // Don't restart if already playing
+    if (this.bgMusicPlaying) return;
 
     // Stop existing music
     this.stopBackgroundMusic();
 
     this.bgMusicGain = this.audioContext.createGain();
     this.bgMusicGain.connect(this.masterGain);
-    this.bgMusicGain.gain.value = 0.08;
+    this.bgMusicGain.gain.value = 0.35; // 35% volume for gameplay music
+    
+    this.bgMusicPlaying = true;
+    console.log('Background music started');
 
     // Simple looping melody pattern
     const bassPattern = [131, 165, 196, 165]; // C3, E3, G3, E3
-    const melodyPattern = [523, 659, 784, 659, 523, 587, 659, 523]; // Higher melody
+    const melodyPattern = [392, 440, 494, 523, 494, 440, 392, 330]; // Adventurous melody
 
     let bassIdx = 0;
     let melodyIdx = 0;
 
     this.bgMusicInterval = window.setInterval(() => {
       if (!this.audioContext || !this.bgMusicGain || !this.musicEnabled) return;
+      
+      const currentTime = this.audioContext.currentTime;
 
       // Bass note
       const bassOsc = this.audioContext.createOscillator();
@@ -223,10 +245,10 @@ class RetroAudioEngine {
       bassGain.connect(this.bgMusicGain);
       bassOsc.type = 'triangle';
       bassOsc.frequency.value = bassPattern[bassIdx % bassPattern.length];
-      bassGain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-      bassGain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.25);
-      bassOsc.start();
-      bassOsc.stop(this.audioContext.currentTime + 0.25);
+      bassGain.gain.setValueAtTime(0.4, currentTime);
+      bassGain.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.25);
+      bassOsc.start(currentTime);
+      bassOsc.stop(currentTime + 0.25);
       bassIdx++;
 
       // Melody note every 2 beats
@@ -237,16 +259,17 @@ class RetroAudioEngine {
         melodyGainNode.connect(this.bgMusicGain);
         melodyOsc.type = 'square';
         melodyOsc.frequency.value = melodyPattern[melodyIdx % melodyPattern.length];
-        melodyGainNode.gain.setValueAtTime(0.15, this.audioContext.currentTime);
-        melodyGainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
-        melodyOsc.start();
-        melodyOsc.stop(this.audioContext.currentTime + 0.2);
+        melodyGainNode.gain.setValueAtTime(0.25, currentTime);
+        melodyGainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + 0.2);
+        melodyOsc.start(currentTime);
+        melodyOsc.stop(currentTime + 0.2);
         melodyIdx++;
       }
-    }, 250);
+    }, 220); // Slightly faster tempo for gameplay
   }
 
   stopBackgroundMusic() {
+    this.bgMusicPlaying = false;
     if (this.bgMusicInterval) {
       clearInterval(this.bgMusicInterval);
       this.bgMusicInterval = null;
@@ -275,9 +298,10 @@ class RetroAudioEngine {
 
     this.menuMusicGain = this.audioContext.createGain();
     this.menuMusicGain.connect(this.masterGain);
-    this.menuMusicGain.gain.value = 0.4;
+    this.menuMusicGain.gain.value = 0.45; // 45% volume for menu music
     
     this.menuMusicPlaying = true;
+    console.log('Menu music started');
 
     // Cheerful Mario-style menu melody
     // C major scale with happy bouncy feel
@@ -325,7 +349,7 @@ class RetroAudioEngine {
         bassGainNode.connect(this.menuMusicGain);
         bassOsc.type = 'triangle';
         bassOsc.frequency.value = bassNote.note;
-        bassGainNode.gain.setValueAtTime(0.35, currentTime);
+        bassGainNode.gain.setValueAtTime(0.45, currentTime);
         bassGainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + bassNote.dur);
         bassOsc.start(currentTime);
         bassOsc.stop(currentTime + bassNote.dur);
@@ -342,7 +366,7 @@ class RetroAudioEngine {
           melodyGainNode.connect(this.menuMusicGain);
           melodyOsc.type = 'square';
           melodyOsc.frequency.value = melodyNote.note;
-          melodyGainNode.gain.setValueAtTime(0.2, currentTime);
+          melodyGainNode.gain.setValueAtTime(0.3, currentTime);
           melodyGainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + melodyNote.dur);
           melodyOsc.start(currentTime);
           melodyOsc.stop(currentTime + melodyNote.dur);
@@ -354,7 +378,7 @@ class RetroAudioEngine {
           harmonyGainNode.connect(this.menuMusicGain);
           harmonyOsc.type = 'sine';
           harmonyOsc.frequency.value = melodyNote.note * 0.5; // Octave below
-          harmonyGainNode.gain.setValueAtTime(0.1, currentTime);
+          harmonyGainNode.gain.setValueAtTime(0.15, currentTime);
           harmonyGainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + melodyNote.dur * 0.8);
           harmonyOsc.start(currentTime);
           harmonyOsc.stop(currentTime + melodyNote.dur * 0.8);
