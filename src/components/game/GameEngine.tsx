@@ -817,6 +817,14 @@ export function GameEngine({
     onLevelComplete();
   }, [audio, onLevelComplete]);
 
+  const handleMidFlagCollected = useCallback(() => {
+    setLevelData(prev => ({
+      ...prev,
+      midFlag: { ...prev.midFlag, collected: true },
+    }));
+    audio.playCheckpoint(); // Use checkpoint sound for mid-flag
+  }, [audio]);
+
   const handleCameraUpdate = useCallback((x: number) => {
     setCameraX(x);
   }, []);
@@ -838,6 +846,7 @@ export function GameEngine({
         onPlayerHit={handlePlayerHit}
         onCheckpointReached={handleCheckpointReached}
         onFlagReached={handleFlagReached}
+        onMidFlagCollected={handleMidFlagCollected}
         onBlockHit={handleBlockHit}
         onJump={handleJump}
         isPaused={isPaused || showDeathOverlay}
@@ -845,7 +854,7 @@ export function GameEngine({
         onCameraUpdate={handleCameraUpdate}
         onFireballHit={handlePlayerHit}
         hasShield={hasShield}
-        hasFlag={levelData.flag.reached}
+        hasMidFlag={levelData.midFlag.collected}
       />
       
       <GameHUD

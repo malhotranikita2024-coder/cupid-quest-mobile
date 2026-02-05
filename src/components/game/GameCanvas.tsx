@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { PlayerState, TouchControls, LevelData, HitBlock, Pipe, FallingHazard, Fireball, LevelFlag } from '@/types/game';
+import { PlayerState, TouchControls, LevelData, HitBlock, Pipe, FallingHazard, Fireball, LevelFlag, MidLevelFlag } from '@/types/game';
 import { COLLECTIBLE_EMOJIS } from '@/data/levels';
 
 interface GameCanvasProps {
@@ -15,6 +15,7 @@ interface GameCanvasProps {
   onPlayerHit: () => void;
   onCheckpointReached: () => void;
   onFlagReached: () => void;
+  onMidFlagCollected: () => void;
   onBlockHit: (index: number) => void;
   onJump: () => void;
   isPaused: boolean;
@@ -22,7 +23,7 @@ interface GameCanvasProps {
   onCameraUpdate: (x: number) => void;
   onFireballHit?: () => void;
   hasShield: boolean;
-  hasFlag: boolean;
+  hasMidFlag: boolean;
 }
 
 const GRAVITY = 0.6;
@@ -46,6 +47,7 @@ export function GameCanvas({
   onPlayerHit,
   onCheckpointReached,
   onFlagReached,
+  onMidFlagCollected,
   onBlockHit,
   onJump,
   isPaused,
@@ -53,7 +55,7 @@ export function GameCanvas({
   onCameraUpdate,
   onFireballHit,
   hasShield,
-  hasFlag,
+  hasMidFlag,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
@@ -434,7 +436,24 @@ export function GameCanvas({
         newPlayer.x < fx + 60 &&
         newPlayer.y + PLAYER_HEIGHT > fy
       ) {
-        onFlagReached();
+        // Only complete level if mid-flag is collected
+        if (levelData.midFlag.collected) {
+          onFlagReached();
+        }
+      }
+    }
+
+    // Mid-flag collision
+    if (!levelData.midFlag.collected) {
+      const mfx = levelData.midFlag.x;
+      const mfy = levelData.midFlag.y;
+      if (
+        newPlayer.x + PLAYER_WIDTH > mfx - 30 &&
+        newPlayer.x < mfx + 60 &&
+        newPlayer.y + PLAYER_HEIGHT > mfy &&
+        newPlayer.y < mfy + 90
+      ) {
+        onMidFlagCollected();
       }
     }
 
@@ -448,7 +467,7 @@ export function GameCanvas({
     onCameraUpdate(newCameraX);
 
     onPlayerUpdate(newPlayer);
-  }, [player, controls, levelData, isPaused, onPlayerUpdate, onCollectItem, onCollectCookie, onEnemyDefeated, onPlayerHit, onCheckpointReached, onFlagReached, onBlockHit, onJump, onCameraUpdate, onFireballHit]);
+  }, [player, controls, levelData, isPaused, onPlayerUpdate, onCollectItem, onCollectCookie, onEnemyDefeated, onPlayerHit, onCheckpointReached, onFlagReached, onMidFlagCollected, onBlockHit, onJump, onCameraUpdate, onFireballHit]);
 
   const draw = useCallback((ctx: CanvasRenderingContext2D, time: number) => {
     const canvas = canvasRef.current;
@@ -864,90 +883,142 @@ export function GameCanvas({
       ctx.fillText('✅', levelData.checkpoint.x + 30, levelData.checkpoint.y + 20);
     }
 
-    // Draw flag
+    // Draw END flag - simple Mario-style flag
     const flagReached = levelData.flag.reached;
-    const flagWave = Math.sin(time / 200) * 5;
+    const flagWave = Math.sin(time / 200) * 3;
     const flagX = levelData.flag.x;
     const flagY = levelData.flag.y;
+    const flagShake = levelData.flag.shakeTimer && levelData.flag.shakeTimer > 0 
+      ? Math.sin(levelData.flag.shakeTimer * 0.5) * 5 
+      : 0;
     
-    // Only draw flag at location if not yet collected
-    if (!flagReached) {
-      // GLOW EFFECT - pulsing golden glow behind flag
+    // Simple flag pole - brown/gray color
+    ctx.save();
+    ctx.translate(flagX + flagShake, 0);
+    
+    ctx.fillStyle = '#5D4037';
+    ctx.strokeStyle = '#3E2723';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(flagX + 15, flagY, 8, 80, 2);
+    ctx.stroke();
+    ctx.fill();
+    
+    // Flag cloth - green if reached, red if not
+    const clothColor = flagReached ? '#00AA00' : '#DD0000';
+    const clothOutline = flagReached ? '#005500' : '#880000';
+    
+    ctx.fillStyle = clothColor;
+    ctx.strokeStyle = clothOutline;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(flagX + 23, flagY + 5);
+    ctx.lineTo(flagX + 55 + flagWave, flagY + 18);
+    ctx.lineTo(flagX + 23, flagY + 32);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fill();
+    
+    // Small heart on flag
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(flagReached ? '💚' : '❤️', flagX + 38 + flagWave * 0.5, flagY + 23);
+    
+    // "END" text if mid-flag not collected
+    if (!levelData.midFlag.collected && !flagReached) {
+      ctx.font = 'bold 12px Arial';
+      ctx.fillStyle = '#FFFFFF';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.strokeText('END', flagX + 35, flagY - 5);
+      ctx.fillText('END', flagX + 35, flagY - 5);
+    }
+    
+    ctx.restore();
+
+    // Draw MID-LEVEL flag with elaborate visuals
+    const midFlag = levelData.midFlag;
+    if (!midFlag.collected) {
+      const midFlagWave = Math.sin(time / 150) * 4;
+      const midFlagX = midFlag.x;
+      const midFlagY = midFlag.y;
+      
+      // GLOW EFFECT - pulsing golden glow behind mid-flag
       const glowPulse = 0.6 + Math.sin(time / 300) * 0.4;
-      const glowRadius = 60 + Math.sin(time / 200) * 10;
+      const glowRadius = 50 + Math.sin(time / 200) * 8;
       
       const glowGradient = ctx.createRadialGradient(
-        flagX + 50, flagY + 40, 5,
-        flagX + 50, flagY + 40, glowRadius
+        midFlagX, midFlagY + 35, 5,
+        midFlagX, midFlagY + 35, glowRadius
       );
       glowGradient.addColorStop(0, `rgba(255, 215, 0, ${glowPulse * 0.8})`);
       glowGradient.addColorStop(0.5, `rgba(255, 100, 50, ${glowPulse * 0.4})`);
       glowGradient.addColorStop(1, 'rgba(255, 50, 50, 0)');
       
       ctx.beginPath();
-      ctx.arc(flagX + 50, flagY + 40, glowRadius, 0, Math.PI * 2);
+      ctx.arc(midFlagX, midFlagY + 35, glowRadius, 0, Math.PI * 2);
       ctx.fillStyle = glowGradient;
       ctx.fill();
       
-      // Flag pole with outline
+      // Flag pole with outline - golden
       ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 4;
-      ctx.fillStyle = '#FFD700'; // Golden pole
-      ctx.beginPath();
-      ctx.roundRect(flagX + 23, flagY - 10, 14, 140, 3);
-      ctx.stroke();
-      ctx.fill();
-      
-      // Flag cloth - BRIGHT RED with dark outline
-      ctx.strokeStyle = '#660000';
       ctx.lineWidth = 3;
-      ctx.fillStyle = '#FF0000'; // Bright red
+      ctx.fillStyle = '#FFD700';
       ctx.beginPath();
-      ctx.moveTo(flagX + 37, flagY);
-      ctx.lineTo(flagX + 95 + flagWave, flagY + 25);
-      ctx.lineTo(flagX + 37, flagY + 50);
+      ctx.roundRect(midFlagX - 5, midFlagY, 10, 90, 3);
+      ctx.stroke();
+      ctx.fill();
+      
+      // Flag cloth - BRIGHT ORANGE with dark outline
+      ctx.strokeStyle = '#993300';
+      ctx.lineWidth = 3;
+      ctx.fillStyle = '#FF6600';
+      ctx.beginPath();
+      ctx.moveTo(midFlagX + 5, midFlagY + 5);
+      ctx.lineTo(midFlagX + 55 + midFlagWave, midFlagY + 25);
+      ctx.lineTo(midFlagX + 5, midFlagY + 45);
       ctx.closePath();
       ctx.stroke();
       ctx.fill();
       
-      // White outline for extra visibility
+      // White inner outline for visibility
       ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(flagX + 39, flagY + 3);
-      ctx.lineTo(flagX + 90 + flagWave, flagY + 25);
-      ctx.lineTo(flagX + 39, flagY + 47);
+      ctx.moveTo(midFlagX + 7, midFlagY + 8);
+      ctx.lineTo(midFlagX + 50 + midFlagWave, midFlagY + 25);
+      ctx.lineTo(midFlagX + 7, midFlagY + 42);
       ctx.closePath();
       ctx.stroke();
       
-      // Heart on flag with glow
-      ctx.font = 'bold 28px Arial';
+      // Star on flag
+      ctx.font = 'bold 20px Arial';
       ctx.textAlign = 'center';
       ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 4;
-      ctx.strokeText('❤️', flagX + 62 + flagWave * 0.5, flagY + 33);
-      ctx.fillText('❤️', flagX + 62 + flagWave * 0.5, flagY + 33);
+      ctx.lineWidth = 3;
+      ctx.strokeText('⭐', midFlagX + 28 + midFlagWave * 0.5, midFlagY + 32);
+      ctx.fillText('⭐', midFlagX + 28 + midFlagWave * 0.5, midFlagY + 32);
       
-      // Sparkles around flag
-      const sparkleCount = 5;
+      // Sparkles around mid-flag
+      const sparkleCount = 4;
       for (let i = 0; i < sparkleCount; i++) {
-        const sparkleAngle = (time / 500) + (i * Math.PI * 2 / sparkleCount);
-        const sparkleRadius = 45 + Math.sin(time / 200 + i) * 10;
-        const sparkleX = flagX + 55 + Math.cos(sparkleAngle) * sparkleRadius;
-        const sparkleY = flagY + 30 + Math.sin(sparkleAngle) * sparkleRadius * 0.6;
-        const sparkleSize = 12 + Math.sin(time / 100 + i * 2) * 4;
+        const sparkleAngle = (time / 400) + (i * Math.PI * 2 / sparkleCount);
+        const sparkleRadius = 35 + Math.sin(time / 200 + i) * 8;
+        const sparkleX = midFlagX + 15 + Math.cos(sparkleAngle) * sparkleRadius;
+        const sparkleY = midFlagY + 25 + Math.sin(sparkleAngle) * sparkleRadius * 0.6;
+        const sparkleSize = 10 + Math.sin(time / 100 + i * 2) * 3;
         
         ctx.font = `${sparkleSize}px Arial`;
         ctx.fillText('✨', sparkleX, sparkleY);
       }
       
-      // "GOAL" text above flag
-      ctx.font = 'bold 16px Arial';
+      // "COLLECT" text above mid-flag
+      ctx.font = 'bold 12px Arial';
       ctx.fillStyle = '#FFD700';
       ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 3;
-      ctx.strokeText('GOAL', flagX + 55, flagY - 20);
-      ctx.fillText('GOAL', flagX + 55, flagY - 20);
+      ctx.lineWidth = 2;
+      ctx.strokeText('COLLECT', midFlagX + 20, midFlagY - 8);
+      ctx.fillText('COLLECT', midFlagX + 20, midFlagY - 8);
     }
 
     // Draw player
@@ -1038,7 +1109,7 @@ export function GameCanvas({
       ctx.fillText('❤️', player.x + PLAYER_WIDTH / 2, player.y + 35);
       
       // Draw carried flag if player has collected it
-      if (hasFlag) {
+      if (hasMidFlag) {
         ctx.save();
         // Small flag on player's back
         const flagPoleX = player.facingRight ? player.x - 5 : player.x + PLAYER_WIDTH + 5;

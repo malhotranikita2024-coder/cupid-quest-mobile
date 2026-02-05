@@ -146,9 +146,10 @@ function createLevel1(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2800, y: GROUND_Y - 80, activated: false },
-    // Flag on elevated platform - requires climbing floating platforms near end
-    // Player must jump from platform at 5700,280 to reach flag
-    flag: { x: 5720, y: 230, reached: false },
+    // Simple end flag at level end
+    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // Mid-level flag - on elevated platform, requires platforming to reach
+    midFlag: { x: 2950, y: 230, collected: false },
     backgroundColor: '#FFE4EC',
     groundColor: '#8B4557',
     levelWidth: LEVEL_WIDTH,
@@ -248,8 +249,10 @@ function createLevel2(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2500, y: GROUND_Y - 80, activated: false },
-    // Flag on high platform - requires navigating to the elevated area near pipe
-    flag: { x: 5630, y: 290, reached: false },
+    // Simple end flag at level end
+    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // Mid-level flag - on floating platform near enemy patrol
+    midFlag: { x: 3250, y: 230, collected: false },
     backgroundColor: '#FFF0E6',
     groundColor: '#8B5A2B',
     levelWidth: LEVEL_WIDTH,
@@ -364,8 +367,10 @@ function createLevel3(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2400, y: GROUND_Y - 80, activated: false },
-    // Flag requires vertical platforming - on elevated section near pipe at 5100
-    flag: { x: 5620, y: 290, reached: false },
+    // Simple end flag at level end
+    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // Mid-level flag - on vertical section platform
+    midFlag: { x: 380, y: 130, collected: false },
     backgroundColor: '#E8F4FF',
     groundColor: '#9B7653',
     levelWidth: LEVEL_WIDTH,
@@ -485,8 +490,10 @@ function createLevel4(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2700, y: GROUND_Y - 80, activated: false },
-    // Flag on elevated platform near end, guarded by falling hazard
-    flag: { x: 5520, y: 350, reached: false },
+    // Simple end flag at level end
+    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // Mid-level flag - near fire pipe, requires timing
+    midFlag: { x: 1630, y: 230, collected: false },
     backgroundColor: '#FFF5F5',
     groundColor: '#C9A0DC',
     levelWidth: LEVEL_WIDTH,
@@ -609,8 +616,10 @@ function createLevel5(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2600, y: GROUND_Y - 80, activated: false },
-    // Flag on elevated floating platform - requires jumping sequence past pipe
-    flag: { x: 5670, y: 270, reached: false },
+    // Simple end flag at level end
+    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // Mid-level flag - on moving platform area
+    midFlag: { x: 2620, y: 230, collected: false },
     backgroundColor: '#E0F7FA',
     groundColor: '#00ACC1',
     levelWidth: LEVEL_WIDTH,
@@ -739,8 +748,10 @@ function createLevel6(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2800, y: GROUND_Y - 80, activated: false },
-    // Flag on moving platform area - requires timing with platforms
-    flag: { x: 5770, y: 330, reached: false },
+    // Simple end flag at level end
+    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // Mid-level flag - on elevated platform, guarded by hazards
+    midFlag: { x: 2170, y: 250, collected: false },
     backgroundColor: '#FFF8E1',
     groundColor: '#FFB300',
     levelWidth: LEVEL_WIDTH,
@@ -883,8 +894,10 @@ function createLevel7(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2900, y: GROUND_Y - 80, activated: false },
-    // Final level flag - on high platform, ultimate challenge
-    flag: { x: 5770, y: 270, reached: false },
+    // Simple end flag at level end
+    flag: { x: 5850, y: GROUND_Y - 80, reached: false },
+    // Mid-level flag - final challenge, on high platform near moving platforms
+    midFlag: { x: 3120, y: 230, collected: false },
     backgroundColor: '#FCE4EC',
     groundColor: '#E91E63',
     levelWidth: LEVEL_WIDTH,
