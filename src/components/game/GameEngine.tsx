@@ -273,8 +273,8 @@ export function GameEngine({
    useEffect(() => {
      if (isPaused || showDeathOverlay) return;
 
-     const EXPIRY_TIME = 5000; // 5 seconds
-     const FADE_DURATION = 500; // 0.5 seconds fade
+     const EXPIRY_TIME = 4000; // 4 seconds
+     const FADE_DURATION = 300; // 0.3 seconds burst
 
      const interval = setInterval(() => {
        const now = Date.now();
