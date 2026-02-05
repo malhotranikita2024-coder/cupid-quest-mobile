@@ -614,28 +614,48 @@ export function GameCanvas({
 
       // Pipe enemy
       if (pipe.hasEnemy && pipe.enemyVisible) {
-        // Larger enemy - 90-120% of player height (50px)
-        ctx.font = '48px Arial';
+        // Scaled 30%: 48->34
+        ctx.font = '34px Arial';
         ctx.textAlign = 'center';
+        // Dark outline for visibility
+        ctx.fillStyle = '#222200';
+        const outlineOffsets = [[-1.5,0], [1.5,0], [0,-1.5], [0,1.5]];
+        outlineOffsets.forEach(([ox, oy]) => {
+          ctx.fillText('🌵', pipe.x + pipe.width / 2 + ox, pipe.y - 15 + oy);
+        });
         ctx.fillText('🌵', pipe.x + pipe.width / 2, pipe.y - 20);
       }
 
       // Fire pipe
       if (pipe.hasFire && pipe.fireActive) {
-        // Draw fire shooting up
-        const fireHeight = 80;
+        // Enhanced fire visibility - brighter, more saturated
+        const fireHeight = 70;
         for (let i = 0; i < fireHeight; i += 15) {
-          const fireAlpha = 1 - (i / fireHeight) * 0.5;
+          const fireAlpha = 1 - (i / fireHeight) * 0.3; // More visible
           const wobble = Math.sin(time / 50 + i * 0.2) * 5;
-          ctx.fillStyle = `rgba(255, ${100 + i}, 0, ${fireAlpha})`;
+          // Brighter orange/yellow core
+          ctx.fillStyle = `rgba(255, ${180 + i * 0.5}, 50, ${fireAlpha})`;
           ctx.beginPath();
-          ctx.arc(pipe.x + pipe.width / 2 + wobble, pipe.y - i, 15 - i * 0.1, 0, Math.PI * 2);
+          ctx.arc(pipe.x + pipe.width / 2 + wobble, pipe.y - i, 18 - i * 0.12, 0, Math.PI * 2);
+          ctx.fill();
+          // Inner bright core
+          ctx.fillStyle = `rgba(255, 255, 150, ${fireAlpha * 0.7})`;
+          ctx.beginPath();
+          ctx.arc(pipe.x + pipe.width / 2 + wobble, pipe.y - i, 8 - i * 0.05, 0, Math.PI * 2);
           ctx.fill();
         }
+        // Dark outline glow for contrast
+        ctx.strokeStyle = 'rgba(150, 50, 0, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(pipe.x + pipe.width / 2 - 15, pipe.y);
+        ctx.quadraticCurveTo(pipe.x + pipe.width / 2, pipe.y - 70, pipe.x + pipe.width / 2 + 15, pipe.y);
+        ctx.stroke();
+        
         // Fire emoji at top
-        ctx.font = '28px Arial';
+        ctx.font = '22px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('🔥', pipe.x + pipe.width / 2, pipe.y - 50);
+        ctx.fillText('🔥', pipe.x + pipe.width / 2, pipe.y - 45);
       }
     });
 
@@ -696,17 +716,52 @@ export function GameCanvas({
     levelData.fireballs?.forEach(fireball => {
       if (!fireball.isActive) return;
       const wobble = Math.sin(time / 50) * 3;
-      ctx.font = '24px Arial';
+      // Enhanced fireball visibility - brighter core with dark outline
+      ctx.font = '18px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText('🔥', fireball.x + fireball.width / 2, fireball.y + wobble + 15);
+      
+      // Bright glow behind fireball
+      ctx.beginPath();
+      ctx.arc(fireball.x + fireball.width / 2, fireball.y + wobble + 8, 14, 0, Math.PI * 2);
+      const fireGlow = ctx.createRadialGradient(
+        fireball.x + fireball.width / 2, fireball.y + wobble + 8, 2,
+        fireball.x + fireball.width / 2, fireball.y + wobble + 8, 14
+      );
+      fireGlow.addColorStop(0, 'rgba(255, 200, 50, 0.9)');
+      fireGlow.addColorStop(0.5, 'rgba(255, 100, 0, 0.6)');
+      fireGlow.addColorStop(1, 'rgba(255, 50, 0, 0)');
+      ctx.fillStyle = fireGlow;
+      ctx.fill();
+      
+      // Dark outline around emoji
+      const outlineOffsets = [[-1.5,0], [1.5,0], [0,-1.5], [0,1.5]];
+      ctx.fillStyle = '#331100';
+      outlineOffsets.forEach(([ox, oy]) => {
+        ctx.fillText('🔥', fireball.x + fireball.width / 2 + ox, fireball.y + wobble + 12 + oy);
+      });
+      ctx.fillText('🔥', fireball.x + fireball.width / 2, fireball.y + wobble + 12);
     });
 
     // Draw falling hazards
     levelData.fallingHazards.forEach(hazard => {
       if (!hazard.isActive) return;
-      ctx.font = '32px Arial';
+      // Scaled down 30%: 32 -> 22
+      ctx.font = '22px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText('💔', hazard.x + hazard.width / 2, hazard.y + 30);
+      
+      // Add visibility glow
+      ctx.beginPath();
+      ctx.arc(hazard.x + hazard.width / 2, hazard.y + 18, 16, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 50, 100, 0.4)';
+      ctx.fill();
+      
+      // White outline
+      const outlineOffsets = [[-1.5,0], [1.5,0], [0,-1.5], [0,1.5]];
+      ctx.fillStyle = '#FFFFFF';
+      outlineOffsets.forEach(([ox, oy]) => {
+        ctx.fillText('💔', hazard.x + hazard.width / 2 + ox, hazard.y + 22 + oy);
+      });
+      ctx.fillText('💔', hazard.x + hazard.width / 2, hazard.y + 22);
     });
 
     // Draw collectibles
@@ -723,7 +778,7 @@ export function GameCanvas({
          const progress = collectible.expiryProgress || 0;
          
          // Burst explosion effect - particles fly outward rapidly
-         const burstRadius = progress * 80;
+         const burstRadius = progress * 56; // Scaled 30%
          const particleCount = 12;
          
          for (let i = 0; i < particleCount; i++) {
@@ -731,7 +786,7 @@ export function GameCanvas({
            const particleX = collectible.x + Math.cos(angle) * burstRadius;
            const particleY = collectible.y + bobY + Math.sin(angle) * burstRadius;
            const particleAlpha = Math.max(0, 1 - progress * 1.2);
-           const particleSize = Math.max(8, 16 - progress * 12);
+           const particleSize = Math.max(6, 11 - progress * 8); // Scaled 30%
            
            ctx.font = `${particleSize}px Arial`;
            ctx.globalAlpha = particleAlpha;
@@ -741,11 +796,11 @@ export function GameCanvas({
          // Inner ring of particles
          for (let i = 0; i < 6; i++) {
            const angle = (i * Math.PI * 2 / 6) - (time / 150);
-           const innerRadius = progress * 40;
+           const innerRadius = progress * 28; // Scaled 30%
            const particleX = collectible.x + Math.cos(angle) * innerRadius;
            const particleY = collectible.y + bobY + Math.sin(angle) * innerRadius;
            
-           ctx.font = '12px Arial';
+           ctx.font = '8px Arial'; // Scaled 30%
            ctx.globalAlpha = Math.max(0, 1 - progress);
            ctx.fillText('💫', particleX, particleY);
          }
@@ -763,10 +818,10 @@ export function GameCanvas({
          // Outer glow for visibility while moving
          const glowPulse = Math.sin(time / 150) * 0.2 + 0.8;
          ctx.beginPath();
-         ctx.arc(collectible.x, collectible.y + bobY - 5, 32 * glowPulse, 0, Math.PI * 2);
+         ctx.arc(collectible.x, collectible.y + bobY - 5, 22 * glowPulse, 0, Math.PI * 2); // Scaled 30%
          const glowGradient = ctx.createRadialGradient(
            collectible.x, collectible.y + bobY - 5, 5,
-           collectible.x, collectible.y + bobY - 5, 32 * glowPulse
+           collectible.x, collectible.y + bobY - 5, 22 * glowPulse
          );
          glowGradient.addColorStop(0, 'rgba(255, 220, 100, 0.6)');
          glowGradient.addColorStop(0.5, 'rgba(255, 180, 50, 0.3)');
@@ -779,32 +834,32 @@ export function GameCanvas({
            const sparkleAngle = time / 100;
            for (let i = 0; i < 4; i++) {
              const angle = sparkleAngle + (i * Math.PI / 2);
-             const sparkleX = collectible.x + Math.cos(angle) * 28;
-             const sparkleY = collectible.y + bobY + Math.sin(angle) * 28;
-             ctx.font = '14px Arial';
+             const sparkleX = collectible.x + Math.cos(angle) * 20; // Scaled 30%
+             const sparkleY = collectible.y + bobY + Math.sin(angle) * 20;
+             ctx.font = '10px Arial'; // Scaled 30%
              ctx.fillText('✨', sparkleX, sparkleY);
            }
         }
-        ctx.font = '48px Arial'; // Larger for burst
+        ctx.font = '34px Arial'; // Scaled 30% (was 48)
       } else if (collectible.type === 'shield') {
         // Pulsing glow for shield power-up
         const pulse = Math.sin(time / 150) * 0.3 + 0.7;
         ctx.beginPath();
-        ctx.arc(collectible.x, collectible.y + bobY - 5, 28 * pulse, 0, Math.PI * 2);
+        ctx.arc(collectible.x, collectible.y + bobY - 5, 20 * pulse, 0, Math.PI * 2); // Scaled 30%
         ctx.fillStyle = 'rgba(255, 100, 150, 0.4)';
         ctx.fill();
-        ctx.font = '44px Arial';
+        ctx.font = '31px Arial'; // Scaled 30% (was 44)
       } else {
-        ctx.font = collectible.type === 'cookie' ? '42px Arial' : '38px Arial';
+        ctx.font = collectible.type === 'cookie' ? '29px Arial' : '27px Arial'; // Scaled 30%
       }
       
       ctx.textAlign = 'center';
       
       // White outline - draw emoji 8 times around the center
       ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 3;
       ctx.miterLimit = 2;
-      const outlineOffsets = [[-2,0], [2,0], [0,-2], [0,2], [-1,-1], [1,-1], [-1,1], [1,1]];
+      const outlineOffsets = [[-1.5,0], [1.5,0], [0,-1.5], [0,1.5], [-1,-1], [1,-1], [-1,1], [1,1]];
       outlineOffsets.forEach(([ox, oy]) => {
         ctx.fillStyle = '#FFFFFF';
         ctx.fillText(emoji, collectible.x + ox, collectible.y + bobY + oy);
@@ -827,62 +882,84 @@ export function GameCanvas({
       ctx.textAlign = 'center';
       
       // White outline offsets
-      const outlineOffsets = [[-2,0], [2,0], [0,-2], [0,2], [-1,-1], [1,-1], [-1,1], [1,1]];
+      const outlineOffsets = [[-2,0], [2,0], [0,-2], [0,2]];
+      
+      // Enhanced danger glow for all enemies
+      ctx.beginPath();
+      ctx.arc(enemyX, enemy.y + 15, 28, 0, Math.PI * 2);
+      const dangerGlow = ctx.createRadialGradient(enemyX, enemy.y + 15, 5, enemyX, enemy.y + 15, 28);
+      dangerGlow.addColorStop(0, 'rgba(180, 0, 50, 0.4)');
+      dangerGlow.addColorStop(1, 'rgba(100, 0, 30, 0)');
+      ctx.fillStyle = dangerGlow;
+      ctx.fill();
       
       if (enemy.type === 'heartBug') {
-        // White outline for heart
-        ctx.font = '52px Arial';
-        ctx.fillStyle = '#FFFFFF';
+        // Scaled 30%: 52->36, 38->27
+        // Dark outline for more dangerous look
+        ctx.font = '36px Arial';
+        ctx.fillStyle = '#330011';
         outlineOffsets.forEach(([ox, oy]) => {
           ctx.fillText('💗', enemyX + ox, enemy.y - 5 + wobble + oy);
         });
-        ctx.font = '38px Arial';
+        ctx.font = '27px Arial';
         outlineOffsets.forEach(([ox, oy]) => {
           ctx.fillText('🐛', enemyX + ox, enemy.y + 22 + wobble + oy);
         });
         
         // Main emojis
-        ctx.font = '52px Arial';
+        ctx.font = '36px Arial';
         ctx.fillText('💗', enemyX, enemy.y - 5 + wobble);
-        ctx.font = '38px Arial';
+        ctx.font = '27px Arial';
         ctx.fillText('🐛', enemyX, enemy.y + 22 + wobble);
         
+        // Evil eyes indicator
+        ctx.font = 'bold 10px Arial';
+        ctx.fillStyle = '#FF0000';
+        ctx.fillText('👀', enemyX, enemy.y + 8 + wobble);
+        
         if (enemy.canShoot) {
-          ctx.font = '20px Arial';
-          ctx.fillText('🔥', enemyX + 18, enemy.y - 10);
+          ctx.font = '14px Arial';
+          ctx.fillText('🔥', enemyX + 14, enemy.y - 8);
         }
       } else if (enemy.type === 'brokenHeartSlime') {
-        // White outline
-        ctx.font = '52px Arial';
-        ctx.fillStyle = '#FFFFFF';
+        // Scaled 30%: 52->36
+        // Dark outline for danger
+        ctx.font = '36px Arial';
+        ctx.fillStyle = '#330011';
         outlineOffsets.forEach(([ox, oy]) => {
           ctx.fillText('💔', enemyX + ox, enemy.y + 15 + wobble + oy);
         });
         
         // Main emoji
-        ctx.font = '52px Arial';
+        ctx.font = '36px Arial';
         ctx.fillText('💔', enemyX, enemy.y + 15 + wobble);
         
+        // Angry expression
+        ctx.font = 'bold 12px Arial';
+        ctx.fillStyle = '#880000';
+        ctx.fillText('😠', enemyX, enemy.y + 28 + wobble);
+        
         if (enemy.canShoot) {
-          ctx.font = '20px Arial';
-          ctx.fillText('🔥', enemyX + 18, enemy.y - 10);
+          ctx.font = '14px Arial';
+          ctx.fillText('🔥', enemyX + 14, enemy.y - 5);
         }
       } else if (enemy.type === 'jealousCloud') {
-        // White outline
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = '48px Arial';
+        // Scaled 30%: 48->34, 42->29
+        // Dark outline
+        ctx.fillStyle = '#222244';
+        ctx.font = '34px Arial';
         outlineOffsets.forEach(([ox, oy]) => {
           ctx.fillText('😤', enemyX + ox, enemy.y + 20 + wobble + oy);
         });
-        ctx.font = '42px Arial';
+        ctx.font = '29px Arial';
         outlineOffsets.forEach(([ox, oy]) => {
           ctx.fillText('☁️', enemyX + ox, enemy.y + 45 + wobble + oy);
         });
         
         // Main emojis
-        ctx.font = '48px Arial';
+        ctx.font = '34px Arial';
         ctx.fillText('😤', enemyX, enemy.y + 20 + wobble);
-        ctx.font = '42px Arial';
+        ctx.font = '29px Arial';
         ctx.fillText('☁️', enemyX, enemy.y + 45 + wobble);
       }
       
