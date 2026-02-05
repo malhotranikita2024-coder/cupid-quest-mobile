@@ -140,8 +140,14 @@ export interface LevelFlag {
   x: number;
   y: number;
   reached: boolean;
-  // Platform the flag is on (for rendering flag on elevated positions)
-  platformY?: number;
+  // Shake animation when player reaches without mid-flag
+  shakeTimer?: number;
+}
+
+export interface MidLevelFlag {
+  x: number;
+  y: number;
+  collected: boolean;
 }
 
 export interface LevelData {
@@ -159,6 +165,7 @@ export interface LevelData {
   fireballs: Fireball[];
   checkpoint: Checkpoint;
   flag: LevelFlag;
+  midFlag: MidLevelFlag;
   backgroundColor: string;
   groundColor: string;
   levelWidth: number;
