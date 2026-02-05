@@ -47,11 +47,34 @@ export function MainMenu({
         <div className="absolute top-[25%] right-[20%] w-20 h-10 bg-white rounded-full opacity-85" />
         
         {/* Sparkle stars */}
-        <div className="absolute top-[8%] left-[30%] text-white text-xl animate-pulse" style={{ animationDuration: '2s' }}>✦</div>
-        <div className="absolute top-[12%] left-[45%] text-white text-sm animate-pulse" style={{ animationDuration: '2.5s', animationDelay: '0.5s' }}>✦</div>
-        <div className="absolute top-[6%] right-[35%] text-white text-lg animate-pulse" style={{ animationDuration: '1.8s', animationDelay: '0.3s' }}>✦</div>
-        <div className="absolute top-[10%] right-[20%] text-pink-300 text-xl animate-pulse" style={{ animationDuration: '2.2s', animationDelay: '0.7s' }}>✦</div>
-        <div className="absolute top-[14%] left-[20%] text-pink-200 text-sm animate-pulse" style={{ animationDuration: '2s', animationDelay: '1s' }}>✦</div>
+        <div 
+          className="absolute top-[8%] left-[30%] text-white text-xl"
+          style={{ animation: 'twinkle 2s ease-in-out infinite', textShadow: '0 0 8px rgba(255,255,255,0.8)' }}
+        >✦</div>
+        <div 
+          className="absolute top-[12%] left-[45%] text-white text-sm"
+          style={{ animation: 'twinkle 2.5s ease-in-out infinite', animationDelay: '0.5s', textShadow: '0 0 6px rgba(255,255,255,0.7)' }}
+        >✦</div>
+        <div 
+          className="absolute top-[6%] right-[35%] text-white text-lg"
+          style={{ animation: 'twinkle 1.8s ease-in-out infinite', animationDelay: '0.3s', textShadow: '0 0 10px rgba(255,255,255,0.9)' }}
+        >✦</div>
+        <div 
+          className="absolute top-[10%] right-[20%] text-pink-300 text-xl"
+          style={{ animation: 'twinkle 2.2s ease-in-out infinite', animationDelay: '0.7s', textShadow: '0 0 8px rgba(255,182,193,0.8)' }}
+        >✦</div>
+        <div 
+          className="absolute top-[14%] left-[20%] text-pink-200 text-sm"
+          style={{ animation: 'twinkle 2s ease-in-out infinite', animationDelay: '1s', textShadow: '0 0 6px rgba(255,192,203,0.7)' }}
+        >✦</div>
+        <div 
+          className="absolute top-[5%] left-[55%] text-white text-xs"
+          style={{ animation: 'twinkle 1.5s ease-in-out infinite', animationDelay: '0.2s', textShadow: '0 0 4px rgba(255,255,255,0.6)' }}
+        >✦</div>
+        <div 
+          className="absolute top-[9%] right-[45%] text-pink-100 text-base"
+          style={{ animation: 'twinkle 2.3s ease-in-out infinite', animationDelay: '1.3s', textShadow: '0 0 8px rgba(255,240,245,0.8)' }}
+        >✦</div>
         
         {/* Floating hearts in sky */}
         <div 
@@ -132,6 +155,12 @@ export function MainMenu({
         @keyframes tower-glow {
           0%, 100% { box-shadow: 0 0 8px rgba(255,105,180,0.3); }
           50% { box-shadow: 0 0 16px rgba(255,105,180,0.6), 0 0 24px rgba(255,182,193,0.4); }
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 1; transform: scale(1) rotate(0deg); }
+          25% { opacity: 0.4; transform: scale(0.8) rotate(15deg); }
+          50% { opacity: 1; transform: scale(1.2) rotate(0deg); }
+          75% { opacity: 0.6; transform: scale(0.9) rotate(-15deg); }
         }
       `}</style>
       
