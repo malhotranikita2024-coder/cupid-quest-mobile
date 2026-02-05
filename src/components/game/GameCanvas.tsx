@@ -943,71 +943,85 @@ export function GameCanvas({
       const midFlagX = midFlag.x;
       const midFlagY = midFlag.y;
       
-      // Subtle pink glow effect (40% smaller = 0.6 scale)
-      const glowPulse = 0.6 + Math.sin(time / 300) * 0.4;
-      const glowRadius = 30 + Math.sin(time / 200) * 5;
-      
-      const glowGradient = ctx.createRadialGradient(
-        midFlagX, midFlagY + 20, 3,
-        midFlagX, midFlagY + 20, glowRadius
-      );
-      glowGradient.addColorStop(0, `rgba(255, 100, 200, ${glowPulse * 0.6})`);
-      glowGradient.addColorStop(0.5, `rgba(255, 50, 150, ${glowPulse * 0.3})`);
-      glowGradient.addColorStop(1, 'rgba(255, 100, 200, 0)');
-      
-      ctx.beginPath();
-      ctx.arc(midFlagX, midFlagY + 20, glowRadius, 0, Math.PI * 2);
-      ctx.fillStyle = glowGradient;
-      ctx.fill();
-      
-      // Flag pole - sleek silver/white (40% smaller)
-      ctx.strokeStyle = '#333333';
-      ctx.lineWidth = 2;
-      ctx.fillStyle = '#E0E0E0';
-      ctx.beginPath();
-      ctx.roundRect(midFlagX - 3, midFlagY, 6, 54, 2);
-      ctx.stroke();
-      ctx.fill();
-      
-      // Flag cloth - vibrant pink/magenta pennant (40% smaller)
-      ctx.strokeStyle = '#880055';
-      ctx.lineWidth = 2;
-      ctx.fillStyle = '#FF1493';
-      ctx.beginPath();
-      ctx.moveTo(midFlagX + 3, midFlagY + 3);
-      ctx.lineTo(midFlagX + 33 + midFlagWave, midFlagY + 15);
-      ctx.lineTo(midFlagX + 3, midFlagY + 27);
-      ctx.closePath();
-      ctx.stroke();
-      ctx.fill();
-      
-      // White inner outline for visibility
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(midFlagX + 5, midFlagY + 6);
-      ctx.lineTo(midFlagX + 28 + midFlagWave, midFlagY + 15);
-      ctx.lineTo(midFlagX + 5, midFlagY + 24);
-      ctx.closePath();
-      ctx.stroke();
-      
-      // Small heart on flag
-      ctx.font = '12px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('💗', midFlagX + 16 + midFlagWave * 0.5, midFlagY + 19);
-      
-      // Subtle sparkles (fewer, smaller)
-      const sparkleCount = 3;
-      for (let i = 0; i < sparkleCount; i++) {
-        const sparkleAngle = (time / 500) + (i * Math.PI * 2 / sparkleCount);
-        const sparkleRadius = 22 + Math.sin(time / 200 + i) * 5;
-        const sparkleX = midFlagX + 10 + Math.cos(sparkleAngle) * sparkleRadius;
-        const sparkleY = midFlagY + 15 + Math.sin(sparkleAngle) * sparkleRadius * 0.5;
-        const sparkleSize = 8 + Math.sin(time / 100 + i * 2) * 2;
-        
-        ctx.font = `${sparkleSize}px Arial`;
-        ctx.fillText('✨', sparkleX, sparkleY);
-      }
+     // Subtle floating bob animation
+     const bobOffset = Math.sin(time / 200) * 3;
+     const adjustedY = midFlagY + bobOffset;
+     
+     // Clean outer glow - soft pink ring
+     const glowPulse = 0.5 + Math.sin(time / 400) * 0.2;
+     ctx.beginPath();
+     ctx.arc(midFlagX + 12, adjustedY + 18, 22, 0, Math.PI * 2);
+     ctx.fillStyle = `rgba(255, 105, 180, ${glowPulse * 0.35})`;
+     ctx.fill();
+     
+     // Golden pole with rounded cap
+     ctx.fillStyle = '#FFD700';
+     ctx.strokeStyle = '#CC9900';
+     ctx.lineWidth = 2;
+     ctx.beginPath();
+     ctx.roundRect(midFlagX - 2, adjustedY, 5, 42, 2);
+     ctx.fill();
+     ctx.stroke();
+     
+     // Pole cap - golden ball
+     ctx.beginPath();
+     ctx.arc(midFlagX + 0.5, adjustedY - 2, 4, 0, Math.PI * 2);
+     ctx.fillStyle = '#FFD700';
+     ctx.fill();
+     ctx.strokeStyle = '#CC9900';
+     ctx.lineWidth = 1.5;
+     ctx.stroke();
+     
+     // Flag cloth - clean heart-shaped pennant (magenta)
+     const clothGradient = ctx.createLinearGradient(midFlagX + 3, adjustedY + 4, midFlagX + 28, adjustedY + 20);
+     clothGradient.addColorStop(0, '#FF1493');
+     clothGradient.addColorStop(1, '#C71585');
+     
+     ctx.fillStyle = clothGradient;
+     ctx.strokeStyle = '#FFFFFF';
+     ctx.lineWidth = 2;
+     ctx.beginPath();
+     ctx.moveTo(midFlagX + 3, adjustedY + 4);
+     ctx.quadraticCurveTo(midFlagX + 30 + midFlagWave, adjustedY + 6, midFlagX + 28 + midFlagWave, adjustedY + 16);
+     ctx.quadraticCurveTo(midFlagX + 26 + midFlagWave, adjustedY + 26, midFlagX + 3, adjustedY + 28);
+     ctx.closePath();
+     ctx.fill();
+     ctx.stroke();
+     
+     // Dark outline for visibility
+     ctx.strokeStyle = '#8B008B';
+     ctx.lineWidth = 1;
+     ctx.stroke();
+     
+     // Cute heart emblem centered on flag
+     ctx.save();
+     ctx.translate(midFlagX + 14 + midFlagWave * 0.4, adjustedY + 16);
+     
+     // Draw clean heart shape
+     ctx.fillStyle = '#FFFFFF';
+     ctx.beginPath();
+     ctx.moveTo(0, 2);
+     ctx.bezierCurveTo(-3, -2, -6, 0, -6, 3);
+     ctx.bezierCurveTo(-6, 6, 0, 9, 0, 11);
+     ctx.bezierCurveTo(0, 9, 6, 6, 6, 3);
+     ctx.bezierCurveTo(6, 0, 3, -2, 0, 2);
+     ctx.closePath();
+     ctx.fill();
+     
+     // Heart outline
+     ctx.strokeStyle = '#FF69B4';
+     ctx.lineWidth = 1;
+     ctx.stroke();
+     ctx.restore();
+     
+     // Small ribbon at pole attachment
+     ctx.fillStyle = '#FFD700';
+     ctx.beginPath();
+     ctx.moveTo(midFlagX + 2, adjustedY + 5);
+     ctx.lineTo(midFlagX + 7, adjustedY + 10);
+     ctx.lineTo(midFlagX + 2, adjustedY + 15);
+     ctx.closePath();
+     ctx.fill();
     }
 
     // Draw player
