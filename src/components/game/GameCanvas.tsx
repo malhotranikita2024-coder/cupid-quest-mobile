@@ -680,16 +680,52 @@ export function GameCanvas({
       
       ctx.save();
       
+       // Handle expiring burst items (fade out)
+       if (collectible.isExpiring && collectible.isBurst) {
+         const progress = collectible.expiryProgress || 0;
+         ctx.globalAlpha = 1 - progress;
+         
+         // Sparkle fade effect
+         if (progress < 0.8) {
+           const sparkleCount = Math.floor((1 - progress) * 6);
+           for (let i = 0; i < sparkleCount; i++) {
+             const angle = (time / 50) + (i * Math.PI * 2 / sparkleCount);
+             const dist = 20 + progress * 30;
+             const sparkleX = collectible.x + Math.cos(angle) * dist;
+             const sparkleY = collectible.y + bobY + Math.sin(angle) * dist;
+             ctx.font = '14px Arial';
+             ctx.fillStyle = `rgba(255, 255, 150, ${1 - progress})`;
+             ctx.fillText('✨', sparkleX, sparkleY);
+           }
+         }
+       }
+
       // Special rendering for burst collectibles (larger, with sparkles)
       if (collectible.isBurst) {
-        // Sparkle effect
-        const sparkleAngle = time / 100;
-        for (let i = 0; i < 4; i++) {
-          const angle = sparkleAngle + (i * Math.PI / 2);
-          const sparkleX = collectible.x + Math.cos(angle) * 25;
-          const sparkleY = collectible.y + bobY + Math.sin(angle) * 25;
-          ctx.font = '12px Arial';
-          ctx.fillText('✨', sparkleX, sparkleY);
+         // Outer glow for visibility while moving
+         const glowPulse = Math.sin(time / 150) * 0.2 + 0.8;
+         ctx.beginPath();
+         ctx.arc(collectible.x, collectible.y + bobY - 5, 32 * glowPulse, 0, Math.PI * 2);
+         const glowGradient = ctx.createRadialGradient(
+           collectible.x, collectible.y + bobY - 5, 5,
+           collectible.x, collectible.y + bobY - 5, 32 * glowPulse
+         );
+         glowGradient.addColorStop(0, 'rgba(255, 220, 100, 0.6)');
+         glowGradient.addColorStop(0.5, 'rgba(255, 180, 50, 0.3)');
+         glowGradient.addColorStop(1, 'rgba(255, 150, 0, 0)');
+         ctx.fillStyle = glowGradient;
+         ctx.fill();
+         
+         // Sparkle effect (orbiting)
+         if (!collectible.isExpiring) {
+           const sparkleAngle = time / 100;
+           for (let i = 0; i < 4; i++) {
+             const angle = sparkleAngle + (i * Math.PI / 2);
+             const sparkleX = collectible.x + Math.cos(angle) * 28;
+             const sparkleY = collectible.y + bobY + Math.sin(angle) * 28;
+             ctx.font = '14px Arial';
+             ctx.fillText('✨', sparkleX, sparkleY);
+           }
         }
         ctx.font = '48px Arial'; // Larger for burst
       } else if (collectible.type === 'shield') {

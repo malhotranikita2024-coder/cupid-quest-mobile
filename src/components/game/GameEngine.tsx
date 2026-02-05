@@ -269,6 +269,212 @@ export function GameEngine({
     return () => clearInterval(interval);
   }, [isPaused, showDeathOverlay]);
 
+   // Update burst collectibles (movement, bouncing, expiry)
+   useEffect(() => {
+     if (isPaused || showDeathOverlay) return;
+
+     const EXPIRY_TIME = 5000; // 5 seconds
+     const FADE_DURATION = 500; // 0.5 seconds fade
+
+     const interval = setInterval(() => {
+       const now = Date.now();
+       
+       setLevelData(prev => {
+         const newCollectibles = prev.collectibles.map(collectible => {
+           // Skip non-burst items, collected items, and shield items (shields don't expire)
+           if (collectible.collected) return collectible;
+           if (!collectible.isBurst) return collectible;
+           if (collectible.type === 'shield') return collectible;
+           if (!collectible.fromBlock) return collectible;
+
+           // Initialize spawn time if not set
+           let spawnTime = collectible.spawnTime || now;
+           if (!collectible.spawnTime) {
+             return { ...collectible, spawnTime: now };
+           }
+
+           // Check expiry
+           const elapsed = now - spawnTime;
+           if (elapsed >= EXPIRY_TIME) {
+             // Start fade out or mark as collected
+             if (collectible.isExpiring) {
+               const fadeElapsed = elapsed - EXPIRY_TIME;
+               if (fadeElapsed >= FADE_DURATION) {
+                 // Fully expired - mark as collected (no points)
+                 return { ...collectible, collected: true };
+               }
+               return { ...collectible, expiryProgress: fadeElapsed / FADE_DURATION };
+             }
+             return { ...collectible, isExpiring: true, expiryProgress: 0 };
+           }
+
+           // Physics: apply gravity and movement
+           let newVelX = collectible.velocityX || 0;
+           let newVelY = collectible.velocityY || 0;
+           let newX = collectible.x + newVelX;
+           let newY = collectible.y + newVelY;
+           let grounded = collectible.isGrounded || false;
+
+           // Apply gravity if not grounded
+           if (!grounded) {
+             newVelY += 0.4; // Gravity
+             if (newVelY > 10) newVelY = 10; // Terminal velocity
+           }
+
+           // Check platform collisions
+           for (const platform of prev.platforms) {
+             const collectibleBottom = newY + 20;
+             const collectibleTop = newY - 20;
+             const collectibleLeft = newX - 15;
+             const collectibleRight = newX + 15;
+
+             const platTop = platform.y;
+             const platBottom = platform.y + platform.height;
+             const platLeft = platform.x;
+             const platRight = platform.x + platform.width;
+
+             // Landing on platform
+             if (
+               collectibleBottom >= platTop &&
+               collectibleBottom <= platTop + 15 &&
+               collectibleRight > platLeft &&
+               collectibleLeft < platRight &&
+               newVelY >= 0
+             ) {
+               newY = platTop - 20;
+               newVelY = 0;
+               grounded = true;
+             }
+
+             // Side collisions - bounce off walls
+             if (grounded && collectibleBottom > platTop + 5 && collectibleTop < platBottom - 5) {
+               if (collectibleRight > platLeft && collectibleLeft < platLeft && newVelX > 0) {
+                 newX = platLeft - 15;
+                 newVelX = -newVelX * 0.8; // Bounce with friction
+               }
+               if (collectibleLeft < platRight && collectibleRight > platRight && newVelX < 0) {
+                 newX = platRight + 15;
+                 newVelX = -newVelX * 0.8; // Bounce with friction
+               }
+             }
+           }
+
+           // Check hit block collisions (bounce off blocks)
+           for (const block of prev.hitBlocks) {
+             const collectibleLeft = newX - 15;
+             const collectibleRight = newX + 15;
+             const collectibleBottom = newY + 20;
+             const collectibleTop = newY - 20;
+
+             const blockTop = block.y;
+             const blockBottom = block.y + block.height;
+             const blockLeft = block.x;
+             const blockRight = block.x + block.width;
+
+             // Landing on block
+             if (
+               collectibleBottom >= blockTop &&
+               collectibleBottom <= blockTop + 15 &&
+               collectibleRight > blockLeft &&
+               collectibleLeft < blockRight &&
+               newVelY >= 0
+             ) {
+               newY = blockTop - 20;
+               newVelY = 0;
+               grounded = true;
+             }
+
+             // Side collisions - bounce
+             if (grounded && collectibleBottom > blockTop + 5 && collectibleTop < blockBottom - 5) {
+               if (collectibleRight > blockLeft && collectibleLeft < blockLeft && newVelX > 0) {
+                 newX = blockLeft - 15;
+                 newVelX = -newVelX * 0.8;
+               }
+               if (collectibleLeft < blockRight && collectibleRight > blockRight && newVelX < 0) {
+                 newX = blockRight + 15;
+                 newVelX = -newVelX * 0.8;
+               }
+             }
+           }
+
+           // Check pipe collisions (bounce off pipes)
+           for (const pipe of prev.pipes) {
+             const collectibleLeft = newX - 15;
+             const collectibleRight = newX + 15;
+             const collectibleBottom = newY + 20;
+             const collectibleTop = newY - 20;
+
+             const pipeTop = pipe.y;
+             const pipeBottom = pipe.y + pipe.height;
+             const pipeLeft = pipe.x;
+             const pipeRight = pipe.x + pipe.width;
+
+             // Landing on pipe
+             if (
+               collectibleBottom >= pipeTop &&
+               collectibleBottom <= pipeTop + 15 &&
+               collectibleRight > pipeLeft + 5 &&
+               collectibleLeft < pipeRight - 5 &&
+               newVelY >= 0
+             ) {
+               newY = pipeTop - 20;
+               newVelY = 0;
+               grounded = true;
+             }
+
+             // Side collisions - bounce
+             if (collectibleBottom > pipeTop + 10 && collectibleTop < pipeBottom - 5) {
+               if (collectibleRight > pipeLeft && collectibleLeft < pipeLeft && newVelX > 0) {
+                 newX = pipeLeft - 15;
+                 newVelX = -newVelX * 0.8;
+               }
+               if (collectibleLeft < pipeRight && collectibleRight > pipeRight && newVelX < 0) {
+                 newX = pipeRight + 15;
+                 newVelX = -newVelX * 0.8;
+               }
+             }
+           }
+
+           // Edge of level boundaries
+           if (newX < 30) {
+             newX = 30;
+             newVelX = Math.abs(newVelX) * 0.8;
+           }
+           if (newX > prev.levelWidth - 30) {
+             newX = prev.levelWidth - 30;
+             newVelX = -Math.abs(newVelX) * 0.8;
+           }
+
+           // Check if fell into pit - remove
+           if (newY > 700) {
+             return { ...collectible, collected: true };
+           }
+
+           // Apply friction when grounded
+           if (grounded) {
+             newVelX *= 0.98;
+             if (Math.abs(newVelX) < 0.1) {
+               newVelX = (Math.random() > 0.5 ? 1 : -1) * 1.5; // Restart movement
+             }
+           }
+
+           return {
+             ...collectible,
+             x: newX,
+             y: newY,
+             velocityX: newVelX,
+             velocityY: newVelY,
+             isGrounded: grounded,
+           };
+         });
+
+         return { ...prev, collectibles: newCollectibles };
+       });
+     }, 1000 / 60);
+
+     return () => clearInterval(interval);
+   }, [isPaused, showDeathOverlay]);
+
   // Update falling hazards
   useEffect(() => {
     if (isPaused || showDeathOverlay) return;
@@ -518,6 +724,8 @@ export function GameEngine({
       let newCollectibles = [...prev.collectibles];
       if (block.contents === 'burst') {
         // Burst reward: spawn larger glowing collectible worth +5
+         // Random initial direction (left or right)
+         const direction = Math.random() > 0.5 ? 1 : -1;
         newCollectibles.push({
           x: block.x + block.width / 2,
           y: block.y - 30,
@@ -525,10 +733,12 @@ export function GameEngine({
           collected: false,
           animationOffset: 0,
           fromBlock: true,
-          velocityX: 1.5,
+           velocityX: direction * (1.5 + Math.random() * 0.5),
           velocityY: -6,
           isBurst: true,
           sparkleTimer: 60,
+           spawnTime: Date.now(),
+           isGrounded: false,
         });
       } else if (block.contents === 'shield') {
         // Shield reward: spawn heart power-up
@@ -541,9 +751,11 @@ export function GameEngine({
           fromBlock: true,
           velocityX: 0,
           velocityY: -7,
+           isBurst: false, // Shield does NOT expire
         });
       } else if (block.contents === 'collectible') {
         // Legacy support for 'collectible' type
+         const direction = Math.random() > 0.5 ? 1 : -1;
         newCollectibles.push({
           x: block.x + block.width / 2,
           y: block.y - 30,
@@ -551,8 +763,11 @@ export function GameEngine({
           collected: false,
           animationOffset: 0,
           fromBlock: true,
-          velocityX: 2,
+           velocityX: direction * 2,
           velocityY: -5,
+           isBurst: true,
+           spawnTime: Date.now(),
+           isGrounded: false,
         });
       } else if (block.contents === 'cookie') {
         newCollectibles.push({
@@ -564,6 +779,7 @@ export function GameEngine({
           fromBlock: true,
           velocityX: 0,
           velocityY: -8,
+           isBurst: false, // Cookies don't expire either
         });
       }
       // 'none' content = empty block, no collectible spawned
