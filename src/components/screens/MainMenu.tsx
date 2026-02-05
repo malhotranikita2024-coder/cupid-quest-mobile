@@ -99,6 +99,12 @@ export function MainMenu({
           0% { background-position: -200% center; }
           100% { background-position: 200% center; }
         }
+        @keyframes flag-wave {
+          0%, 100% { transform: skewX(0deg) scaleX(1); }
+          25% { transform: skewX(-5deg) scaleX(0.95); }
+          50% { transform: skewX(3deg) scaleX(1.02); }
+          75% { transform: skewX(-3deg) scaleX(0.98); }
+        }
       `}</style>
       
       {/* LEFT ISLAND */}
@@ -362,7 +368,14 @@ export function MainMenu({
             {/* Flag */}
             <div className="absolute -top-3 right-0">
               <div className="w-1 h-7 bg-[#8B4513]" />
-              <div className="absolute top-0 left-1 w-5 h-4 bg-gradient-to-r from-[#FF1493] to-[#FF69B4]" style={{ clipPath: 'polygon(0 0, 100% 50%, 0 100%)' }} />
+              <div 
+                className="absolute top-0 left-1 w-5 h-4 bg-gradient-to-r from-[#FF1493] to-[#FF69B4]" 
+                style={{ 
+                  clipPath: 'polygon(0 0, 100% 50%, 0 100%)',
+                  transformOrigin: 'left center',
+                  animation: 'flag-wave 1.5s ease-in-out infinite',
+                }} 
+              />
             </div>
           </div>
         </div>
