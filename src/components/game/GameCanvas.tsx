@@ -473,6 +473,9 @@ export function GameCanvas({
       drawCloud(ctx, cloudX, cloudY, 60 + (i % 2) * 30);
     }
     
+    // Layer 3.5: Flying creatures (birds/butterflies)
+    drawFlyingCreatures(ctx, width, height, time, levelData.id);
+    
     // Layer 4: Background bushes/trees (behind gameplay)
     drawBackgroundVegetation(ctx, width, height, midOffset, levelData.id);
 
@@ -935,6 +938,99 @@ function drawStars(ctx: CanvasRenderingContext2D, width: number, height: number,
     ctx.lineTo(starX, starY - size * 0.3);
     ctx.closePath();
     ctx.fill();
+  }
+}
+
+// Helper: Draw flying birds or butterflies
+function drawFlyingCreatures(ctx: CanvasRenderingContext2D, width: number, height: number, time: number, levelId: number) {
+  // Determine creature type based on level
+  const isButterfly = levelId === 1 || levelId === 2 || levelId === 7; // Rose Garden, Candyland, Love Castle get butterflies
+  
+  // Creature colors by level
+  const butterflyColors: Record<number, string[]> = {
+    1: ['rgba(255, 150, 180, 0.6)', 'rgba(255, 180, 200, 0.6)'], // Pink butterflies
+    2: ['rgba(255, 200, 100, 0.6)', 'rgba(255, 180, 150, 0.6)'], // Orange/yellow
+    7: ['rgba(255, 100, 150, 0.6)', 'rgba(200, 100, 200, 0.6)'], // Pink/purple
+  };
+  
+  const birdColor = 'rgba(60, 60, 80, 0.4)';
+  
+  // Number of creatures
+  const creatureCount = 5 + (levelId % 3);
+  
+  for (let i = 0; i < creatureCount; i++) {
+    // Each creature has its own flight pattern
+    const seed = levelId * 1000 + i * 123;
+    const speedMultiplier = 0.3 + (seed % 10) / 20; // 0.3 - 0.8
+    const baseX = ((time * speedMultiplier + seed * 50) % (width + 300)) - 150;
+    const baseY = 60 + (seed % 150);
+    
+    // Gentle wave motion
+    const waveY = Math.sin(time / 500 + i * 2) * 15;
+    const waveX = Math.sin(time / 800 + i * 1.5) * 8;
+    
+    const x = baseX + waveX;
+    const y = baseY + waveY;
+    
+    if (isButterfly) {
+      // Draw butterfly
+      const colors = butterflyColors[levelId] || butterflyColors[1];
+      const color = colors[i % colors.length];
+      const wingFlap = Math.sin(time / 80 + i * 3) * 0.5 + 0.5; // 0-1 flap cycle
+      const size = 8 + (i % 3) * 2;
+      
+      ctx.fillStyle = color;
+      
+      // Left wing
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(1, wingFlap * 0.6 + 0.4);
+      ctx.beginPath();
+      ctx.ellipse(-size * 0.6, 0, size, size * 0.7, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      
+      // Right wing
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.scale(1, wingFlap * 0.6 + 0.4);
+      ctx.beginPath();
+      ctx.ellipse(size * 0.6, 0, size, size * 0.7, 0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      
+      // Body
+      ctx.fillStyle = 'rgba(80, 60, 60, 0.5)';
+      ctx.beginPath();
+      ctx.ellipse(x, y, 2, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // Draw bird (simple V shape)
+      const wingAngle = Math.sin(time / 100 + i * 2) * 0.4; // Wing flap
+      const size = 10 + (i % 4) * 3;
+      
+      ctx.strokeStyle = birdColor;
+      ctx.lineWidth = 2;
+      ctx.lineCap = 'round';
+      
+      // Left wing
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.quadraticCurveTo(
+        x - size * 0.5, y - size * wingAngle,
+        x - size, y - size * 0.3 + wingAngle * size * 0.5
+      );
+      ctx.stroke();
+      
+      // Right wing
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.quadraticCurveTo(
+        x + size * 0.5, y - size * wingAngle,
+        x + size, y - size * 0.3 + wingAngle * size * 0.5
+      );
+      ctx.stroke();
+    }
   }
 }
 
