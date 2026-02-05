@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useGameState } from '@/hooks/useGameState';
 import { useAudio } from '@/hooks/useAudio';
 import { MainMenu } from './screens/MainMenu';
@@ -37,6 +37,56 @@ export function Game() {
 
   const [isPortrait, setIsPortrait] = useState(false);
   const [showStoryBefore, setShowStoryBefore] = useState(false);
+  const menuMusicStartedRef = useRef(false);
+
+  // Handle menu music - play when on menu screen, stop when leaving
+  useEffect(() => {
+    if (gameState.screen === 'menu' && gameState.musicEnabled) {
+      // Small delay to allow for user interaction first
+      const startMusic = () => {
+        if (!menuMusicStartedRef.current) {
+          audio.initAudio();
+          audio.startMenuMusic();
+          menuMusicStartedRef.current = true;
+        }
+      };
+      
+      // Try to start immediately, or wait for user interaction
+      const handleInteraction = () => {
+        startMusic();
+        document.removeEventListener('click', handleInteraction);
+        document.removeEventListener('keydown', handleInteraction);
+        document.removeEventListener('touchstart', handleInteraction);
+      };
+      
+      // Attempt to start, might fail without user gesture
+      try {
+        startMusic();
+      } catch {
+        document.addEventListener('click', handleInteraction);
+        document.addEventListener('keydown', handleInteraction);
+        document.addEventListener('touchstart', handleInteraction);
+      }
+      
+      return () => {
+        document.removeEventListener('click', handleInteraction);
+        document.removeEventListener('keydown', handleInteraction);
+        document.removeEventListener('touchstart', handleInteraction);
+      };
+    } else if (gameState.screen !== 'menu' && menuMusicStartedRef.current) {
+      // Stop menu music with fade when leaving menu
+      audio.stopMenuMusic(true);
+      menuMusicStartedRef.current = false;
+    }
+  }, [gameState.screen, gameState.musicEnabled, audio]);
+
+  // Also stop menu music if music is disabled
+  useEffect(() => {
+    if (!gameState.musicEnabled && menuMusicStartedRef.current) {
+      audio.stopMenuMusic(false);
+      menuMusicStartedRef.current = false;
+    }
+  }, [gameState.musicEnabled, audio]);
 
   // Check orientation
   useEffect(() => {
