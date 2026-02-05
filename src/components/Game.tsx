@@ -41,44 +41,13 @@ export function Game() {
 
   // Handle menu music - play when on menu screen, stop when leaving
   useEffect(() => {
-    if (gameState.screen === 'menu' && gameState.musicEnabled) {
-      // Small delay to allow for user interaction first
-      const startMusic = () => {
-        if (!menuMusicStartedRef.current) {
-          audio.initAudio();
-          audio.startMenuMusic();
-          menuMusicStartedRef.current = true;
-        }
-      };
-      
-      // Try to start immediately, or wait for user interaction
-      const handleInteraction = () => {
-        startMusic();
-        document.removeEventListener('click', handleInteraction);
-        document.removeEventListener('keydown', handleInteraction);
-        document.removeEventListener('touchstart', handleInteraction);
-      };
-      
-      // Attempt to start, might fail without user gesture
-      try {
-        startMusic();
-      } catch {
-        document.addEventListener('click', handleInteraction);
-        document.addEventListener('keydown', handleInteraction);
-        document.addEventListener('touchstart', handleInteraction);
-      }
-      
-      return () => {
-        document.removeEventListener('click', handleInteraction);
-        document.removeEventListener('keydown', handleInteraction);
-        document.removeEventListener('touchstart', handleInteraction);
-      };
-    } else if (gameState.screen !== 'menu' && menuMusicStartedRef.current) {
+    // Stop menu music with fade when leaving menu
+    if (gameState.screen !== 'menu' && menuMusicStartedRef.current) {
       // Stop menu music with fade when leaving menu
       audio.stopMenuMusic(true);
       menuMusicStartedRef.current = false;
     }
-  }, [gameState.screen, gameState.musicEnabled, audio]);
+  }, [gameState.screen, audio]);
 
   // Also stop menu music if music is disabled
   useEffect(() => {
@@ -183,6 +152,15 @@ export function Game() {
           onPlay={handlePlay}
           onHowToPlay={() => setScreen('howToPlay')}
           onSettings={() => setScreen('settings')}
+          musicEnabled={gameState.musicEnabled}
+          onToggleMusic={toggleMusic}
+          onFirstInteraction={() => {
+            audio.initAudio();
+            if (gameState.musicEnabled && !menuMusicStartedRef.current) {
+              audio.startMenuMusic();
+              menuMusicStartedRef.current = true;
+            }
+          }}
         />
       )}
 
