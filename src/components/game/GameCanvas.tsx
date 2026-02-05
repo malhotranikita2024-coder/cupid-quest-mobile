@@ -1257,7 +1257,7 @@ function drawBackgroundVegetation(ctx: CanvasRenderingContext2D, width: number, 
   };
   
   // Draw flowers on middle meadow
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 3; i++) {
     const seed = levelId * 100 + i;
     const baseX = seededRandom(seed) * (width + 200) - 50;
     const flowerX = ((baseX - offset * 0.25) % (width + 200)) - 50;
@@ -1286,7 +1286,7 @@ function drawBackgroundVegetation(ctx: CanvasRenderingContext2D, width: number, 
   }
   
   // Draw flowers on front meadow (slightly larger, more visible)
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 2; i++) {
     const seed = levelId * 200 + i + 500;
     const baseX = seededRandom(seed) * (width + 250) - 50;
     const flowerX = ((baseX - offset * 0.35) % (width + 250)) - 50;
