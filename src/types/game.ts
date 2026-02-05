@@ -23,6 +23,7 @@ export interface GameState {
   isPaused: boolean;
   timeRemaining: number;
   hasFinishedGame: boolean;
+  hasShield: boolean;
 }
 
 export interface PlayerState {
@@ -58,7 +59,7 @@ export interface HitBlock {
   height: number;
   type: 'question' | 'brick';
   isHit: boolean;
-  contents?: 'collectible' | 'cookie' | 'none';
+  contents?: 'collectible' | 'cookie' | 'none' | 'shield' | 'burst';
   bounceTimer: number;
 }
 
@@ -90,12 +91,14 @@ export interface FallingHazard {
 export interface Collectible {
   x: number;
   y: number;
-  type: 'rose' | 'chocolate' | 'teddy' | 'letter' | 'pearl' | 'ring' | 'arrow' | 'cookie';
+  type: 'rose' | 'chocolate' | 'teddy' | 'letter' | 'pearl' | 'ring' | 'arrow' | 'cookie' | 'shield';
   collected: boolean;
   animationOffset: number;
   fromBlock?: boolean;
   velocityX?: number;
   velocityY?: number;
+  isBurst?: boolean;
+  sparkleTimer?: number;
 }
 
 export interface Enemy {

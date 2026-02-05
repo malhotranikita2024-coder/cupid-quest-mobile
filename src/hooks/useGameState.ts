@@ -15,6 +15,7 @@ const INITIAL_STATE: GameState = {
   isPaused: false,
   timeRemaining: 300,
   hasFinishedGame: false,
+  hasShield: false,
 };
 
 export function useGameState() {
@@ -36,6 +37,7 @@ export function useGameState() {
       collectibles: 0,
       fortuneCookieCollected: false,
       timeRemaining: 300,
+      hasShield: false,
     }));
   }, []);
 
@@ -48,6 +50,7 @@ export function useGameState() {
       fortuneCookieCollected: false,
       timeRemaining: 300,
       isPaused: false,
+      hasShield: false,
     }));
   }, []);
 
@@ -125,6 +128,22 @@ export function useGameState() {
     }));
   }, []);
 
+  const activateShield = useCallback(() => {
+    setGameState(prev => ({ ...prev, hasShield: true }));
+  }, []);
+
+  const useShield = useCallback(() => {
+    setGameState(prev => ({ ...prev, hasShield: false }));
+  }, []);
+
+  const collectBurst = useCallback((amount: number = 5) => {
+    setGameState(prev => ({
+      ...prev,
+      collectibles: prev.collectibles + amount,
+      score: prev.score + 100 * amount,
+    }));
+  }, []);
+
   const togglePause = useCallback(() => {
     setGameState(prev => ({ ...prev, isPaused: !prev.isPaused }));
   }, []);
@@ -160,6 +179,7 @@ export function useGameState() {
       fortuneCookieCollected: false,
       timeRemaining: 300,
       isPaused: false,
+      hasShield: false,
     }));
   }, []);
 
@@ -180,6 +200,9 @@ export function useGameState() {
     addScore,
     collectItem,
     collectFortuneCookie,
+    activateShield,
+    useShield,
+    collectBurst,
     togglePause,
     toggleMusic,
     toggleSfx,
