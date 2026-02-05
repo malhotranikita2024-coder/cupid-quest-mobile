@@ -88,6 +88,10 @@ export function GameEngine({
 
   const audio = useAudio(musicEnabled, sfxEnabled);
 
+  // Store audio functions in refs to avoid dependency issues
+  const audioRef = useRef(audio);
+  audioRef.current = audio;
+
   // Initialize level and start music
   useEffect(() => {
     const data = getLevelData(currentLevel);
@@ -99,17 +103,17 @@ export function GameEngine({
     setShowDeathOverlay(false);
     
     // Start background music
-    audio.initAudio();
+    audioRef.current.initAudio();
     // Small delay to ensure audio context is ready
     const musicTimeout = setTimeout(() => {
-      audio.startBackgroundMusic();
+      audioRef.current.startBackgroundMusic();
     }, 100);
     
     return () => {
       clearTimeout(musicTimeout);
-      audio.stopBackgroundMusic();
+      audioRef.current.stopBackgroundMusic();
     };
-  }, [currentLevel, resetControls, audio]);
+  }, [currentLevel, resetControls]);
 
   // Timer countdown
   useEffect(() => {
