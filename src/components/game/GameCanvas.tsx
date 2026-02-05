@@ -921,8 +921,74 @@ export function GameCanvas({
    );
    const groundY = endPlatform?.y ?? 460; // End platform is at GROUND_Y - 60 = 460
    
-   // Finish zone ground indicator (checkered pattern behind flag)
+   // Define finish zone position first (used by stairs)
    const finishZoneX = flagX - 30;
+   
+   // Draw stairs leading up to end platform
+   const stairCount = 4;
+   const stairWidth = 35;
+   const stairHeight = 15;
+   const stairsStartX = finishZoneX - stairCount * stairWidth - 10;
+   const baseGroundY = 520; // Regular ground level
+   
+   for (let i = 0; i < stairCount; i++) {
+     const stepX = stairsStartX + i * stairWidth;
+     const stepY = baseGroundY - (i + 1) * stairHeight;
+     const stepHeight = (i + 1) * stairHeight;
+     
+     // Brick pattern for each step
+     const brickHeight = 15;
+     const brickWidth = 17;
+     
+     for (let by = 0; by < stepHeight; by += brickHeight) {
+       const rowOffset = (Math.floor(by / brickHeight) % 2) * (brickWidth / 2);
+       for (let bx = 0; bx < stairWidth; bx += brickWidth) {
+         const actualBx = bx + rowOffset;
+         if (actualBx < stairWidth) {
+           const drawWidth = Math.min(brickWidth - 2, stairWidth - actualBx - 2);
+           if (drawWidth > 0) {
+             // Brick base
+             ctx.fillStyle = '#8B4513';
+             ctx.fillRect(
+               stepX + actualBx - cameraX, 
+               stepY + by, 
+               drawWidth, 
+               brickHeight - 2
+             );
+             
+             // Brick highlight (top edge)
+             ctx.fillStyle = '#A0522D';
+             ctx.fillRect(
+               stepX + actualBx - cameraX, 
+               stepY + by, 
+               drawWidth, 
+               3
+             );
+             
+             // Brick shadow (bottom edge)
+             ctx.fillStyle = '#5D3A1A';
+             ctx.fillRect(
+               stepX + actualBx - cameraX, 
+               stepY + by + brickHeight - 4, 
+               drawWidth, 
+               2
+             );
+           }
+         }
+       }
+     }
+     
+     // Step top surface (lighter brown)
+     ctx.fillStyle = '#CD853F';
+     ctx.fillRect(stepX - cameraX, stepY - 3, stairWidth, 3);
+     
+     // Step edge highlight
+     ctx.strokeStyle = '#3E2723';
+     ctx.lineWidth = 1;
+     ctx.strokeRect(stepX - cameraX, stepY, stairWidth, stepHeight);
+   }
+   
+   // Finish zone ground indicator (checkered pattern behind flag)
    const finishZoneWidth = 160;
    ctx.fillStyle = '#FFD700';
    ctx.fillRect(finishZoneX - cameraX, groundY - 8, finishZoneWidth, 8);
