@@ -719,32 +719,6 @@ export function GameCanvas({
          ctx.scale(scale, scale);
          ctx.translate(-collectible.x, -(collectible.y + bobY));
        }
-       
-       // Warning flash in last 1 second before expiry (rapid red/white flashing)
-       const timeSinceSpawn = collectible.spawnTime ? Date.now() - collectible.spawnTime : 0;
-       const EXPIRY_TIME = 4000;
-       const WARNING_START = EXPIRY_TIME - 1000; // Last 1 second
-       
-       if (timeSinceSpawn >= WARNING_START && timeSinceSpawn < EXPIRY_TIME && !collectible.isExpiring && (collectible.isBurst || collectible.type === 'shield')) {
-         // Rapid flashing - alternates every 100ms
-         const flashPhase = Math.floor(timeSinceSpawn / 80) % 2;
-         
-         // Draw warning glow
-         ctx.beginPath();
-         ctx.arc(collectible.x, collectible.y + bobY - 5, 35, 0, Math.PI * 2);
-         if (flashPhase === 0) {
-           ctx.fillStyle = 'rgba(255, 50, 50, 0.5)';
-         } else {
-           ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-         }
-         ctx.fill();
-         
-         // Pulsing scale effect
-         const pulseScale = 1 + Math.sin(timeSinceSpawn / 40) * 0.1;
-         ctx.translate(collectible.x, collectible.y + bobY);
-         ctx.scale(pulseScale, pulseScale);
-         ctx.translate(-collectible.x, -(collectible.y + bobY));
-       }
 
       // Special rendering for burst collectibles (larger, with sparkles)
       if (collectible.isBurst) {
