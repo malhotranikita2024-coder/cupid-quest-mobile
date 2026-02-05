@@ -668,8 +668,9 @@ export function GameCanvas({
       const bobY = Math.sin(time / 300 + collectible.animationOffset * Math.PI) * 5;
       const emoji = COLLECTIBLE_EMOJIS[collectible.type] || '🌹';
       
-      // Boost saturation and contrast for vivid colors
-      ctx.filter = 'saturate(3.0) contrast(1.5) brightness(1.1)';
+      // Arcade-style vibrant collectibles: +40% saturation, +25% contrast
+      // Makes roses red/pink pop, chocolates rich brown, etc.
+      ctx.filter = 'saturate(1.4) contrast(1.25)';
       ctx.font = collectible.type === 'cookie' ? '40px Arial' : '36px Arial';
       ctx.textAlign = 'center';
       ctx.fillText(emoji, collectible.x, collectible.y + bobY);
@@ -683,8 +684,9 @@ export function GameCanvas({
       const wobble = Math.sin(time / 200) * 3;
       const enemyX = enemy.x + enemy.width / 2;
       
-      // Boost saturation and contrast for vivid enemy colors
-      ctx.filter = 'saturate(3.5) contrast(1.6) brightness(1.1)';
+      // Arcade-style bold enemies: +35% saturation, +30% contrast
+      // Makes enemies instantly visible and distinct from background
+      ctx.filter = 'saturate(1.35) contrast(1.3)';
       ctx.font = '48px Arial';
       ctx.textAlign = 'center';
       
