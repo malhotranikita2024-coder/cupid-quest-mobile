@@ -681,7 +681,7 @@ export function GameCanvas({
       ctx.save();
       
        // Handle expiring burst items (fade out)
-       if (collectible.isExpiring && collectible.isBurst) {
+       if (collectible.isExpiring && (collectible.isBurst || collectible.type === 'shield')) {
          const progress = collectible.expiryProgress || 0;
          
          // Burst explosion effect - particles fly outward rapidly
