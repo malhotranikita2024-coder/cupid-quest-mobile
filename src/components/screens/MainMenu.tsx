@@ -95,6 +95,10 @@ export function MainMenu({
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-4px); }
         }
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
       `}</style>
       
       {/* LEFT ISLAND */}
@@ -216,15 +220,24 @@ export function MainMenu({
         
         {/* Golden block on brick stack */}
         <div 
-          className="absolute bottom-[118%] left-[25%] w-7 h-7 flex items-center justify-center"
+          className="absolute bottom-[118%] left-[25%] w-7 h-7 flex items-center justify-center overflow-hidden"
           style={{
             background: 'linear-gradient(180deg, #FFE55C 0%, #FFD700 50%, #DAA520 100%)',
             border: '2px solid #B8860B',
             borderRadius: '3px',
             boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+            position: 'relative',
           }}
         >
           <span className="text-red-500 text-sm">❤</span>
+          <div 
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 2s infinite',
+            }}
+          />
         </div>
         
         {/* Pink Pipe */}
@@ -238,15 +251,25 @@ export function MainMenu({
         
         {/* Golden block near pipe */}
         <div 
-          className="absolute bottom-[130%] left-[40%] w-7 h-7 flex items-center justify-center"
+          className="absolute bottom-[130%] left-[40%] w-7 h-7 flex items-center justify-center overflow-hidden"
           style={{
             background: 'linear-gradient(180deg, #FFE55C 0%, #FFD700 50%, #DAA520 100%)',
             border: '2px solid #B8860B',
             borderRadius: '3px',
             boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+            position: 'relative',
           }}
         >
           <span className="text-red-500 text-sm">❤</span>
+          <div 
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 2s infinite',
+              animationDelay: '0.5s',
+            }}
+          />
         </div>
       </div>
       
@@ -279,14 +302,24 @@ export function MainMenu({
         {/* Golden blocks on right */}
         <div className="absolute bottom-[100%] right-[55%] flex gap-0.5">
           <div 
-            className="w-6 h-6 flex items-center justify-center"
+            className="w-6 h-6 flex items-center justify-center overflow-hidden"
             style={{
               background: 'linear-gradient(180deg, #FFE55C 0%, #FFD700 50%, #DAA520 100%)',
               border: '2px solid #B8860B',
               borderRadius: '2px',
+              position: 'relative',
             }}
           >
             <span className="text-red-500 text-xs">❤</span>
+            <div 
+              className="absolute inset-0 pointer-events-none"
+              style={{
+                background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 2s infinite',
+                animationDelay: '1s',
+              }}
+            />
           </div>
         </div>
         
@@ -360,17 +393,26 @@ export function MainMenu({
       {/* 7-HEART PROGRESS BAR - Golden pill at top */}
       <div className="absolute top-3 left-1/2 -translate-x-1/2 z-30">
         <div 
-          className="px-4 py-2 flex items-center gap-1.5"
+          className="px-4 py-2 flex items-center gap-1.5 overflow-hidden"
           style={{
             background: 'linear-gradient(180deg, #FFE55C 0%, #FFD700 40%, #DAA520 100%)',
             border: '4px solid #B8860B',
             borderRadius: '999px',
             boxShadow: '0 4px 8px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.4)',
+            position: 'relative',
           }}
         >
           {[1, 2, 3, 4, 5, 6, 7].map((i) => (
             <span key={i} className="text-xl" style={{ filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.2))' }}>❤️</span>
           ))}
+          <div 
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 3s infinite',
+            }}
+          />
         </div>
       </div>
       
