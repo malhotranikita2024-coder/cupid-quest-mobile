@@ -668,13 +668,38 @@ export function GameCanvas({
       const bobY = Math.sin(time / 300 + collectible.animationOffset * Math.PI) * 5;
       const emoji = COLLECTIBLE_EMOJIS[collectible.type] || '🌹';
       
-      // Arcade-style vibrant collectibles: +40% saturation, +25% contrast
-      // Makes roses red/pink pop, chocolates rich brown, etc.
-      ctx.filter = 'saturate(1.4) contrast(1.25)';
+      // Draw high-contrast backdrop circle to make collectibles pop
+      ctx.beginPath();
+      ctx.arc(collectible.x, collectible.y + bobY - 5, 20, 0, Math.PI * 2);
+      if (collectible.type === 'cookie') {
+        ctx.fillStyle = 'rgba(255, 200, 50, 0.85)';
+      } else if (collectible.type === 'rose') {
+        ctx.fillStyle = 'rgba(255, 50, 80, 0.8)';
+      } else if (collectible.type === 'chocolate') {
+        ctx.fillStyle = 'rgba(139, 69, 19, 0.85)';
+      } else if (collectible.type === 'teddy') {
+        ctx.fillStyle = 'rgba(210, 180, 140, 0.85)';
+      } else if (collectible.type === 'letter') {
+        ctx.fillStyle = 'rgba(255, 182, 193, 0.85)';
+      } else if (collectible.type === 'pearl') {
+        ctx.fillStyle = 'rgba(200, 220, 255, 0.85)';
+      } else if (collectible.type === 'ring') {
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.85)';
+      } else if (collectible.type === 'arrow') {
+        ctx.fillStyle = 'rgba(255, 100, 100, 0.85)';
+      } else {
+        ctx.fillStyle = 'rgba(255, 100, 150, 0.8)';
+      }
+      ctx.fill();
+      
+      // White rim for extra pop
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
       ctx.font = collectible.type === 'cookie' ? '40px Arial' : '36px Arial';
       ctx.textAlign = 'center';
       ctx.fillText(emoji, collectible.x, collectible.y + bobY);
-      ctx.filter = 'none';
     });
 
     // Draw enemies
@@ -683,10 +708,25 @@ export function GameCanvas({
       
       const wobble = Math.sin(time / 200) * 3;
       const enemyX = enemy.x + enemy.width / 2;
+      const enemyCenterY = enemy.y + 10;
       
-      // Arcade-style bold enemies: +35% saturation, +30% contrast
-      // Makes enemies instantly visible and distinct from background
-      ctx.filter = 'saturate(1.35) contrast(1.3)';
+      // Draw high-contrast backdrop for enemies - makes them instantly visible
+      ctx.beginPath();
+      ctx.arc(enemyX, enemyCenterY, 32, 0, Math.PI * 2);
+      if (enemy.type === 'heartBug') {
+        ctx.fillStyle = 'rgba(255, 20, 100, 0.75)';
+      } else if (enemy.type === 'brokenHeartSlime') {
+        ctx.fillStyle = 'rgba(128, 0, 128, 0.75)';
+      } else {
+        ctx.fillStyle = 'rgba(100, 100, 200, 0.75)';
+      }
+      ctx.fill();
+      
+      // Bold dark outline for arcade look
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.6)';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      
       ctx.font = '48px Arial';
       ctx.textAlign = 'center';
       
@@ -709,7 +749,6 @@ export function GameCanvas({
         ctx.font = '40px Arial';
         ctx.fillText('☁️', enemyX, enemy.y + 45 + wobble);
       }
-      ctx.filter = 'none';
     });
 
     // Draw checkpoint
