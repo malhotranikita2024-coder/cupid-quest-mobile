@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Play, HelpCircle, Settings, User } from 'lucide-react';
+import { Play, HelpCircle, Settings } from 'lucide-react';
 
 interface MainMenuProps {
   playerName: string;
@@ -31,306 +31,364 @@ export function MainMenu({
       <div 
         className="absolute inset-0"
         style={{ 
-          background: 'linear-gradient(180deg, #7EC8E3 0%, #A8D8EA 30%, #B5E2FA 50%, #FFB5C5 80%, #FF9EBA 100%)' 
+          background: 'linear-gradient(180deg, #87CEEB 0%, #ADD8E6 40%, #B0E0E6 60%, #FFE4E1 100%)' 
         }}
       />
       
       {/* Decorative clouds */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[8%] left-[5%] w-32 h-16 bg-white rounded-full opacity-90" style={{ filter: 'blur(2px)' }} />
-        <div className="absolute top-[5%] left-[8%] w-24 h-14 bg-white rounded-full opacity-90" style={{ filter: 'blur(2px)' }} />
-        <div className="absolute top-[12%] left-[25%] w-28 h-12 bg-white rounded-full opacity-80" style={{ filter: 'blur(2px)' }} />
-        <div className="absolute top-[6%] right-[20%] w-36 h-16 bg-white rounded-full opacity-90" style={{ filter: 'blur(2px)' }} />
-        <div className="absolute top-[10%] right-[25%] w-20 h-12 bg-white rounded-full opacity-85" style={{ filter: 'blur(2px)' }} />
-        <div className="absolute top-[15%] right-[5%] w-28 h-14 bg-white rounded-full opacity-80" style={{ filter: 'blur(2px)' }} />
-        
-        {/* Sparkle effects */}
-        <div className="absolute top-[8%] left-[40%] text-white text-xl animate-pulse">✦</div>
-        <div className="absolute top-[12%] right-[35%] text-white text-lg animate-pulse" style={{ animationDelay: '0.5s' }}>✦</div>
-        <div className="absolute top-[5%] right-[15%] text-pink-200 text-2xl animate-pulse" style={{ animationDelay: '1s' }}>✦</div>
+        <div className="absolute top-[12%] left-[5%] w-24 h-10 bg-white/80 rounded-full" style={{ filter: 'blur(3px)' }} />
+        <div className="absolute top-[8%] left-[15%] w-16 h-8 bg-white/70 rounded-full" style={{ filter: 'blur(3px)' }} />
+        <div className="absolute top-[15%] right-[10%] w-28 h-12 bg-white/80 rounded-full" style={{ filter: 'blur(3px)' }} />
+        <div className="absolute top-[10%] right-[25%] w-20 h-9 bg-white/70 rounded-full" style={{ filter: 'blur(3px)' }} />
       </div>
       
-      {/* World map landscape */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Left island with greenery */}
-        <div className="absolute bottom-[20%] left-0 w-[35%] h-[45%]">
-          {/* Island base */}
-          <div className="absolute bottom-0 left-0 right-0 h-[60%] bg-gradient-to-t from-[#8B6914] via-[#A67C00] to-[#5D8A3C] rounded-tr-[60px]" />
-          {/* Grass top */}
-          <div className="absolute bottom-[55%] left-0 right-[10%] h-[25%] bg-gradient-to-t from-[#4A7C2F] to-[#6BAF47] rounded-t-[30px]" />
-          {/* Trees */}
-          <div className="absolute bottom-[65%] left-[20%] w-12 h-16 bg-[#2D5A1E] rounded-full" />
-          <div className="absolute bottom-[70%] left-[35%] w-16 h-20 bg-[#3D7A2E] rounded-full" />
-          <div className="absolute bottom-[60%] left-[55%] w-10 h-14 bg-[#4A8A3A] rounded-full" />
-        </div>
-        
-        {/* Right island with castle */}
-        <div className="absolute bottom-[20%] right-0 w-[35%] h-[50%]">
-          {/* Island base */}
-          <div className="absolute bottom-0 left-0 right-0 h-[55%] bg-gradient-to-t from-[#8B6914] via-[#A67C00] to-[#5D8A3C] rounded-tl-[60px]" />
-          {/* Grass */}
-          <div className="absolute bottom-[50%] left-[10%] right-0 h-[20%] bg-gradient-to-t from-[#4A7C2F] to-[#6BAF47] rounded-t-[30px]" />
-          {/* Castle */}
-          <div className="absolute bottom-[55%] right-[15%] w-20 h-28">
-            {/* Castle body */}
-            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-20 bg-gradient-to-b from-[#F5E6D3] to-[#E8D5C4]" />
-            {/* Castle towers */}
-            <div className="absolute bottom-[70%] left-0 w-6 h-12 bg-gradient-to-b from-[#FFB6C1] to-[#F5E6D3]" />
-            <div className="absolute bottom-[75%] right-0 w-6 h-14 bg-gradient-to-b from-[#FFB6C1] to-[#F5E6D3]" />
-            {/* Tower tops */}
-            <div className="absolute bottom-[100%] left-0 w-0 h-0 border-l-[12px] border-r-[12px] border-b-[16px] border-transparent border-b-[#FF69B4]" style={{ transform: 'translateX(-3px)' }} />
-            <div className="absolute bottom-[105%] right-0 w-0 h-0 border-l-[12px] border-r-[12px] border-b-[16px] border-transparent border-b-[#FF69B4]" style={{ transform: 'translateX(3px)' }} />
-            {/* Flags */}
-            <div className="absolute -top-2 left-1 w-1 h-6 bg-[#8B4513]" />
-            <div className="absolute -top-2 left-2 w-4 h-3 bg-[#FF1493]" style={{ clipPath: 'polygon(0 0, 100% 50%, 0 100%)' }} />
-          </div>
-          {/* Trees */}
-          <div className="absolute bottom-[55%] left-[15%] w-10 h-14 bg-[#3D7A2E] rounded-full" />
-        </div>
-        
-        {/* Water/ocean in middle */}
-        <div className="absolute bottom-0 left-[30%] right-[30%] h-[25%] bg-gradient-to-b from-[#87CEEB] via-[#5DADE2] to-[#3498DB] opacity-80" />
-        
-        {/* Winding golden path on left island */}
-        <div className="absolute bottom-[35%] left-[5%] w-3 h-20 bg-gradient-to-b from-[#FFD700] to-[#DAA520] rounded-full opacity-80" />
-        <div className="absolute bottom-[45%] left-[10%] w-3 h-16 bg-gradient-to-b from-[#FFD700] to-[#DAA520] rounded-full opacity-80 rotate-12" />
-        
-        {/* Golden path on right */}
-        <div className="absolute bottom-[40%] right-[25%] w-3 h-24 bg-gradient-to-b from-[#FFD700] to-[#DAA520] rounded-full opacity-80 -rotate-12" />
-      </div>
+      {/* Far background - distant hills */}
+      <div className="absolute bottom-[35%] left-0 right-0 h-[20%] bg-gradient-to-t from-[#7CB97C] to-[#9ACD9A] opacity-60" style={{ borderRadius: '50% 50% 0 0' }} />
       
-      {/* Ground level with platformer elements */}
-      <div className="absolute bottom-0 left-0 right-0 h-[22%]">
-        {/* Main ground */}
-        <div className="absolute bottom-0 left-0 right-0 h-full bg-gradient-to-t from-[#5D8A3C] to-[#7AB356]" />
+      {/* Main ground terrain - full width platformer ground */}
+      <div className="absolute bottom-0 left-0 right-0 h-[40%]">
+        {/* Grass layer */}
+        <div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-[#4CAF50] to-[#388E3C]" />
+        {/* Dirt/earth layer */}
+        <div className="absolute top-4 left-0 right-0 bottom-0 bg-gradient-to-b from-[#8B5A2B] via-[#6B4423] to-[#4A3520]" />
         
-        {/* Brick platform left */}
-        <div className="absolute bottom-[80%] left-[3%] flex">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="w-8 h-8 bg-gradient-to-b from-[#CD853F] to-[#8B4513] border border-[#654321] flex items-center justify-center">
-              <div className="w-full h-[2px] bg-[#654321] absolute top-1/2" />
-              <div className="h-full w-[2px] bg-[#654321] absolute left-1/2" />
+        {/* Brick texture pattern in ground */}
+        <div className="absolute top-6 left-0 right-0 bottom-0 opacity-30">
+          {[...Array(8)].map((_, row) => (
+            <div key={row} className="flex" style={{ marginTop: row > 0 ? '-1px' : '0' }}>
+              {[...Array(30)].map((_, col) => (
+                <div 
+                  key={col} 
+                  className="w-8 h-4 border-b border-r"
+                  style={{ 
+                    borderColor: 'rgba(0,0,0,0.2)',
+                    marginLeft: row % 2 === 0 ? '0' : '-16px'
+                  }} 
+                />
+              ))}
             </div>
           ))}
         </div>
-        
-        {/* Golden question block left */}
-        <div className="absolute bottom-[80%] left-[22%] w-10 h-10 bg-gradient-to-b from-[#FFD700] to-[#DAA520] border-2 border-[#B8860B] rounded flex items-center justify-center shadow-lg">
-          <span className="text-[#B8860B] font-bold text-xl">❤</span>
-        </div>
-        
-        {/* Pipe left */}
-        <div className="absolute bottom-[60%] left-[12%]">
-          <div className="w-10 h-6 bg-gradient-to-b from-[#FF69B4] to-[#DB7093] rounded-t-lg border-2 border-[#C71585]" />
-          <div className="w-8 h-12 bg-gradient-to-b from-[#FF69B4] to-[#DB7093] mx-auto border-x-2 border-b-2 border-[#C71585]" />
-        </div>
-        
-        {/* Rose decoration */}
-        <div className="absolute bottom-[95%] left-[15%] text-3xl">🌹</div>
-        
-        {/* Brick platform right */}
-        <div className="absolute bottom-[60%] right-[3%] flex">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="w-8 h-8 bg-gradient-to-b from-[#CD853F] to-[#8B4513] border border-[#654321] relative">
-              <div className="w-full h-[2px] bg-[#654321] absolute top-1/2" />
-              <div className="h-full w-[2px] bg-[#654321] absolute left-1/2" />
-            </div>
-          ))}
-        </div>
-        
-        {/* Golden question blocks right */}
-        <div className="absolute bottom-[60%] right-[25%] flex gap-1">
-          <div className="w-10 h-10 bg-gradient-to-b from-[#FFD700] to-[#DAA520] border-2 border-[#B8860B] rounded flex items-center justify-center shadow-lg">
-            <span className="text-[#B8860B] font-bold text-xl">❤</span>
-          </div>
-        </div>
-        
-        {/* Hero character (right side) */}
-        <div className="absolute bottom-[60%] right-[8%] animate-bounce" style={{ animationDuration: '1s' }}>
-          <div className="relative">
-            {/* Hero body */}
-            <div className="w-12 h-12 bg-gradient-to-b from-[#FFE4C4] to-[#FFDAB9] rounded-full border-2 border-[#DEB887]" />
-            {/* Happy face */}
-            <div className="absolute top-2 left-2 w-2 h-2 bg-[#333] rounded-full" />
-            <div className="absolute top-2 right-2 w-2 h-2 bg-[#333] rounded-full" />
-            <div className="absolute top-5 left-1/2 -translate-x-1/2 w-4 h-2 border-b-2 border-[#333] rounded-b-full" />
-            {/* Red outfit */}
-            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-10 h-6 bg-gradient-to-b from-[#FF4444] to-[#CC0000] rounded-b-lg" />
-            {/* Flag in hand */}
-            <div className="absolute -top-4 -right-2">
-              <div className="w-1 h-8 bg-[#8B4513]" />
-              <div className="absolute top-0 left-1 w-6 h-4 bg-[#FF1493]" style={{ clipPath: 'polygon(0 0, 100% 50%, 0 100%)' }} />
-            </div>
-          </div>
-        </div>
-        
-        {/* Enemy characters (decorative) */}
-        <div className="absolute bottom-[55%] right-[35%]">
-          <div className="w-8 h-8 bg-gradient-to-b from-[#4A4A8A] to-[#2E2E5E] rounded-lg">
-            <div className="absolute top-2 left-1 w-1.5 h-1.5 bg-[#FFD700] rounded-full" />
-            <div className="absolute top-2 right-1 w-1.5 h-1.5 bg-[#FFD700] rounded-full" />
-          </div>
-        </div>
-        
-        <div className="absolute bottom-[55%] left-[28%]">
-          <div className="w-8 h-8 bg-gradient-to-b from-[#4A4A8A] to-[#2E2E5E] rounded-lg">
-            <div className="absolute top-2 left-1 w-1.5 h-1.5 bg-[#FFD700] rounded-full" />
-            <div className="absolute top-2 right-1 w-1.5 h-1.5 bg-[#FFD700] rounded-full" />
-          </div>
+      </div>
+      
+      {/* Left side platformer elements */}
+      <div className="absolute bottom-[40%] left-[2%]">
+        {/* Pipe */}
+        <div className="relative">
+          <div className="w-12 h-5 bg-gradient-to-b from-[#32CD32] to-[#228B22] rounded-t-md border-2 border-[#006400]" />
+          <div className="w-10 h-16 bg-gradient-to-r from-[#228B22] via-[#32CD32] to-[#228B22] mx-auto border-x-2 border-b-2 border-[#006400]" />
         </div>
       </div>
       
-      {/* 7-Heart Progress Bar (Top) */}
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+      {/* Left brick stack */}
+      <div className="absolute bottom-[40%] left-[12%] flex flex-col">
+        {[0, 1].map((row) => (
+          <div key={row} className="flex">
+            {[0, 1].map((col) => (
+              <div 
+                key={col} 
+                className="w-7 h-7 relative"
+                style={{
+                  background: 'linear-gradient(135deg, #CD853F 0%, #A0522D 50%, #8B4513 100%)',
+                  border: '2px solid #654321',
+                  boxShadow: 'inset 1px 1px 0 rgba(255,255,255,0.2), inset -1px -1px 0 rgba(0,0,0,0.2)',
+                }}
+              >
+                <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-[#654321]" />
+                <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-[#654321]" />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      
+      {/* Golden question block left */}
+      <div 
+        className="absolute bottom-[54%] left-[12%] w-8 h-8 flex items-center justify-center animate-pulse"
+        style={{
+          background: 'linear-gradient(180deg, #FFD700 0%, #FFA500 50%, #DAA520 100%)',
+          border: '2px solid #B8860B',
+          borderRadius: '4px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.4)',
+          animationDuration: '2s',
+        }}
+      >
+        <span className="text-[#8B4513] font-bold text-sm">?</span>
+      </div>
+      
+      {/* Right side platformer elements */}
+      <div className="absolute bottom-[40%] right-[3%]">
+        {/* Pipe */}
+        <div className="relative">
+          <div className="w-12 h-5 bg-gradient-to-b from-[#32CD32] to-[#228B22] rounded-t-md border-2 border-[#006400]" />
+          <div className="w-10 h-20 bg-gradient-to-r from-[#228B22] via-[#32CD32] to-[#228B22] mx-auto border-x-2 border-b-2 border-[#006400]" />
+        </div>
+      </div>
+      
+      {/* Right brick platform */}
+      <div className="absolute bottom-[40%] right-[12%] flex">
+        {[0, 1, 2, 3].map((i) => (
+          <div 
+            key={i} 
+            className="w-7 h-7 relative"
+            style={{
+              background: 'linear-gradient(135deg, #CD853F 0%, #A0522D 50%, #8B4513 100%)',
+              border: '2px solid #654321',
+              boxShadow: 'inset 1px 1px 0 rgba(255,255,255,0.2), inset -1px -1px 0 rgba(0,0,0,0.2)',
+            }}
+          >
+            <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-[#654321]" />
+            <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-[#654321]" />
+          </div>
+        ))}
+      </div>
+      
+      {/* Golden blocks on right platform */}
+      <div className="absolute bottom-[47%] right-[14%] flex gap-1">
+        {[0, 1].map((i) => (
+          <div 
+            key={i}
+            className="w-7 h-7 flex items-center justify-center"
+            style={{
+              background: 'linear-gradient(180deg, #FFD700 0%, #FFA500 50%, #DAA520 100%)',
+              border: '2px solid #B8860B',
+              borderRadius: '3px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+            }}
+          >
+            <span className="text-[#8B4513] font-bold text-xs">?</span>
+          </div>
+        ))}
+      </div>
+      
+      {/* Enemy on right platform */}
+      <div className="absolute bottom-[47%] right-[22%]">
         <div 
-          className="px-6 py-2 rounded-full flex items-center gap-2"
+          className="w-7 h-7 rounded-md relative"
+          style={{ background: 'linear-gradient(180deg, #4A4A8A 0%, #2E2E5E 100%)' }}
+        >
+          <div className="absolute top-1.5 left-1 w-1.5 h-1.5 bg-[#FFD700] rounded-full" />
+          <div className="absolute top-1.5 right-1 w-1.5 h-1.5 bg-[#FFD700] rounded-full" />
+        </div>
+      </div>
+      
+      {/* Center elevated platform with path leading to it */}
+      <div className="absolute bottom-[40%] left-1/2 -translate-x-1/2">
+        <div className="flex">
+          {[...Array(6)].map((_, i) => (
+            <div 
+              key={i} 
+              className="w-8 h-8 relative"
+              style={{
+                background: 'linear-gradient(135deg, #CD853F 0%, #A0522D 50%, #8B4513 100%)',
+                border: '2px solid #654321',
+                boxShadow: 'inset 1px 1px 0 rgba(255,255,255,0.2)',
+              }}
+            >
+              <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-[#654321]" />
+              <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-[#654321]" />
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* HERO CHARACTER - Standing at journey start, facing right */}
+      <div className="absolute bottom-[48%] left-[25%] z-30">
+        <div className="relative">
+          {/* Body */}
+          <div 
+            className="w-10 h-10 rounded-full relative"
+            style={{ background: 'linear-gradient(180deg, #FFE4C4 0%, #FFDAB9 100%)', border: '2px solid #DEB887' }}
+          >
+            {/* Eyes - looking right */}
+            <div className="absolute top-2 left-3 w-2 h-2 bg-[#333] rounded-full" />
+            <div className="absolute top-2 right-1.5 w-2 h-2 bg-[#333] rounded-full" />
+            {/* Smile */}
+            <div className="absolute top-5 left-1/2 -translate-x-1/2 w-4 h-2 border-b-2 border-[#333] rounded-b-full" />
+          </div>
+          {/* Red outfit */}
+          <div 
+            className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-9 h-5 rounded-b-lg"
+            style={{ background: 'linear-gradient(180deg, #FF4444 0%, #CC0000 100%)' }}
+          />
+          {/* Arm pointing forward */}
+          <div 
+            className="absolute top-4 -right-3 w-4 h-2 rounded-full"
+            style={{ background: '#FFE4C4', border: '1px solid #DEB887' }}
+          />
+        </div>
+      </div>
+      
+      {/* Rose collectible near hero */}
+      <div className="absolute bottom-[52%] left-[32%] text-xl animate-bounce" style={{ animationDuration: '1.5s' }}>🌹</div>
+      
+      {/* 7-Heart Progress Bar - Subtle, wooden frame style */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20">
+        <div 
+          className="px-3 py-1.5 flex items-center gap-1"
           style={{
-            background: 'linear-gradient(180deg, #FFE55C 0%, #FFD700 50%, #DAA520 100%)',
-            border: '4px solid #B8860B',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.3)',
+            background: 'linear-gradient(180deg, #DEB887 0%, #D2691E 100%)',
+            border: '3px solid #8B4513',
+            borderRadius: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
           }}
         >
           {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-            <span key={i} className="text-2xl drop-shadow-md" style={{ filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.3))' }}>
-              ❤️
-            </span>
+            <span key={i} className="text-sm opacity-50">❤️</span>
           ))}
         </div>
       </div>
       
-      {/* Title */}
-      <div className="absolute top-[15%] left-1/2 -translate-x-1/2 z-10 text-center">
-        <div className="relative">
-          {/* SUPER */}
-          <span 
-            className="font-display text-3xl md:text-5xl font-black tracking-wide inline-block"
-            style={{
-              background: 'linear-gradient(180deg, #FF69B4 0%, #FF1493 50%, #C71585 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(3px 3px 0 #7B0041) drop-shadow(5px 5px 0 #3D0020)',
-              letterSpacing: '4px',
-            }}
-          >
-            SUPER
-          </span>
-          <span className="text-3xl md:text-4xl ml-2">💕</span>
-        </div>
-        <div className="relative -mt-1">
-          {/* LOVE */}
-          <span 
-            className="font-display text-4xl md:text-6xl font-black tracking-wide inline-block"
-            style={{
-              background: 'linear-gradient(180deg, #87CEEB 0%, #4169E1 50%, #1E3A8A 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(3px 3px 0 #1E3A8A) drop-shadow(5px 5px 0 #0A1628)',
-              letterSpacing: '4px',
-            }}
-          >
-            LOVE
-          </span>
-          {/* QUEST */}
-          <span 
-            className="font-display text-4xl md:text-6xl font-black tracking-wide inline-block ml-3"
-            style={{
-              background: 'linear-gradient(180deg, #FFD700 0%, #FFA500 50%, #FF8C00 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(3px 3px 0 #B8860B) drop-shadow(5px 5px 0 #5C4306)',
-              letterSpacing: '4px',
-            }}
-          >
-            QUEST
-          </span>
+      {/* TITLE - Mounted on wooden signboard */}
+      <div className="absolute top-[12%] left-1/2 -translate-x-1/2 z-10">
+        {/* Wooden sign backing */}
+        <div 
+          className="relative px-6 py-3"
+          style={{
+            background: 'linear-gradient(180deg, #DEB887 0%, #D2B48C 50%, #C4A574 100%)',
+            border: '4px solid #8B4513',
+            borderRadius: '8px',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.2)',
+          }}
+        >
+          {/* Wooden texture lines */}
+          <div className="absolute inset-0 opacity-20 overflow-hidden rounded">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-[1px] bg-[#654321] mt-3" />
+            ))}
+          </div>
+          
+          {/* Title text */}
+          <div className="relative text-center">
+            <span 
+              className="font-display text-2xl md:text-4xl font-black block"
+              style={{
+                color: '#FF1493',
+                textShadow: '2px 2px 0 #8B0051, 3px 3px 0 #4A0029, 0 0 10px rgba(255,20,147,0.3)',
+                letterSpacing: '2px',
+              }}
+            >
+              SUPER
+            </span>
+            <div className="flex items-center justify-center gap-2 -mt-1">
+              <span 
+                className="font-display text-3xl md:text-5xl font-black"
+                style={{
+                  color: '#FF69B4',
+                  textShadow: '2px 2px 0 #C71585, 3px 3px 0 #8B0051',
+                  letterSpacing: '3px',
+                }}
+              >
+                LOVE
+              </span>
+              <span 
+                className="font-display text-3xl md:text-5xl font-black"
+                style={{
+                  color: '#FFD700',
+                  textShadow: '2px 2px 0 #B8860B, 3px 3px 0 #8B6914',
+                  letterSpacing: '3px',
+                }}
+              >
+                QUEST
+              </span>
+            </div>
+          </div>
+          
+          {/* Sign posts */}
+          <div className="absolute -bottom-8 left-4 w-3 h-10 bg-gradient-to-b from-[#8B4513] to-[#654321] rounded-b" />
+          <div className="absolute -bottom-8 right-4 w-3 h-10 bg-gradient-to-b from-[#8B4513] to-[#654321] rounded-b" />
         </div>
       </div>
       
-      {/* Center Menu Panel */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 mt-8">
+      {/* UI Panel - Wooden board style, embedded in world */}
+      <div className="absolute bottom-[48%] left-1/2 -translate-x-1/2 z-20">
         <div 
-          className="px-8 py-6 rounded-2xl min-w-[300px] md:min-w-[380px]"
+          className="relative px-4 py-3"
           style={{
-            background: 'linear-gradient(180deg, #FFFAF0 0%, #FFF5E6 50%, #FFE4C4 100%)',
-            border: '4px solid #DEB887',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.25), inset 0 2px 8px rgba(255,255,255,0.5)',
+            background: 'linear-gradient(180deg, #F5DEB3 0%, #DEB887 50%, #D2B48C 100%)',
+            border: '3px solid #8B4513',
+            borderRadius: '6px',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.3)',
+            minWidth: '200px',
           }}
         >
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name Input */}
-            <div className="relative">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-                <User className="w-5 h-5" />
-              </div>
-              <input
-                id="playerName"
-                type="text"
-                value={playerName}
-                onChange={(e) => onPlayerNameChange(e.target.value)}
-                onFocus={() => setIsInputFocused(true)}
-                onBlur={() => setIsInputFocused(false)}
-                placeholder="Enter Your Name"
-                className="w-full pl-12 pr-4 py-3 text-lg rounded-xl bg-white border-2 border-gray-200 focus:border-pink-400 focus:outline-none transition-colors"
-                style={{ 
-                  color: '#555',
-                  boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)',
-                }}
-                maxLength={20}
-                autoComplete="off"
-              />
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-2">
+            {/* Name Input - Stone tablet style */}
+            <input
+              id="playerName"
+              type="text"
+              value={playerName}
+              onChange={(e) => onPlayerNameChange(e.target.value)}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
+              placeholder="Enter Name..."
+              className="w-full px-3 py-2 text-sm text-center font-display rounded focus:outline-none"
+              style={{ 
+                background: 'linear-gradient(180deg, #FFF8DC 0%, #F5DEB3 100%)',
+                border: '2px solid #A0522D',
+                color: '#5C4306',
+              }}
+              maxLength={20}
+              autoComplete="off"
+            />
             
             {/* Play Button */}
             <button
               type="submit"
               disabled={!playerName.trim()}
-              className="w-full flex items-center justify-center gap-3 py-4 text-xl font-display font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="w-full flex items-center justify-center gap-2 py-2 text-sm font-display font-bold rounded disabled:opacity-50 disabled:cursor-not-allowed transition-transform hover:scale-[1.02] active:scale-[0.98]"
               style={{
                 background: 'linear-gradient(180deg, #FF69B4 0%, #FF1493 100%)',
-                border: '3px solid #C71585',
+                border: '2px solid #C71585',
                 color: '#FFF',
-                textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
-                boxShadow: '0 4px 0 #8B0051, 0 6px 12px rgba(0,0,0,0.2)',
+                textShadow: '1px 1px 1px rgba(0,0,0,0.3)',
+                boxShadow: '0 3px 0 #8B0051',
               }}
             >
-              <Play className="w-5 h-5 fill-white" />
+              <Play className="w-4 h-4 fill-white" />
               PLAY
             </button>
             
             {/* Secondary Buttons */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex gap-2">
               <button
                 type="button"
                 onClick={onHowToPlay}
-                className="flex items-center justify-center gap-2 py-3 text-sm font-display font-bold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-display font-bold rounded transition-transform hover:scale-[1.02]"
                 style={{
-                  background: 'linear-gradient(180deg, #FFE55C 0%, #FFD700 100%)',
-                  border: '3px solid #B8860B',
+                  background: 'linear-gradient(180deg, #FFD700 0%, #DAA520 100%)',
+                  border: '2px solid #B8860B',
                   color: '#5C4306',
-                  boxShadow: '0 3px 0 #8B6914, 0 4px 8px rgba(0,0,0,0.15)',
+                  boxShadow: '0 2px 0 #8B6914',
                 }}
               >
-                <HelpCircle className="w-4 h-4" />
-                How to Play
+                <HelpCircle className="w-3 h-3" />
+                How To
               </button>
               
               <button
                 type="button"
                 onClick={onSettings}
-                className="flex items-center justify-center gap-2 py-3 text-sm font-display font-bold rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-display font-bold rounded transition-transform hover:scale-[1.02]"
                 style={{
-                  background: 'linear-gradient(180deg, #FFE55C 0%, #FFD700 100%)',
-                  border: '3px solid #B8860B',
+                  background: 'linear-gradient(180deg, #FFD700 0%, #DAA520 100%)',
+                  border: '2px solid #B8860B',
                   color: '#5C4306',
-                  boxShadow: '0 3px 0 #8B6914, 0 4px 8px rgba(0,0,0,0.15)',
+                  boxShadow: '0 2px 0 #8B6914',
                 }}
               >
-                <Settings className="w-4 h-4" />
+                <Settings className="w-3 h-3" />
                 Settings
               </button>
             </div>
           </form>
         </div>
+      </div>
+      
+      {/* Decorative arrow pointing right (toward adventure) */}
+      <div className="absolute bottom-[42%] left-[38%] text-2xl animate-pulse" style={{ animationDuration: '1s' }}>
+        ➡️
       </div>
     </div>
   );
