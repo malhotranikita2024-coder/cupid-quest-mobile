@@ -669,7 +669,7 @@ export function GameCanvas({
       const emoji = COLLECTIBLE_EMOJIS[collectible.type] || '🌹';
       
       // Boost saturation and contrast for vivid colors
-      ctx.filter = 'saturate(1.8) contrast(1.3)';
+      ctx.filter = 'saturate(3.0) contrast(1.5) brightness(1.1)';
       ctx.font = collectible.type === 'cookie' ? '40px Arial' : '36px Arial';
       ctx.textAlign = 'center';
       ctx.fillText(emoji, collectible.x, collectible.y + bobY);
@@ -684,7 +684,7 @@ export function GameCanvas({
       const enemyX = enemy.x + enemy.width / 2;
       
       // Boost saturation and contrast for vivid enemy colors
-      ctx.filter = 'saturate(2.0) contrast(1.4)';
+      ctx.filter = 'saturate(3.5) contrast(1.6) brightness(1.1)';
       ctx.font = '48px Arial';
       ctx.textAlign = 'center';
       
