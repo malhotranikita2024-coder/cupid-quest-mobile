@@ -9,6 +9,8 @@ interface GameCanvasProps {
   onPlayerUpdate: (player: PlayerState) => void;
   onCollectItem: (index: number) => void;
   onCollectCookie: (index: number) => void;
+  onCollectShield: (index: number) => void;
+  onCollectBurst: (index: number) => void;
   onEnemyDefeated: (index: number) => void;
   onPlayerHit: () => void;
   onCheckpointReached: () => void;
@@ -19,6 +21,7 @@ interface GameCanvasProps {
   cameraX: number;
   onCameraUpdate: (x: number) => void;
   onFireballHit?: () => void;
+  hasShield: boolean;
 }
 
 const GRAVITY = 0.6;
@@ -36,6 +39,8 @@ export function GameCanvas({
   onPlayerUpdate,
   onCollectItem,
   onCollectCookie,
+  onCollectShield,
+  onCollectBurst,
   onEnemyDefeated,
   onPlayerHit,
   onCheckpointReached,
@@ -46,6 +51,7 @@ export function GameCanvas({
   cameraX,
   onCameraUpdate,
   onFireballHit,
+  hasShield,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
@@ -264,6 +270,10 @@ export function GameCanvas({
       if (distance < 40) {
         if (collectible.type === 'cookie') {
           onCollectCookie(index);
+        } else if (collectible.type === 'shield') {
+          onCollectShield(index);
+        } else if (collectible.isBurst) {
+          onCollectBurst(index);
         } else {
           onCollectItem(index);
         }
@@ -669,7 +679,31 @@ export function GameCanvas({
       const emoji = COLLECTIBLE_EMOJIS[collectible.type] || '🌹';
       
       ctx.save();
-      ctx.font = collectible.type === 'cookie' ? '42px Arial' : '38px Arial';
+      
+      // Special rendering for burst collectibles (larger, with sparkles)
+      if (collectible.isBurst) {
+        // Sparkle effect
+        const sparkleAngle = time / 100;
+        for (let i = 0; i < 4; i++) {
+          const angle = sparkleAngle + (i * Math.PI / 2);
+          const sparkleX = collectible.x + Math.cos(angle) * 25;
+          const sparkleY = collectible.y + bobY + Math.sin(angle) * 25;
+          ctx.font = '12px Arial';
+          ctx.fillText('✨', sparkleX, sparkleY);
+        }
+        ctx.font = '48px Arial'; // Larger for burst
+      } else if (collectible.type === 'shield') {
+        // Pulsing glow for shield power-up
+        const pulse = Math.sin(time / 150) * 0.3 + 0.7;
+        ctx.beginPath();
+        ctx.arc(collectible.x, collectible.y + bobY - 5, 28 * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 100, 150, 0.4)';
+        ctx.fill();
+        ctx.font = '44px Arial';
+      } else {
+        ctx.font = collectible.type === 'cookie' ? '42px Arial' : '38px Arial';
+      }
+      
       ctx.textAlign = 'center';
       
       // White outline - draw emoji 8 times around the center
@@ -798,6 +832,37 @@ export function GameCanvas({
     const blinkVisible = !player.isInvincible || Math.floor(time / 100) % 2 === 0;
     if (blinkVisible) {
       ctx.save();
+      
+      // Draw shield aura if player has shield
+      if (hasShield) {
+        const shieldPulse = Math.sin(time / 200) * 0.15 + 0.85;
+        const shieldRadius = 40 * shieldPulse;
+        
+        // Outer glow
+        const gradient = ctx.createRadialGradient(
+          player.x + PLAYER_WIDTH / 2, player.y + PLAYER_HEIGHT / 2, 10,
+          player.x + PLAYER_WIDTH / 2, player.y + PLAYER_HEIGHT / 2, shieldRadius
+        );
+        gradient.addColorStop(0, 'rgba(255, 100, 150, 0.6)');
+        gradient.addColorStop(0.5, 'rgba(255, 50, 100, 0.3)');
+        gradient.addColorStop(1, 'rgba(255, 0, 100, 0)');
+        
+        ctx.beginPath();
+        ctx.arc(player.x + PLAYER_WIDTH / 2, player.y + PLAYER_HEIGHT / 2, shieldRadius, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        
+        // Heart icons orbiting
+        const orbitAngle = time / 300;
+        for (let i = 0; i < 3; i++) {
+          const angle = orbitAngle + (i * Math.PI * 2 / 3);
+          const orbitX = player.x + PLAYER_WIDTH / 2 + Math.cos(angle) * 35;
+          const orbitY = player.y + PLAYER_HEIGHT / 2 + Math.sin(angle) * 35;
+          ctx.font = '16px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('💖', orbitX, orbitY);
+        }
+      }
       
       ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
       ctx.beginPath();

@@ -24,6 +24,9 @@ export function Game() {
     loseLife,
     collectItem,
     collectFortuneCookie,
+    activateShield,
+    useShield,
+    collectBurst,
     togglePause,
     toggleMusic,
     toggleSfx,
@@ -188,6 +191,7 @@ export function Game() {
           isPaused={gameState.isPaused}
           musicEnabled={gameState.musicEnabled}
           sfxEnabled={gameState.sfxEnabled}
+          hasShield={gameState.hasShield}
           onPause={togglePause}
           onResume={handleResume}
           onMainMenu={goToMenu}
@@ -195,6 +199,9 @@ export function Game() {
           onToggleSfx={toggleSfx}
           onCollectItem={collectItem}
           onCollectCookie={collectFortuneCookie}
+          onCollectShield={activateShield}
+          onUseShield={useShield}
+          onCollectBurst={collectBurst}
           onLoseLife={handleLoseLife}
           onLevelComplete={completeLevel}
           onUpdateTimer={updateTimer}

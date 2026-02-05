@@ -17,6 +17,7 @@ interface GameEngineProps {
   isPaused: boolean;
   musicEnabled: boolean;
   sfxEnabled: boolean;
+  hasShield: boolean;
   onPause: () => void;
   onResume: () => void;
   onMainMenu: () => void;
@@ -24,6 +25,9 @@ interface GameEngineProps {
   onToggleSfx: () => void;
   onCollectItem: () => void;
   onCollectCookie: () => void;
+  onCollectShield: () => void;
+  onUseShield: () => void;
+  onCollectBurst: (amount?: number) => void;
   onLoseLife: () => boolean;
   onLevelComplete: () => void;
   onUpdateTimer: (time: number) => void;
@@ -52,6 +56,7 @@ export function GameEngine({
   isPaused,
   musicEnabled,
   sfxEnabled,
+  hasShield,
   onPause,
   onResume,
   onMainMenu,
@@ -59,6 +64,9 @@ export function GameEngine({
   onToggleSfx,
   onCollectItem,
   onCollectCookie,
+  onCollectShield,
+  onUseShield,
+  onCollectBurst,
   onLoseLife,
   onLevelComplete,
   onUpdateTimer,
@@ -452,6 +460,32 @@ export function GameEngine({
     onCollectCookie();
   }, [audio, onCollectCookie]);
 
+  const handleCollectShield = useCallback((index: number) => {
+    setLevelData(prev => {
+      const newCollectibles = [...prev.collectibles];
+      newCollectibles[index] = { ...newCollectibles[index], collected: true };
+      return { ...prev, collectibles: newCollectibles };
+    });
+    // If already has shield, convert to burst reward instead
+    if (hasShield) {
+      audio.playCollect();
+      onCollectBurst(5);
+    } else {
+      audio.playCookieCollect(); // Special sound for shield
+      onCollectShield();
+    }
+  }, [audio, hasShield, onCollectShield, onCollectBurst]);
+
+  const handleCollectBurst = useCallback((index: number) => {
+    setLevelData(prev => {
+      const newCollectibles = [...prev.collectibles];
+      newCollectibles[index] = { ...newCollectibles[index], collected: true };
+      return { ...prev, collectibles: newCollectibles };
+    });
+    audio.playCookieCollect(); // Special sound for burst
+    onCollectBurst(5); // +5 collectibles
+  }, [audio, onCollectBurst]);
+
   const handleEnemyDefeated = useCallback((index: number) => {
     setLevelData(prev => {
       const newEnemies = [...prev.enemies];
@@ -462,8 +496,14 @@ export function GameEngine({
   }, [audio]);
 
   const handlePlayerHit = useCallback(() => {
+    // If player has shield, absorb the hit instead of dying
+    if (hasShield) {
+      onUseShield();
+      audio.playBlockHit(); // Play a sound for shield absorption
+      return;
+    }
     handlePlayerDeath();
-  }, [handlePlayerDeath]);
+  }, [handlePlayerDeath, hasShield, onUseShield, audio]);
 
   const handleBlockHit = useCallback((index: number) => {
     setLevelData(prev => {
@@ -476,7 +516,8 @@ export function GameEngine({
       
       // Spawn MOVING collectible if block has contents
       let newCollectibles = [...prev.collectibles];
-      if (block.contents === 'collectible') {
+      if (block.contents === 'burst') {
+        // Burst reward: spawn larger glowing collectible worth +5
         newCollectibles.push({
           x: block.x + block.width / 2,
           y: block.y - 30,
@@ -484,8 +525,34 @@ export function GameEngine({
           collected: false,
           animationOffset: 0,
           fromBlock: true,
-          velocityX: 2, // Moving collectible
-          velocityY: -5, // Pop up effect
+          velocityX: 1.5,
+          velocityY: -6,
+          isBurst: true,
+          sparkleTimer: 60,
+        });
+      } else if (block.contents === 'shield') {
+        // Shield reward: spawn heart power-up
+        newCollectibles.push({
+          x: block.x + block.width / 2,
+          y: block.y - 30,
+          type: 'shield',
+          collected: false,
+          animationOffset: 0,
+          fromBlock: true,
+          velocityX: 0,
+          velocityY: -7,
+        });
+      } else if (block.contents === 'collectible') {
+        // Legacy support for 'collectible' type
+        newCollectibles.push({
+          x: block.x + block.width / 2,
+          y: block.y - 30,
+          type: prev.collectibleType as any,
+          collected: false,
+          animationOffset: 0,
+          fromBlock: true,
+          velocityX: 2,
+          velocityY: -5,
         });
       } else if (block.contents === 'cookie') {
         newCollectibles.push({
@@ -496,9 +563,10 @@ export function GameEngine({
           animationOffset: 0,
           fromBlock: true,
           velocityX: 0,
-          velocityY: -8, // Higher pop for cookie
+          velocityY: -8,
         });
       }
+      // 'none' content = empty block, no collectible spawned
       
       return { ...prev, hitBlocks: newBlocks, collectibles: newCollectibles };
     });
@@ -543,6 +611,8 @@ export function GameEngine({
         onPlayerUpdate={handlePlayerUpdate}
         onCollectItem={handleCollectItem}
         onCollectCookie={handleCollectCookie}
+        onCollectShield={handleCollectShield}
+        onCollectBurst={handleCollectBurst}
         onEnemyDefeated={handleEnemyDefeated}
         onPlayerHit={handlePlayerHit}
         onCheckpointReached={handleCheckpointReached}
@@ -553,6 +623,7 @@ export function GameEngine({
         cameraX={cameraX}
         onCameraUpdate={handleCameraUpdate}
         onFireballHit={handlePlayerHit}
+        hasShield={hasShield}
       />
       
       <GameHUD

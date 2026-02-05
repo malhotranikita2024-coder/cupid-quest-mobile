@@ -884,24 +884,36 @@ function createLevel7(): LevelData {
 }
 
 export function getLevelData(levelId: number): LevelData {
+  let data: LevelData;
   switch (levelId) {
     case 1:
-      return createLevel1();
+      data = createLevel1();
+      break;
     case 2:
-      return createLevel2();
+      data = createLevel2();
+      break;
     case 3:
-      return createLevel3();
+      data = createLevel3();
+      break;
     case 4:
-      return createLevel4();
+      data = createLevel4();
+      break;
     case 5:
-      return createLevel5();
+      data = createLevel5();
+      break;
     case 6:
-      return createLevel6();
+      data = createLevel6();
+      break;
     case 7:
-      return createLevel7();
+      data = createLevel7();
+      break;
     default:
-      return createLevel1();
+      data = createLevel1();
   }
+  
+  // Apply adaptive reward distribution to golden blocks
+  data.hitBlocks = assignBlockRewards(data.hitBlocks);
+  return data;
 }
 
 export const COLLECTIBLE_EMOJIS: Record<string, string> = {
@@ -913,4 +925,71 @@ export const COLLECTIBLE_EMOJIS: Record<string, string> = {
   ring: '💍',
   arrow: '🏹',
   cookie: '🍪',
+  shield: '💖',
 };
+
+// Adaptive reward distribution for golden question blocks
+// Given N total golden blocks:
+// - Shield blocks = max(1, floor(N * 0.25))
+// - Empty blocks = max(1, floor(N * 0.25))
+// - Burst blocks = N - Shield - Empty
+export function assignBlockRewards(hitBlocks: HitBlock[]): HitBlock[] {
+  // Get only question blocks (golden blocks)
+  const questionBlockIndices: number[] = [];
+  hitBlocks.forEach((block, index) => {
+    if (block.type === 'question') {
+      questionBlockIndices.push(index);
+    }
+  });
+  
+  const N = questionBlockIndices.length;
+  if (N === 0) return hitBlocks;
+  
+  // Calculate distribution
+  const shieldCount = Math.max(1, Math.floor(N * 0.25));
+  const emptyCount = Math.max(1, Math.floor(N * 0.25));
+  const burstCount = N - shieldCount - emptyCount;
+  
+  // Create assignment array and shuffle for variety
+  const assignments: ('burst' | 'shield' | 'none')[] = [];
+  for (let i = 0; i < burstCount; i++) assignments.push('burst');
+  for (let i = 0; i < shieldCount; i++) assignments.push('shield');
+  for (let i = 0; i < emptyCount; i++) assignments.push('none');
+  
+  // Deterministic shuffle based on level (spread rewards across level)
+  // Sort by block X position to spread rewards spatially
+  const sortedIndices = [...questionBlockIndices].sort((a, b) => hitBlocks[a].x - hitBlocks[b].x);
+  
+  // Distribute: first burst blocks, then interleave shield and empty
+  // Pattern: burst, burst, shield, burst, empty, burst, shield, empty...
+  const finalAssignments: ('burst' | 'shield' | 'none')[] = [];
+  let burstIdx = 0, shieldIdx = 0, emptyIdx = 0;
+  
+  for (let i = 0; i < N; i++) {
+    // Every 3rd-4th block is special (shield or empty)
+    if ((i + 1) % 3 === 0 && shieldIdx < shieldCount) {
+      finalAssignments.push('shield');
+      shieldIdx++;
+    } else if ((i + 1) % 4 === 0 && emptyIdx < emptyCount) {
+      finalAssignments.push('none');
+      emptyIdx++;
+    } else if (burstIdx < burstCount) {
+      finalAssignments.push('burst');
+      burstIdx++;
+    } else if (shieldIdx < shieldCount) {
+      finalAssignments.push('shield');
+      shieldIdx++;
+    } else {
+      finalAssignments.push('none');
+      emptyIdx++;
+    }
+  }
+  
+  // Apply assignments to blocks
+  const newBlocks = [...hitBlocks];
+  sortedIndices.forEach((blockIndex, i) => {
+    newBlocks[blockIndex] = { ...newBlocks[blockIndex], contents: finalAssignments[i] };
+  });
+  
+  return newBlocks;
+}
