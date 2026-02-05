@@ -449,6 +449,9 @@ export function GameCanvas({
     ctx.fillStyle = levelData.backgroundColor;
     ctx.fillRect(0, 0, width, height);
 
+    // === STARS IN THE SKY ===
+    drawStars(ctx, width, height, cameraX * 0.05, levelData.id);
+
     // === PARALLAX BACKGROUND LAYERS ===
     const bgOffset = cameraX * 0.2;
     const midOffset = cameraX * 0.4;
@@ -857,6 +860,79 @@ function drawHeart(ctx: CanvasRenderingContext2D, x: number, y: number, size: nu
   ctx.bezierCurveTo(x, y + size, x + size, y + size * 0.6, x + size, y + size * 0.3);
   ctx.bezierCurveTo(x + size, y, x, y, x, y + size * 0.3);
   ctx.fill();
+}
+
+// Helper: Draw stars in the sky
+function drawStars(ctx: CanvasRenderingContext2D, width: number, height: number, offset: number, levelId: number) {
+  // Star density and brightness varies slightly by level
+  const starConfigs: Record<number, { count: number; maxAlpha: number }> = {
+    1: { count: 40, maxAlpha: 0.6 },   // Rose Garden - moderate stars
+    2: { count: 35, maxAlpha: 0.5 },   // Candyland - softer
+    3: { count: 45, maxAlpha: 0.65 },  // Toyland - more stars
+    4: { count: 40, maxAlpha: 0.55 },  // Letter Lane - moderate
+    5: { count: 50, maxAlpha: 0.7 },   // Pearl Beach - bright stars
+    6: { count: 55, maxAlpha: 0.75 },  // Ring Mountain - mountain stars
+    7: { count: 60, maxAlpha: 0.8 },   // Love Castle - magical sky
+  };
+  
+  const config = starConfigs[levelId] || { count: 40, maxAlpha: 0.6 };
+  
+  // Use seeded random for consistent star positions per level
+  const seed = levelId * 12345;
+  const seededRandom = (i: number) => {
+    const x = Math.sin(seed + i * 9999) * 10000;
+    return x - Math.floor(x);
+  };
+  
+  // Draw stars with very slow parallax
+  for (let i = 0; i < config.count; i++) {
+    const baseX = seededRandom(i) * (width + 500);
+    const starX = ((baseX - offset) % (width + 200)) - 100;
+    const starY = seededRandom(i + 100) * height * 0.5; // Only in upper half of sky
+    const starSize = 1 + seededRandom(i + 200) * 2;
+    const twinkle = 0.5 + Math.sin(Date.now() / 1000 + i * 0.5) * 0.5; // Twinkle effect
+    const alpha = config.maxAlpha * (0.4 + seededRandom(i + 300) * 0.6) * twinkle;
+    
+    // Star glow
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.3})`;
+    ctx.beginPath();
+    ctx.arc(starX, starY, starSize * 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Star core
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(starX, starY, starSize, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Add a few larger, brighter accent stars
+  for (let i = 0; i < 8; i++) {
+    const baseX = seededRandom(i + 500) * (width + 400);
+    const starX = ((baseX - offset * 0.8) % (width + 300)) - 100;
+    const starY = 20 + seededRandom(i + 600) * height * 0.35;
+    const twinkle = 0.6 + Math.sin(Date.now() / 800 + i * 1.2) * 0.4;
+    
+    // Draw 4-point star shape
+    ctx.fillStyle = `rgba(255, 255, 240, ${config.maxAlpha * 0.8 * twinkle})`;
+    ctx.beginPath();
+    const size = 3 + seededRandom(i + 700) * 2;
+    // Vertical spike
+    ctx.moveTo(starX, starY - size * 2);
+    ctx.lineTo(starX + size * 0.3, starY);
+    ctx.lineTo(starX, starY + size * 2);
+    ctx.lineTo(starX - size * 0.3, starY);
+    ctx.closePath();
+    ctx.fill();
+    // Horizontal spike
+    ctx.beginPath();
+    ctx.moveTo(starX - size * 2, starY);
+    ctx.lineTo(starX, starY + size * 0.3);
+    ctx.lineTo(starX + size * 2, starY);
+    ctx.lineTo(starX, starY - size * 0.3);
+    ctx.closePath();
+    ctx.fill();
+  }
 }
 
 // Helper: Draw distant hills (very subtle, low contrast)
