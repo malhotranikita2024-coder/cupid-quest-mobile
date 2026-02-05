@@ -683,21 +683,41 @@ export function GameCanvas({
        // Handle expiring burst items (fade out)
        if (collectible.isExpiring && collectible.isBurst) {
          const progress = collectible.expiryProgress || 0;
-         ctx.globalAlpha = 1 - progress;
          
-         // Sparkle fade effect
-         if (progress < 0.8) {
-           const sparkleCount = Math.floor((1 - progress) * 6);
-           for (let i = 0; i < sparkleCount; i++) {
-             const angle = (time / 50) + (i * Math.PI * 2 / sparkleCount);
-             const dist = 20 + progress * 30;
-             const sparkleX = collectible.x + Math.cos(angle) * dist;
-             const sparkleY = collectible.y + bobY + Math.sin(angle) * dist;
-             ctx.font = '14px Arial';
-             ctx.fillStyle = `rgba(255, 255, 150, ${1 - progress})`;
-             ctx.fillText('✨', sparkleX, sparkleY);
-           }
+         // Burst explosion effect - particles fly outward rapidly
+         const burstRadius = progress * 80;
+         const particleCount = 12;
+         
+         for (let i = 0; i < particleCount; i++) {
+           const angle = (i * Math.PI * 2 / particleCount) + (time / 200);
+           const particleX = collectible.x + Math.cos(angle) * burstRadius;
+           const particleY = collectible.y + bobY + Math.sin(angle) * burstRadius;
+           const particleAlpha = Math.max(0, 1 - progress * 1.2);
+           const particleSize = Math.max(8, 16 - progress * 12);
+           
+           ctx.font = `${particleSize}px Arial`;
+           ctx.globalAlpha = particleAlpha;
+           ctx.fillText('✨', particleX, particleY);
          }
+         
+         // Inner ring of particles
+         for (let i = 0; i < 6; i++) {
+           const angle = (i * Math.PI * 2 / 6) - (time / 150);
+           const innerRadius = progress * 40;
+           const particleX = collectible.x + Math.cos(angle) * innerRadius;
+           const particleY = collectible.y + bobY + Math.sin(angle) * innerRadius;
+           
+           ctx.font = '12px Arial';
+           ctx.globalAlpha = Math.max(0, 1 - progress);
+           ctx.fillText('💫', particleX, particleY);
+         }
+         
+         // Scale down the main item as it bursts
+         const scale = Math.max(0.3, 1 - progress * 0.7);
+         ctx.globalAlpha = Math.max(0, 1 - progress * 1.5);
+         ctx.translate(collectible.x, collectible.y + bobY);
+         ctx.scale(scale, scale);
+         ctx.translate(-collectible.x, -(collectible.y + bobY));
        }
 
       // Special rendering for burst collectibles (larger, with sparkles)
