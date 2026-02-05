@@ -99,6 +99,10 @@ export interface Collectible {
   velocityY?: number;
   isBurst?: boolean;
   sparkleTimer?: number;
+   spawnTime?: number;
+   isExpiring?: boolean;
+   expiryProgress?: number;
+   isGrounded?: boolean;
 }
 
 export interface Enemy {
