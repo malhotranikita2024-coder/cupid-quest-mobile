@@ -310,8 +310,6 @@ export function GameEngine({
            // Physics: apply gravity and movement
            let newVelX = collectible.velocityX || 0;
            let newVelY = collectible.velocityY || 0;
-           let newX = collectible.x + newVelX;
-           let newY = collectible.y + newVelY;
            let grounded = collectible.isGrounded || false;
 
            // Apply gravity if not grounded
@@ -319,6 +317,10 @@ export function GameEngine({
              newVelY += 0.4; // Gravity
              if (newVelY > 10) newVelY = 10; // Terminal velocity
            }
+
+            // Apply movement
+            let newX = collectible.x + newVelX;
+            let newY = collectible.y + newVelY;
 
            // Check platform collisions
            for (const platform of prev.platforms) {
@@ -451,9 +453,10 @@ export function GameEngine({
 
            // Apply friction when grounded
            if (grounded) {
-             newVelX *= 0.98;
-             if (Math.abs(newVelX) < 0.1) {
-               newVelX = (Math.random() > 0.5 ? 1 : -1) * 1.5; // Restart movement
+              newVelX *= 0.99;
+              // Keep minimum speed when grounded
+              if (Math.abs(newVelX) < 2) {
+                newVelX = newVelX >= 0 ? 2.5 : -2.5;
              }
            }
 
@@ -727,13 +730,13 @@ export function GameEngine({
          const direction = Math.random() > 0.5 ? 1 : -1;
         newCollectibles.push({
           x: block.x + block.width / 2,
-          y: block.y - 30,
+           y: block.y - 40,
           type: prev.collectibleType as any,
           collected: false,
           animationOffset: 0,
           fromBlock: true,
-           velocityX: direction * (3.5 + Math.random() * 1.5),
-           velocityY: -10,
+           velocityX: direction * (4 + Math.random() * 2),
+           velocityY: -8,
           isBurst: true,
           sparkleTimer: 60,
            spawnTime: Date.now(),
@@ -744,13 +747,13 @@ export function GameEngine({
          const direction = Math.random() > 0.5 ? 1 : -1;
         newCollectibles.push({
           x: block.x + block.width / 2,
-          y: block.y - 30,
+           y: block.y - 40,
           type: 'shield',
           collected: false,
           animationOffset: 0,
           fromBlock: true,
-           velocityX: direction * (3 + Math.random() * 1),
-           velocityY: -10,
+           velocityX: direction * (4 + Math.random() * 2),
+           velocityY: -8,
            isBurst: true, // Shield now expires like burst items
            spawnTime: Date.now(),
            isGrounded: false,
@@ -760,13 +763,13 @@ export function GameEngine({
          const direction = Math.random() > 0.5 ? 1 : -1;
         newCollectibles.push({
           x: block.x + block.width / 2,
-          y: block.y - 30,
+           y: block.y - 40,
           type: prev.collectibleType as any,
           collected: false,
           animationOffset: 0,
           fromBlock: true,
-           velocityX: direction * 4,
-          velocityY: -5,
+           velocityX: direction * (4 + Math.random() * 2),
+           velocityY: -8,
            isBurst: true,
            spawnTime: Date.now(),
            isGrounded: false,
