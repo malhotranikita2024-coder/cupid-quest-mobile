@@ -121,6 +121,14 @@ export function MainMenu({
           50% { transform: rotate(0deg) scaleY(1); }
           75% { transform: rotate(-1.5deg) scaleY(0.99); }
         }
+        @keyframes water-ripple {
+          0%, 100% { transform: translateX(0); }
+          50% { transform: translateX(3px); }
+        }
+        @keyframes water-shimmer {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 0.6; }
+        }
       `}</style>
       
       {/* LEFT ISLAND */}
@@ -226,11 +234,47 @@ export function MainMenu({
       
       {/* OCEAN / WATER in center */}
       <div 
-        className="absolute bottom-0 left-[25%] right-[25%] h-[20%]"
+        className="absolute bottom-0 left-[25%] right-[25%] h-[20%] overflow-hidden"
         style={{
           background: 'linear-gradient(180deg, #87CEEB 0%, #5DADE2 30%, #3498DB 60%, #2980B9 100%)',
         }}
-      />
+      >
+        {/* Ripple lines */}
+        <div 
+          className="absolute top-[15%] left-0 right-0 h-[2px] bg-white/20"
+          style={{ animation: 'water-ripple 3s ease-in-out infinite' }}
+        />
+        <div 
+          className="absolute top-[30%] left-0 right-0 h-[1px] bg-white/15"
+          style={{ animation: 'water-ripple 3.5s ease-in-out infinite', animationDelay: '0.5s' }}
+        />
+        <div 
+          className="absolute top-[45%] left-0 right-0 h-[2px] bg-white/20"
+          style={{ animation: 'water-ripple 2.8s ease-in-out infinite', animationDelay: '1s' }}
+        />
+        <div 
+          className="absolute top-[60%] left-0 right-0 h-[1px] bg-white/15"
+          style={{ animation: 'water-ripple 3.2s ease-in-out infinite', animationDelay: '0.3s' }}
+        />
+        <div 
+          className="absolute top-[75%] left-0 right-0 h-[2px] bg-white/20"
+          style={{ animation: 'water-ripple 3s ease-in-out infinite', animationDelay: '0.8s' }}
+        />
+        
+        {/* Shimmer highlights */}
+        <div 
+          className="absolute top-[20%] left-[20%] w-8 h-1 bg-white/30 rounded-full"
+          style={{ animation: 'water-shimmer 2s ease-in-out infinite' }}
+        />
+        <div 
+          className="absolute top-[50%] left-[50%] w-6 h-1 bg-white/25 rounded-full"
+          style={{ animation: 'water-shimmer 2.5s ease-in-out infinite', animationDelay: '0.7s' }}
+        />
+        <div 
+          className="absolute top-[35%] right-[25%] w-10 h-1 bg-white/30 rounded-full"
+          style={{ animation: 'water-shimmer 2.2s ease-in-out infinite', animationDelay: '1.2s' }}
+        />
+      </div>
       
       {/* GROUND LEVEL - Left platform area */}
       <div className="absolute bottom-0 left-0 w-[30%] h-[18%]">
