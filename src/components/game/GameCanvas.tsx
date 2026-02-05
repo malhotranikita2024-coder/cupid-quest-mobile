@@ -1179,64 +1179,154 @@ function drawMidHills(ctx: CanvasRenderingContext2D, width: number, height: numb
 // Helper: Draw background vegetation (bushes and trees behind gameplay)
 function drawBackgroundVegetation(ctx: CanvasRenderingContext2D, width: number, height: number, offset: number, levelId: number) {
   // Tree/bush colors based on level
-  const treeColors: Record<number, { trunk: string; leaves: string }> = {
-    1: { trunk: 'rgba(101, 67, 33, 0.3)', leaves: 'rgba(60, 120, 60, 0.35)' },
-    2: { trunk: 'rgba(110, 70, 40, 0.3)', leaves: 'rgba(70, 110, 50, 0.35)' },
-    3: { trunk: 'rgba(90, 60, 40, 0.3)', leaves: 'rgba(50, 130, 80, 0.35)' },
-    4: { trunk: 'rgba(100, 65, 35, 0.3)', leaves: 'rgba(55, 115, 55, 0.35)' },
-    5: { trunk: 'rgba(95, 60, 45, 0.3)', leaves: 'rgba(60, 100, 70, 0.35)' },
-    6: { trunk: 'rgba(105, 70, 35, 0.3)', leaves: 'rgba(65, 105, 50, 0.35)' },
-    7: { trunk: 'rgba(100, 60, 50, 0.3)', leaves: 'rgba(70, 120, 60, 0.35)' },
+  const treeColors: Record<number, { trunk: string; trunkDark: string; leaves: string; leavesLight: string; leavesDark: string }> = {
+    1: { trunk: 'rgba(101, 67, 33, 0.4)', trunkDark: 'rgba(70, 45, 20, 0.4)', leaves: 'rgba(76, 140, 76, 0.5)', leavesLight: 'rgba(100, 160, 90, 0.4)', leavesDark: 'rgba(50, 100, 50, 0.5)' },
+    2: { trunk: 'rgba(110, 70, 40, 0.4)', trunkDark: 'rgba(80, 50, 25, 0.4)', leaves: 'rgba(90, 130, 70, 0.5)', leavesLight: 'rgba(110, 150, 80, 0.4)', leavesDark: 'rgba(60, 100, 50, 0.5)' },
+    3: { trunk: 'rgba(90, 60, 40, 0.4)', trunkDark: 'rgba(60, 40, 25, 0.4)', leaves: 'rgba(70, 150, 100, 0.5)', leavesLight: 'rgba(90, 170, 110, 0.4)', leavesDark: 'rgba(45, 110, 70, 0.5)' },
+    4: { trunk: 'rgba(100, 65, 35, 0.4)', trunkDark: 'rgba(70, 45, 20, 0.4)', leaves: 'rgba(75, 135, 75, 0.5)', leavesLight: 'rgba(95, 155, 85, 0.4)', leavesDark: 'rgba(50, 100, 55, 0.5)' },
+    5: { trunk: 'rgba(95, 60, 45, 0.4)', trunkDark: 'rgba(65, 40, 30, 0.4)', leaves: 'rgba(80, 120, 90, 0.5)', leavesLight: 'rgba(100, 140, 100, 0.4)', leavesDark: 'rgba(55, 90, 65, 0.5)' },
+    6: { trunk: 'rgba(105, 70, 35, 0.4)', trunkDark: 'rgba(75, 50, 20, 0.4)', leaves: 'rgba(85, 125, 70, 0.5)', leavesLight: 'rgba(105, 145, 80, 0.4)', leavesDark: 'rgba(60, 95, 50, 0.5)' },
+    7: { trunk: 'rgba(100, 60, 50, 0.4)', trunkDark: 'rgba(70, 40, 35, 0.4)', leaves: 'rgba(90, 140, 80, 0.5)', leavesLight: 'rgba(110, 160, 90, 0.4)', leavesDark: 'rgba(60, 105, 55, 0.5)' },
   };
   
   const colors = treeColors[levelId] || treeColors[1];
   const groundY = height * 0.82; // Where vegetation sits
   
-  // Draw bushes at regular intervals
-  for (let i = 0; i < 15; i++) {
-    const bushX = ((i * 350 - offset * 0.6) % (width + 400)) - 100;
-    const bushSize = 35 + (i % 3) * 15;
+  // Draw fewer, nicer bushes
+  for (let i = 0; i < 8; i++) {
+    const bushX = ((i * 500 - offset * 0.6) % (width + 500)) - 100;
+    const bushSize = 25 + (i % 3) * 10;
     
-    // Draw bush (cluster of circles)
+    // Draw bush with gradient and layered circles for depth
+    // Back layer (darker)
+    ctx.fillStyle = colors.leavesDark;
+    ctx.beginPath();
+    ctx.arc(bushX - bushSize * 0.5, groundY - bushSize * 0.3, bushSize * 0.6, 0, Math.PI * 2);
+    ctx.arc(bushX + bushSize * 0.5, groundY - bushSize * 0.3, bushSize * 0.7, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Main bush body
     ctx.fillStyle = colors.leaves;
     ctx.beginPath();
-    ctx.arc(bushX, groundY, bushSize, 0, Math.PI * 2);
-    ctx.arc(bushX - bushSize * 0.6, groundY + 5, bushSize * 0.7, 0, Math.PI * 2);
-    ctx.arc(bushX + bushSize * 0.6, groundY + 5, bushSize * 0.8, 0, Math.PI * 2);
+    ctx.arc(bushX, groundY - bushSize * 0.4, bushSize * 0.8, 0, Math.PI * 2);
+    ctx.arc(bushX - bushSize * 0.4, groundY - bushSize * 0.2, bushSize * 0.5, 0, Math.PI * 2);
+    ctx.arc(bushX + bushSize * 0.4, groundY - bushSize * 0.2, bushSize * 0.55, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Highlight (lighter top)
+    ctx.fillStyle = colors.leavesLight;
+    ctx.beginPath();
+    ctx.arc(bushX - bushSize * 0.2, groundY - bushSize * 0.6, bushSize * 0.35, 0, Math.PI * 2);
+    ctx.arc(bushX + bushSize * 0.15, groundY - bushSize * 0.55, bushSize * 0.3, 0, Math.PI * 2);
     ctx.fill();
   }
   
-  // Draw distant trees (taller, further back)
-  for (let i = 0; i < 8; i++) {
-    const treeX = ((i * 550 + 200 - offset * 0.4) % (width + 600)) - 100;
-    const treeHeight = 80 + (i % 3) * 30;
-    const trunkWidth = 12 + (i % 2) * 4;
+  // Draw nicer trees with better silhouettes
+  for (let i = 0; i < 6; i++) {
+    const treeX = ((i * 650 + 200 - offset * 0.4) % (width + 700)) - 100;
+    const treeHeight = 100 + (i % 3) * 25;
+    const trunkWidth = 10 + (i % 2) * 3;
+    const trunkHeight = treeHeight * 0.45;
     
-    // Trunk
+    // Trunk with subtle taper
+    ctx.fillStyle = colors.trunkDark;
+    ctx.beginPath();
+    ctx.moveTo(treeX - trunkWidth * 0.6, groundY);
+    ctx.lineTo(treeX - trunkWidth * 0.4, groundY - trunkHeight);
+    ctx.lineTo(treeX + trunkWidth * 0.4, groundY - trunkHeight);
+    ctx.lineTo(treeX + trunkWidth * 0.6, groundY);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Trunk highlight
     ctx.fillStyle = colors.trunk;
-    ctx.fillRect(treeX - trunkWidth / 2, groundY - treeHeight * 0.4, trunkWidth, treeHeight * 0.5);
+    ctx.beginPath();
+    ctx.moveTo(treeX - trunkWidth * 0.3, groundY);
+    ctx.lineTo(treeX - trunkWidth * 0.2, groundY - trunkHeight);
+    ctx.lineTo(treeX + trunkWidth * 0.1, groundY - trunkHeight);
+    ctx.lineTo(treeX + trunkWidth * 0.2, groundY);
+    ctx.closePath();
+    ctx.fill();
     
-    // Foliage (triangular for conifers, rounded for deciduous)
-    ctx.fillStyle = colors.leaves;
+    // Foliage - layered for depth
+    const foliageY = groundY - trunkHeight + 10;
+    
     if (i % 2 === 0) {
-      // Rounded tree top
+      // Deciduous tree - fluffy cloud-like canopy
+      const canopyRadius = treeHeight * 0.35;
+      
+      // Back shadow layer
+      ctx.fillStyle = colors.leavesDark;
       ctx.beginPath();
-      ctx.arc(treeX, groundY - treeHeight * 0.5, treeHeight * 0.4, 0, Math.PI * 2);
+      ctx.arc(treeX - canopyRadius * 0.4, foliageY - canopyRadius * 0.2, canopyRadius * 0.7, 0, Math.PI * 2);
+      ctx.arc(treeX + canopyRadius * 0.5, foliageY - canopyRadius * 0.1, canopyRadius * 0.65, 0, Math.PI * 2);
+      ctx.arc(treeX, foliageY - canopyRadius * 0.5, canopyRadius * 0.6, 0, Math.PI * 2);
       ctx.fill();
+      
+      // Main canopy
+      ctx.fillStyle = colors.leaves;
       ctx.beginPath();
-      ctx.arc(treeX - 15, groundY - treeHeight * 0.35, treeHeight * 0.3, 0, Math.PI * 2);
+      ctx.arc(treeX, foliageY - canopyRadius * 0.3, canopyRadius * 0.85, 0, Math.PI * 2);
+      ctx.arc(treeX - canopyRadius * 0.5, foliageY, canopyRadius * 0.6, 0, Math.PI * 2);
+      ctx.arc(treeX + canopyRadius * 0.5, foliageY + 5, canopyRadius * 0.55, 0, Math.PI * 2);
       ctx.fill();
+      
+      // Highlight puffs
+      ctx.fillStyle = colors.leavesLight;
       ctx.beginPath();
-      ctx.arc(treeX + 15, groundY - treeHeight * 0.35, treeHeight * 0.3, 0, Math.PI * 2);
+      ctx.arc(treeX - canopyRadius * 0.3, foliageY - canopyRadius * 0.6, canopyRadius * 0.4, 0, Math.PI * 2);
+      ctx.arc(treeX + canopyRadius * 0.2, foliageY - canopyRadius * 0.5, canopyRadius * 0.35, 0, Math.PI * 2);
       ctx.fill();
+      
     } else {
-      // Triangular pine tree
-      ctx.beginPath();
-      ctx.moveTo(treeX, groundY - treeHeight);
-      ctx.lineTo(treeX - treeHeight * 0.35, groundY - treeHeight * 0.3);
-      ctx.lineTo(treeX + treeHeight * 0.35, groundY - treeHeight * 0.3);
-      ctx.closePath();
-      ctx.fill();
+      // Pine/conifer tree - layered triangles
+      const pineWidth = treeHeight * 0.4;
+      
+      // Draw 3 layered triangle sections
+      for (let layer = 0; layer < 3; layer++) {
+        const layerY = foliageY + layer * (treeHeight * 0.15);
+        const layerWidth = pineWidth * (1 - layer * 0.15);
+        const layerHeight = treeHeight * 0.35;
+        
+        // Shadow/dark side
+        ctx.fillStyle = colors.leavesDark;
+        ctx.beginPath();
+        ctx.moveTo(treeX, layerY - layerHeight);
+        ctx.lineTo(treeX + layerWidth * 0.1, layerY);
+        ctx.lineTo(treeX + layerWidth, layerY);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Main triangle
+        ctx.fillStyle = colors.leaves;
+        ctx.beginPath();
+        ctx.moveTo(treeX, layerY - layerHeight);
+        ctx.lineTo(treeX - layerWidth, layerY);
+        ctx.lineTo(treeX + layerWidth * 0.1, layerY);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Highlight edge
+        ctx.fillStyle = colors.leavesLight;
+        ctx.beginPath();
+        ctx.moveTo(treeX, layerY - layerHeight);
+        ctx.lineTo(treeX - layerWidth * 0.3, layerY - layerHeight * 0.3);
+        ctx.lineTo(treeX - layerWidth * 0.6, layerY);
+        ctx.lineTo(treeX - layerWidth * 0.8, layerY);
+        ctx.closePath();
+        ctx.fill();
+      }
+      
+      // Snow/light tip for some trees
+      if (i % 3 === 1) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+        ctx.beginPath();
+        ctx.moveTo(treeX, foliageY - treeHeight * 0.35);
+        ctx.lineTo(treeX - pineWidth * 0.15, foliageY - treeHeight * 0.25);
+        ctx.lineTo(treeX + pineWidth * 0.1, foliageY - treeHeight * 0.25);
+        ctx.closePath();
+        ctx.fill();
+      }
     }
   }
 }
