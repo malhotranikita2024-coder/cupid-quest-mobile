@@ -892,18 +892,63 @@ export function GameCanvas({
       ? Math.sin(levelData.flag.shakeTimer * 0.5) * 5 
       : 0;
     
-    // Simple flag pole - brown/gray color
     ctx.save();
     ctx.translate(flagX + flagShake, 0);
     
+   // Get ground level from platform data (fallback to 520)
+   const groundY = levelData.platforms.find(p => p.type === 'ground')?.y ?? 520;
+   
+   // Finish zone ground indicator (checkered pattern behind flag)
+   const finishZoneX = flagX - 30;
+   const finishZoneWidth = 120;
+   ctx.fillStyle = '#FFD700';
+   ctx.fillRect(finishZoneX - cameraX, groundY - 8, finishZoneWidth, 8);
+   
+   // Checkered pattern
+   const squareSize = 15;
+   for (let i = 0; i < finishZoneWidth / squareSize; i++) {
+     for (let j = 0; j < 2; j++) {
+       if ((i + j) % 2 === 0) {
+         ctx.fillStyle = '#FFFFFF';
+       } else {
+         ctx.fillStyle = '#FF1493';
+       }
+       ctx.fillRect(finishZoneX - cameraX + i * squareSize, groundY - 25 + j * squareSize, squareSize, squareSize);
+     }
+   }
+   
+   // Border around finish zone
+   ctx.strokeStyle = '#333333';
+   ctx.lineWidth = 2;
+   ctx.strokeRect(finishZoneX - cameraX, groundY - 25, finishZoneWidth, 25);
+   
+   // "FINISH" text above zone
+   ctx.font = 'bold 14px Arial';
+   ctx.textAlign = 'center';
+   ctx.fillStyle = '#FFFFFF';
+   ctx.strokeStyle = '#333333';
+   ctx.lineWidth = 3;
+   ctx.strokeText('FINISH', finishZoneX - cameraX + finishZoneWidth / 2, groundY - 35);
+   ctx.fillText('FINISH', finishZoneX - cameraX + finishZoneWidth / 2, groundY - 35);
+   
+   // Simple flag pole - brown/gray color
     ctx.fillStyle = '#5D4037';
     ctx.strokeStyle = '#3E2723';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.roundRect(flagX + 15, flagY, 8, 80, 2);
+   ctx.roundRect(flagX + 15 - cameraX, flagY, 10, 100, 3);
     ctx.stroke();
     ctx.fill();
     
+   // Pole cap - golden ball
+   ctx.beginPath();
+   ctx.arc(flagX + 20 - cameraX, flagY - 3, 6, 0, Math.PI * 2);
+   ctx.fillStyle = '#FFD700';
+   ctx.fill();
+   ctx.strokeStyle = '#CC9900';
+   ctx.lineWidth = 2;
+   ctx.stroke();
+   
     // Flag cloth - green if reached, red if not
     const clothColor = flagReached ? '#00AA00' : '#DD0000';
     const clothOutline = flagReached ? '#005500' : '#880000';
@@ -912,17 +957,25 @@ export function GameCanvas({
     ctx.strokeStyle = clothOutline;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(flagX + 23, flagY + 5);
-    ctx.lineTo(flagX + 55 + flagWave, flagY + 18);
-    ctx.lineTo(flagX + 23, flagY + 32);
+   ctx.moveTo(flagX + 25 - cameraX, flagY + 5);
+   ctx.lineTo(flagX + 65 - cameraX + flagWave, flagY + 20);
+   ctx.lineTo(flagX + 25 - cameraX, flagY + 38);
     ctx.closePath();
     ctx.stroke();
     ctx.fill();
     
+   // White inner highlight on cloth
+   ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+   ctx.lineWidth = 1;
+   ctx.beginPath();
+   ctx.moveTo(flagX + 28 - cameraX, flagY + 10);
+   ctx.lineTo(flagX + 55 - cameraX + flagWave * 0.8, flagY + 20);
+   ctx.stroke();
+   
     // Small heart on flag
     ctx.font = '14px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText(flagReached ? '💚' : '❤️', flagX + 38 + flagWave * 0.5, flagY + 23);
+   ctx.fillText(flagReached ? '💚' : '❤️', flagX + 42 - cameraX + flagWave * 0.5, flagY + 26);
     
     // "END" text if mid-flag not collected
     if (!levelData.midFlag.collected && !flagReached) {
@@ -930,8 +983,8 @@ export function GameCanvas({
       ctx.fillStyle = '#FFFFFF';
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 2;
-      ctx.strokeText('END', flagX + 35, flagY - 5);
-      ctx.fillText('END', flagX + 35, flagY - 5);
+     ctx.strokeText('NEED FLAG!', flagX + 40 - cameraX, flagY - 10);
+     ctx.fillText('NEED FLAG!', flagX + 40 - cameraX, flagY - 10);
     }
     
     ctx.restore();
