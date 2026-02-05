@@ -66,23 +66,23 @@ function createLevel1(): LevelData {
       { start: 4300, width: 700 },
       { start: 5100, width: 800 },
     ]),
-    // Floating platforms for exploration
-    createFloatingPlatform(400, 400, 150),
-    createFloatingPlatform(650, 320, 120),
-    createFloatingPlatform(1000, 380, 180),
-    createFloatingPlatform(1300, 300, 140),
-    createFloatingPlatform(1700, 400, 150),
-    createFloatingPlatform(2000, 340, 130),
-    createFloatingPlatform(2400, 380, 160),
-    createFloatingPlatform(2700, 300, 140),
-    createFloatingPlatform(3100, 360, 150),
-    createFloatingPlatform(3400, 280, 130),
-    createFloatingPlatform(3800, 400, 140),
-    createFloatingPlatform(4100, 320, 150),
-    createFloatingPlatform(4500, 380, 160),
-    createFloatingPlatform(4800, 300, 130),
-    createFloatingPlatform(5200, 360, 150),
-    createFloatingPlatform(5500, 400, 140),
+    // Floating platforms - well spaced, no overlaps
+    createFloatingPlatform(350, 420, 120),    // Low platform for easy access
+    createFloatingPlatform(600, 340, 100),    // Mid-height, clear of first
+    createFloatingPlatform(1050, 400, 150),   // Ground section 2
+    createFloatingPlatform(1350, 320, 120),   // Higher, well spaced
+    createFloatingPlatform(1750, 420, 130),   // Low platform
+    createFloatingPlatform(2050, 340, 110),   // Mid-height
+    createFloatingPlatform(2500, 400, 140),   // Ground section 4
+    createFloatingPlatform(2850, 320, 120),   // Higher platform
+    createFloatingPlatform(3200, 400, 130),   // Ground section 5
+    createFloatingPlatform(3500, 300, 110),   // High platform for cookie
+    createFloatingPlatform(3900, 420, 120),   // Low platform
+    createFloatingPlatform(4200, 340, 110),   // Mid-height
+    createFloatingPlatform(4600, 400, 130),   // Ground section 7
+    createFloatingPlatform(4950, 320, 110),   // Higher platform
+    createFloatingPlatform(5300, 400, 130),   // Ground section 8
+    createFloatingPlatform(5600, 340, 110),   // Final stretch
   ];
 
   const collectibles: Collectible[] = [];
@@ -112,12 +112,15 @@ function createLevel1(): LevelData {
   ];
 
   const hitBlocks: HitBlock[] = [
-    ...createBlockRow(460, 380, ['brick', 'question', 'brick']),
-    ...createBlockRow(1110, 340, ['brick', 'question', 'brick']),
-    ...createBlockRow(2460, 360, ['brick', 'question', 'brick']),
-    ...createBlockRow(3560, 340, ['brick', 'question', 'brick']),
-    ...createBlockRow(4560, 360, ['brick', 'question', 'brick']),
-    ...createBlockRow(5360, 340, ['brick', 'question', 'brick']),
+    // Golden blocks at y=400 (120px above ground) - easily reachable by jump
+    // Player jumps ~150px, so y=400 from ground (y=520) gives 120px clearance
+    ...createBlockRow(200, 400, ['brick', 'question', 'brick']),
+    ...createBlockRow(750, 400, ['brick', 'question', 'brick']),
+    ...createBlockRow(1200, 400, ['brick', 'question', 'brick']),
+    ...createBlockRow(2400, 400, ['brick', 'question', 'brick']),
+    ...createBlockRow(3300, 400, ['brick', 'question', 'brick']),
+    ...createBlockRow(4500, 400, ['brick', 'question', 'brick']),
+    ...createBlockRow(5400, 400, ['brick', 'question', 'brick']),
   ];
 
   const pipes: Pipe[] = [

@@ -671,9 +671,13 @@ export function GameCanvas({
       if (collectible.type === 'cookie') {
         ctx.shadowColor = '#FFD700';
         ctx.shadowBlur = 20;
+      } else if (collectible.type === 'rose') {
+        // Vibrant red glow for roses - high visibility
+        ctx.shadowColor = '#FF1744';
+        ctx.shadowBlur = 15;
       } else {
         ctx.shadowColor = '#FF69B4';
-        ctx.shadowBlur = 10;
+        ctx.shadowBlur = 12;
       }
       
       ctx.font = collectible.type === 'cookie' ? '36px Arial' : '28px Arial';
@@ -687,12 +691,17 @@ export function GameCanvas({
       if (enemy.isDefeated) return;
       
       const wobble = Math.sin(time / 200) * 3;
-      // Larger, more readable enemies with higher contrast
+      // Vibrant enemies with strong glow for visibility
+      ctx.shadowColor = '#FF0066';
+      ctx.shadowBlur = 12;
       ctx.font = '40px Arial';
       ctx.textAlign = 'center';
       
       if (enemy.type === 'heartBug') {
+        ctx.shadowColor = '#FF1493';
+        ctx.shadowBlur = 15;
         ctx.fillText('💗', enemy.x + enemy.width / 2, enemy.y - 5 + wobble);
+        ctx.shadowBlur = 8;
         ctx.font = '28px Arial';
         ctx.fillText('🐛', enemy.x + enemy.width / 2, enemy.y + 22 + wobble);
         // Show fireball indicator for shooting enemies
@@ -701,8 +710,11 @@ export function GameCanvas({
           ctx.fillText('🔥', enemy.x + enemy.width / 2 + 15, enemy.y - 10);
         }
       } else if (enemy.type === 'brokenHeartSlime') {
+        ctx.shadowColor = '#9C27B0';
+        ctx.shadowBlur = 15;
         ctx.fillText('💔', enemy.x + enemy.width / 2, enemy.y + 15 + wobble);
         if (enemy.canShoot) {
+          ctx.shadowBlur = 8;
           ctx.font = '16px Arial';
           ctx.fillText('🔥', enemy.x + enemy.width / 2 + 15, enemy.y - 10);
         }
@@ -711,6 +723,7 @@ export function GameCanvas({
         ctx.font = '32px Arial';
         ctx.fillText('☁️', enemy.x + enemy.width / 2, enemy.y + 45 + wobble);
       }
+      ctx.shadowBlur = 0;
     });
 
     // Draw checkpoint
