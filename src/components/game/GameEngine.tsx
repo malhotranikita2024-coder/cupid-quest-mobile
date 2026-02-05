@@ -77,9 +77,11 @@ export function GameEngine({
   const [cameraX, setCameraX] = useState(0);
   const [checkpointPosition, setCheckpointPosition] = useState({ x: 100, y: 400 });
   const [showDeathOverlay, setShowDeathOverlay] = useState(false);
+  const [isPlantingFlag, setIsPlantingFlag] = useState(false);
   
   const timerRef = useRef<NodeJS.Timeout>();
   const deathTimeoutRef = useRef<NodeJS.Timeout>();
+  const plantingTimeoutRef = useRef<NodeJS.Timeout>();
   
   const {
     controls,
@@ -808,14 +810,41 @@ export function GameEngine({
   }, [levelData.checkpoint, audio]);
 
   const handleFlagReached = useCallback(() => {
+    // Start flag planting animation instead of immediate completion
+    if (isPlantingFlag) return; // Prevent double trigger
+    
+    setIsPlantingFlag(true);
     setLevelData(prev => ({
       ...prev,
-      flag: { ...prev.flag, reached: true },
+     flag: { ...prev.flag, isPlanting: true, plantProgress: 0 },
     }));
-    audio.playLevelComplete();
-    audio.stopBackgroundMusic();
-    onLevelComplete();
-  }, [audio, onLevelComplete]);
+   audio.playCheckpoint(); // Play a sound for planting start
+   
+    // Run planting animation (0.8 seconds)
+    let progress = 0;
+    const plantInterval = setInterval(() => {
+      progress += 5;
+      setLevelData(prev => ({
+        ...prev,
+        flag: { ...prev.flag, plantProgress: progress },
+      }));
+      
+      if (progress >= 100) {
+        clearInterval(plantInterval);
+        // Complete the planting
+        setLevelData(prev => ({
+          ...prev,
+          flag: { ...prev.flag, reached: true, isPlanting: false, plantedFlag: true },
+        }));
+        setIsPlantingFlag(false);
+        audio.playLevelComplete();
+        audio.stopBackgroundMusic();
+        onLevelComplete();
+      }
+    }, 40); // ~25 updates over 1 second
+    
+    plantingTimeoutRef.current = plantInterval as unknown as NodeJS.Timeout;
+  }, [audio, onLevelComplete, isPlantingFlag]);
 
   const handleMidFlagCollected = useCallback(() => {
     setLevelData(prev => ({
@@ -855,6 +884,7 @@ export function GameEngine({
         onFireballHit={handlePlayerHit}
         hasShield={hasShield}
         hasMidFlag={levelData.midFlag.collected}
+        isPlantingFlag={isPlantingFlag}
       />
       
       <GameHUD

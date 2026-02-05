@@ -24,6 +24,7 @@ interface GameCanvasProps {
   onFireballHit?: () => void;
   hasShield: boolean;
   hasMidFlag: boolean;
+  isPlantingFlag: boolean;
 }
 
 const GRAVITY = 0.6;
@@ -56,6 +57,7 @@ export function GameCanvas({
   onFireballHit,
   hasShield,
   hasMidFlag,
+  isPlantingFlag,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
@@ -63,6 +65,9 @@ export function GameCanvas({
 
   const updatePlayer = useCallback(() => {
     if (isPaused) return;
+    
+    // Freeze player during flag planting animation
+    if (isPlantingFlag) return;
 
     let newPlayer = { ...player };
     
@@ -885,6 +890,9 @@ export function GameCanvas({
 
     // Draw END flag - simple Mario-style flag
     const flagReached = levelData.flag.reached;
+    const flagIsPlanting = levelData.flag.isPlanting;
+    const plantProgress = levelData.flag.plantProgress || 0;
+    const flagPlanted = levelData.flag.plantedFlag;
     const flagWave = Math.sin(time / 200) * 3;
     const flagX = levelData.flag.x;
     const flagY = levelData.flag.y;
@@ -931,61 +939,118 @@ export function GameCanvas({
    ctx.strokeText('FINISH', finishZoneX - cameraX + finishZoneWidth / 2, groundY - 35);
    ctx.fillText('FINISH', finishZoneX - cameraX + finishZoneWidth / 2, groundY - 35);
    
-   // Simple flag pole - brown/gray color
-    ctx.fillStyle = '#5D4037';
-    ctx.strokeStyle = '#3E2723';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-   ctx.roundRect(flagX + 15 - cameraX, flagY, 10, 100, 3);
-    ctx.stroke();
-    ctx.fill();
-    
-   // Pole cap - golden ball
-   ctx.beginPath();
-   ctx.arc(flagX + 20 - cameraX, flagY - 3, 6, 0, Math.PI * 2);
-   ctx.fillStyle = '#FFD700';
-   ctx.fill();
-   ctx.strokeStyle = '#CC9900';
+   // Flag pole holder (empty pole that waits for the planted flag)
+   ctx.fillStyle = '#5D4037';
+   ctx.strokeStyle = '#3E2723';
    ctx.lineWidth = 2;
-   ctx.stroke();
-   
-    // Flag cloth - green if reached, red if not
-    const clothColor = flagReached ? '#00AA00' : '#DD0000';
-    const clothOutline = flagReached ? '#005500' : '#880000';
-    
-    ctx.fillStyle = clothColor;
-    ctx.strokeStyle = clothOutline;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-   ctx.moveTo(flagX + 25 - cameraX, flagY + 5);
-   ctx.lineTo(flagX + 65 - cameraX + flagWave, flagY + 20);
-   ctx.lineTo(flagX + 25 - cameraX, flagY + 38);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.fill();
-    
-   // White inner highlight on cloth
-   ctx.strokeStyle = 'rgba(255,255,255,0.5)';
-   ctx.lineWidth = 1;
    ctx.beginPath();
-   ctx.moveTo(flagX + 28 - cameraX, flagY + 10);
-   ctx.lineTo(flagX + 55 - cameraX + flagWave * 0.8, flagY + 20);
+   ctx.roundRect(flagX + 15 - cameraX, groundY - 60, 8, 60, 3);
    ctx.stroke();
+   ctx.fill();
    
-    // Small heart on flag
-    ctx.font = '14px Arial';
-    ctx.textAlign = 'center';
-   ctx.fillText(flagReached ? '💚' : '❤️', flagX + 42 - cameraX + flagWave * 0.5, flagY + 26);
-    
-    // "END" text if mid-flag not collected
-    if (!levelData.midFlag.collected && !flagReached) {
-      ctx.font = 'bold 12px Arial';
-      ctx.fillStyle = '#FFFFFF';
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 2;
-     ctx.strokeText('NEED FLAG!', flagX + 40 - cameraX, flagY - 10);
-     ctx.fillText('NEED FLAG!', flagX + 40 - cameraX, flagY - 10);
-    }
+   // Pole base - stone block
+   ctx.fillStyle = '#666666';
+   ctx.strokeStyle = '#333333';
+   ctx.lineWidth = 2;
+   ctx.beginPath();
+   ctx.roundRect(flagX + 5 - cameraX, groundY - 15, 28, 15, 3);
+   ctx.stroke();
+   ctx.fill();
+   
+   // Draw planted flag if completed
+   if (flagPlanted || flagIsPlanting) {
+     const plantedFlagY = flagIsPlanting 
+       ? groundY - 60 - (plantProgress / 100) * 50  // Animate from base up
+       : groundY - 110;  // Final position
+     
+     // Planted flag pole (golden)
+     ctx.fillStyle = '#FFD700';
+     ctx.strokeStyle = '#CC9900';
+     ctx.lineWidth = 2;
+     ctx.beginPath();
+     ctx.roundRect(flagX + 16 - cameraX, plantedFlagY, 6, 50, 2);
+     ctx.stroke();
+     ctx.fill();
+     
+     // Golden ball cap
+     ctx.beginPath();
+     ctx.arc(flagX + 19 - cameraX, plantedFlagY - 3, 5, 0, Math.PI * 2);
+     ctx.fillStyle = '#FFD700';
+     ctx.fill();
+     ctx.strokeStyle = '#CC9900';
+     ctx.lineWidth = 1.5;
+     ctx.stroke();
+     
+     // Green victory flag cloth
+     const victoryWave = Math.sin(time / 150) * 4;
+     ctx.fillStyle = '#00CC00';
+     ctx.strokeStyle = '#FFFFFF';
+     ctx.lineWidth = 2;
+     ctx.beginPath();
+     ctx.moveTo(flagX + 22 - cameraX, plantedFlagY + 2);
+     ctx.quadraticCurveTo(flagX + 48 - cameraX + victoryWave, plantedFlagY + 4, flagX + 45 - cameraX + victoryWave, plantedFlagY + 15);
+     ctx.quadraticCurveTo(flagX + 42 - cameraX + victoryWave, plantedFlagY + 26, flagX + 22 - cameraX, plantedFlagY + 28);
+     ctx.closePath();
+     ctx.fill();
+     ctx.stroke();
+     
+     // White heart on victory flag
+     ctx.save();
+     ctx.translate(flagX + 32 - cameraX + victoryWave * 0.4, plantedFlagY + 15);
+     ctx.fillStyle = '#FFFFFF';
+     ctx.beginPath();
+     ctx.moveTo(0, 2);
+     ctx.bezierCurveTo(-3, -2, -5, 0, -5, 2.5);
+     ctx.bezierCurveTo(-5, 5, 0, 8, 0, 9);
+     ctx.bezierCurveTo(0, 8, 5, 5, 5, 2.5);
+     ctx.bezierCurveTo(5, 0, 3, -2, 0, 2);
+     ctx.closePath();
+     ctx.fill();
+     ctx.restore();
+     
+     // Celebration sparkles during planting
+     if (flagIsPlanting) {
+       const sparkleCount = 6;
+       for (let i = 0; i < sparkleCount; i++) {
+         const sparkleAngle = (time / 200) + (i * Math.PI * 2 / sparkleCount);
+         const sparkleRadius = 30 + (plantProgress / 100) * 20;
+         const sparkleX = flagX + 20 - cameraX + Math.cos(sparkleAngle) * sparkleRadius;
+         const sparkleY = plantedFlagY + 20 + Math.sin(sparkleAngle) * sparkleRadius * 0.6;
+         
+         ctx.font = '14px Arial';
+         ctx.textAlign = 'center';
+         ctx.fillText('✨', sparkleX, sparkleY);
+       }
+     }
+     
+     // "VICTORY!" text when planted
+     if (flagPlanted) {
+       ctx.font = 'bold 16px Arial';
+       ctx.textAlign = 'center';
+       ctx.fillStyle = '#FFD700';
+       ctx.strokeStyle = '#000000';
+       ctx.lineWidth = 3;
+       ctx.strokeText('VICTORY!', flagX + 20 - cameraX, plantedFlagY - 15);
+       ctx.fillText('VICTORY!', flagX + 20 - cameraX, plantedFlagY - 15);
+     }
+   } else {
+     // Show "PLANT FLAG HERE" or "NEED FLAG" hint
+     ctx.font = 'bold 11px Arial';
+     ctx.textAlign = 'center';
+     if (hasMidFlag) {
+       ctx.fillStyle = '#00FF00';
+       ctx.strokeStyle = '#000000';
+       ctx.lineWidth = 2;
+       ctx.strokeText('PLANT FLAG!', flagX + 20 - cameraX, groundY - 70);
+       ctx.fillText('PLANT FLAG!', flagX + 20 - cameraX, groundY - 70);
+     } else {
+       ctx.fillStyle = '#FF6666';
+       ctx.strokeStyle = '#000000';
+       ctx.lineWidth = 2;
+       ctx.strokeText('NEED FLAG!', flagX + 20 - cameraX, groundY - 70);
+       ctx.fillText('NEED FLAG!', flagX + 20 - cameraX, groundY - 70);
+     }
+   }
     
     ctx.restore();
 
