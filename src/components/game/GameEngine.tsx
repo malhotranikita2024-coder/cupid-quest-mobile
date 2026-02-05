@@ -283,8 +283,7 @@ export function GameEngine({
          const newCollectibles = prev.collectibles.map(collectible => {
            // Skip non-burst items, collected items, and shield items (shields don't expire)
            if (collectible.collected) return collectible;
-           if (!collectible.isBurst) return collectible;
-           if (collectible.type === 'shield') return collectible;
+           if (!collectible.isBurst && collectible.type !== 'shield') return collectible;
            if (!collectible.fromBlock) return collectible;
 
            // Initialize spawn time if not set
@@ -742,6 +741,7 @@ export function GameEngine({
         });
       } else if (block.contents === 'shield') {
         // Shield reward: spawn heart power-up
+         const direction = Math.random() > 0.5 ? 1 : -1;
         newCollectibles.push({
           x: block.x + block.width / 2,
           y: block.y - 30,
@@ -749,9 +749,11 @@ export function GameEngine({
           collected: false,
           animationOffset: 0,
           fromBlock: true,
-          velocityX: 0,
-          velocityY: -7,
-           isBurst: false, // Shield does NOT expire
+           velocityX: direction * (3 + Math.random() * 1),
+           velocityY: -10,
+           isBurst: true, // Shield now expires like burst items
+           spawnTime: Date.now(),
+           isGrounded: false,
         });
       } else if (block.contents === 'collectible') {
         // Legacy support for 'collectible' type
