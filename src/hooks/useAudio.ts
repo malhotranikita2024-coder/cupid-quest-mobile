@@ -9,6 +9,8 @@ class RetroAudioEngine {
   private bgMusicOsc: OscillatorNode[] = [];
   private bgMusicGain: GainNode | null = null;
   private bgMusicInterval: number | null = null;
+  private menuMusicInterval: number | null = null;
+  private menuMusicGain: GainNode | null = null;
 
   init() {
     if (this.audioContext) return;
@@ -237,6 +239,116 @@ class RetroAudioEngine {
     });
     this.bgMusicOsc = [];
   }
+
+  startMenuMusic() {
+    if (!this.musicEnabled) return;
+    this.init();
+    if (!this.audioContext || !this.masterGain) return;
+
+    // Stop existing menu music
+    this.stopMenuMusic();
+
+    this.menuMusicGain = this.audioContext.createGain();
+    this.menuMusicGain.connect(this.masterGain);
+    this.menuMusicGain.gain.value = 0.06; // Moderate volume
+
+    // Cheerful Mario-style menu melody
+    // C major scale with happy bouncy feel
+    const melodyPattern = [
+      { note: 523, dur: 0.15 },  // C5
+      { note: 587, dur: 0.15 },  // D5
+      { note: 659, dur: 0.15 },  // E5
+      { note: 523, dur: 0.15 },  // C5
+      { note: 659, dur: 0.15 },  // E5
+      { note: 784, dur: 0.3 },   // G5
+      { note: 784, dur: 0.15 },  // G5
+      { note: 0, dur: 0.15 },    // Rest
+      { note: 392, dur: 0.15 },  // G4
+      { note: 440, dur: 0.15 },  // A4
+      { note: 494, dur: 0.15 },  // B4
+      { note: 392, dur: 0.15 },  // G4
+      { note: 494, dur: 0.15 },  // B4
+      { note: 523, dur: 0.3 },   // C5
+      { note: 523, dur: 0.15 },  // C5
+      { note: 0, dur: 0.15 },    // Rest
+    ];
+
+    const bassPattern = [
+      { note: 131, dur: 0.25 },  // C3
+      { note: 165, dur: 0.25 },  // E3
+      { note: 196, dur: 0.25 },  // G3
+      { note: 165, dur: 0.25 },  // E3
+    ];
+
+    let melodyIdx = 0;
+    let bassIdx = 0;
+    let beatCount = 0;
+
+    this.menuMusicInterval = window.setInterval(() => {
+      if (!this.audioContext || !this.menuMusicGain || !this.musicEnabled) return;
+
+      const currentTime = this.audioContext.currentTime;
+
+      // Play bass note every beat
+      const bassNote = bassPattern[bassIdx % bassPattern.length];
+      if (bassNote.note > 0) {
+        const bassOsc = this.audioContext.createOscillator();
+        const bassGainNode = this.audioContext.createGain();
+        bassOsc.connect(bassGainNode);
+        bassGainNode.connect(this.menuMusicGain);
+        bassOsc.type = 'triangle';
+        bassOsc.frequency.value = bassNote.note;
+        bassGainNode.gain.setValueAtTime(0.25, currentTime);
+        bassGainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + bassNote.dur);
+        bassOsc.start(currentTime);
+        bassOsc.stop(currentTime + bassNote.dur);
+      }
+      bassIdx++;
+
+      // Play melody note every beat
+      if (beatCount % 1 === 0) {
+        const melodyNote = melodyPattern[melodyIdx % melodyPattern.length];
+        if (melodyNote.note > 0) {
+          const melodyOsc = this.audioContext.createOscillator();
+          const melodyGainNode = this.audioContext.createGain();
+          melodyOsc.connect(melodyGainNode);
+          melodyGainNode.connect(this.menuMusicGain);
+          melodyOsc.type = 'square';
+          melodyOsc.frequency.value = melodyNote.note;
+          melodyGainNode.gain.setValueAtTime(0.12, currentTime);
+          melodyGainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + melodyNote.dur);
+          melodyOsc.start(currentTime);
+          melodyOsc.stop(currentTime + melodyNote.dur);
+
+          // Add a subtle harmony
+          const harmonyOsc = this.audioContext.createOscillator();
+          const harmonyGainNode = this.audioContext.createGain();
+          harmonyOsc.connect(harmonyGainNode);
+          harmonyGainNode.connect(this.menuMusicGain);
+          harmonyOsc.type = 'sine';
+          harmonyOsc.frequency.value = melodyNote.note * 0.5; // Octave below
+          harmonyGainNode.gain.setValueAtTime(0.06, currentTime);
+          harmonyGainNode.gain.exponentialRampToValueAtTime(0.01, currentTime + melodyNote.dur * 0.8);
+          harmonyOsc.start(currentTime);
+          harmonyOsc.stop(currentTime + melodyNote.dur * 0.8);
+        }
+        melodyIdx++;
+      }
+      beatCount++;
+    }, 200); // Tempo: 300 BPM feel (upbeat)
+  }
+
+  stopMenuMusic(fadeOut: boolean = false) {
+    if (this.menuMusicInterval) {
+      clearInterval(this.menuMusicInterval);
+      this.menuMusicInterval = null;
+    }
+    
+    // Fade out the gain if requested
+    if (fadeOut && this.menuMusicGain && this.audioContext) {
+      this.menuMusicGain.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + 0.5);
+    }
+  }
 }
 
 const audioEngine = new RetroAudioEngine();
@@ -307,6 +419,14 @@ export function useAudio(musicEnabled: boolean, sfxEnabled: boolean) {
     audioEngine.stopBackgroundMusic();
   }, []);
 
+  const startMenuMusic = useCallback(() => {
+    audioEngine.startMenuMusic();
+  }, []);
+
+  const stopMenuMusic = useCallback((fadeOut: boolean = false) => {
+    audioEngine.stopMenuMusic(fadeOut);
+  }, []);
+
   return {
     initAudio,
     playJump,
@@ -321,5 +441,7 @@ export function useAudio(musicEnabled: boolean, sfxEnabled: boolean) {
     playFireball,
     startBackgroundMusic,
     stopBackgroundMusic,
+    startMenuMusic,
+    stopMenuMusic,
   };
 }
