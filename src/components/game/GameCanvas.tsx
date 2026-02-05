@@ -668,14 +668,31 @@ export function GameCanvas({
       const bobY = Math.sin(time / 300 + collectible.animationOffset * Math.PI) * 5;
       const emoji = COLLECTIBLE_EMOJIS[collectible.type] || '🌹';
       
+      // Draw bright glowing backdrop circle for visibility
       if (collectible.type === 'cookie') {
+        // Golden pulsing glow circle
+        const pulse = Math.sin(time / 150) * 0.3 + 0.7;
+        ctx.beginPath();
+        ctx.arc(collectible.x, collectible.y + bobY - 8, 22 * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 215, 0, 0.6)';
+        ctx.fill();
         ctx.shadowColor = '#FFD700';
         ctx.shadowBlur = 25;
       } else if (collectible.type === 'rose') {
-        // MAXIMUM visibility red glow for roses
+        // Bright RED glowing circle behind rose
+        const pulse = Math.sin(time / 200 + collectible.animationOffset) * 0.2 + 0.8;
+        ctx.beginPath();
+        ctx.arc(collectible.x, collectible.y + bobY - 6, 18 * pulse, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.5)';
+        ctx.fill();
+        // Bright red glow
         ctx.shadowColor = '#FF0000';
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 25;
       } else {
+        ctx.beginPath();
+        ctx.arc(collectible.x, collectible.y + bobY - 6, 16, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 105, 180, 0.4)';
+        ctx.fill();
         ctx.shadowColor = '#FF69B4';
         ctx.shadowBlur = 12;
       }
@@ -691,42 +708,48 @@ export function GameCanvas({
       if (enemy.isDefeated) return;
       
       const wobble = Math.sin(time / 200) * 3;
-      // MAXIMUM contrast enemies - bright glows
+      const enemyX = enemy.x + enemy.width / 2;
+      
+      // Draw bright glowing backdrop for enemy visibility
+      const enemyPulse = Math.sin(time / 150) * 0.15 + 0.85;
+      ctx.beginPath();
+      ctx.arc(enemyX, enemy.y + 10, 30 * enemyPulse, 0, Math.PI * 2);
+      ctx.fillStyle = enemy.type === 'heartBug' ? 'rgba(255, 0, 100, 0.5)' : 'rgba(180, 0, 255, 0.5)';
+      ctx.fill();
+      
       ctx.font = '44px Arial';
       ctx.textAlign = 'center';
       
       if (enemy.type === 'heartBug') {
-        // Bright magenta glow
-        ctx.shadowColor = '#FF00FF';
-        ctx.shadowBlur = 20;
-        ctx.fillText('💗', enemy.x + enemy.width / 2, enemy.y - 5 + wobble);
-        ctx.shadowBlur = 12;
+        ctx.shadowColor = '#FF0066';
+        ctx.shadowBlur = 25;
+        ctx.fillText('💗', enemyX, enemy.y - 5 + wobble);
+        ctx.shadowBlur = 15;
         ctx.font = '32px Arial';
-        ctx.fillText('🐛', enemy.x + enemy.width / 2, enemy.y + 22 + wobble);
+        ctx.fillText('🐛', enemyX, enemy.y + 22 + wobble);
         // Show fireball indicator for shooting enemies
         if (enemy.canShoot) {
           ctx.shadowColor = '#FF4500';
-          ctx.shadowBlur = 10;
+          ctx.shadowBlur = 15;
           ctx.font = '16px Arial';
-          ctx.fillText('🔥', enemy.x + enemy.width / 2 + 15, enemy.y - 10);
+          ctx.fillText('🔥', enemyX + 18, enemy.y - 10);
         }
       } else if (enemy.type === 'brokenHeartSlime') {
-        // Bright purple glow
-        ctx.shadowColor = '#FF00FF';
-        ctx.shadowBlur = 20;
-        ctx.fillText('💔', enemy.x + enemy.width / 2, enemy.y + 15 + wobble);
+        ctx.shadowColor = '#CC00FF';
+        ctx.shadowBlur = 25;
+        ctx.fillText('💔', enemyX, enemy.y + 15 + wobble);
         if (enemy.canShoot) {
           ctx.shadowColor = '#FF4500';
-          ctx.shadowBlur = 10;
+          ctx.shadowBlur = 15;
           ctx.font = '16px Arial';
-          ctx.fillText('🔥', enemy.x + enemy.width / 2 + 15, enemy.y - 10);
+          ctx.fillText('🔥', enemyX + 18, enemy.y - 10);
         }
       } else if (enemy.type === 'jealousCloud') {
         ctx.shadowColor = '#00BFFF';
-        ctx.shadowBlur = 15;
-        ctx.fillText('😤', enemy.x + enemy.width / 2, enemy.y + 20 + wobble);
+        ctx.shadowBlur = 20;
+        ctx.fillText('😤', enemyX, enemy.y + 20 + wobble);
         ctx.font = '36px Arial';
-        ctx.fillText('☁️', enemy.x + enemy.width / 2, enemy.y + 45 + wobble);
+        ctx.fillText('☁️', enemyX, enemy.y + 45 + wobble);
       }
       ctx.shadowBlur = 0;
     });
