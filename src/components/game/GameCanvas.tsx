@@ -1236,6 +1236,83 @@ function drawBackgroundVegetation(ctx: CanvasRenderingContext2D, width: number, 
   ctx.lineTo(width + 50, height);
   ctx.closePath();
   ctx.fill();
+  
+  // Flower colors based on level theme
+  const flowerColors: Record<number, string[]> = {
+    1: ['rgba(255, 200, 220, 0.6)', 'rgba(255, 255, 200, 0.6)', 'rgba(255, 180, 180, 0.5)'], // Pink, yellow, rose
+    2: ['rgba(255, 220, 150, 0.6)', 'rgba(255, 180, 200, 0.5)', 'rgba(255, 255, 180, 0.6)'], // Orange, pink, cream
+    3: ['rgba(200, 220, 255, 0.5)', 'rgba(255, 255, 200, 0.6)', 'rgba(220, 200, 255, 0.5)'], // Blue, yellow, lavender
+    4: ['rgba(255, 255, 200, 0.6)', 'rgba(255, 200, 200, 0.5)', 'rgba(200, 255, 220, 0.5)'], // Yellow, pink, mint
+    5: ['rgba(255, 255, 220, 0.6)', 'rgba(220, 240, 255, 0.5)', 'rgba(255, 220, 240, 0.5)'], // Cream, light blue, blush
+    6: ['rgba(255, 230, 180, 0.6)', 'rgba(255, 200, 180, 0.5)', 'rgba(255, 255, 200, 0.6)'], // Peach, coral, yellow
+    7: ['rgba(255, 180, 200, 0.6)', 'rgba(255, 150, 180, 0.6)', 'rgba(255, 220, 230, 0.5)'], // Pink, magenta, blush
+  };
+  
+  const flowers = flowerColors[levelId] || flowerColors[1];
+  
+  // Seeded random for consistent flower positions
+  const seededRandom = (seed: number) => {
+    const x = Math.sin(seed * 9999) * 10000;
+    return x - Math.floor(x);
+  };
+  
+  // Draw flowers on middle meadow
+  for (let i = 0; i < 15; i++) {
+    const seed = levelId * 100 + i;
+    const baseX = seededRandom(seed) * (width + 200) - 50;
+    const flowerX = ((baseX - offset * 0.25) % (width + 200)) - 50;
+    const adjustedX = flowerX + offset * 0.25 + 150;
+    const meadowY = height * 0.68 + Math.sin(adjustedX * 0.005) * 20 + Math.sin(adjustedX * 0.012 + 1) * 10;
+    const flowerY = meadowY - 3 - seededRandom(seed + 50) * 8;
+    const flowerSize = 3 + seededRandom(seed + 100) * 2;
+    const colorIndex = Math.floor(seededRandom(seed + 150) * flowers.length);
+    
+    // Draw simple daisy flower
+    ctx.fillStyle = flowers[colorIndex];
+    // Petals (4-5 small circles around center)
+    for (let p = 0; p < 5; p++) {
+      const angle = (p / 5) * Math.PI * 2;
+      const petalX = flowerX + Math.cos(angle) * flowerSize * 0.6;
+      const petalY = flowerY + Math.sin(angle) * flowerSize * 0.6;
+      ctx.beginPath();
+      ctx.arc(petalX, petalY, flowerSize * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Center
+    ctx.fillStyle = 'rgba(255, 220, 100, 0.7)';
+    ctx.beginPath();
+    ctx.arc(flowerX, flowerY, flowerSize * 0.35, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Draw flowers on front meadow (slightly larger, more visible)
+  for (let i = 0; i < 12; i++) {
+    const seed = levelId * 200 + i + 500;
+    const baseX = seededRandom(seed) * (width + 250) - 50;
+    const flowerX = ((baseX - offset * 0.35) % (width + 250)) - 50;
+    const adjustedX = flowerX + offset * 0.35 + 300;
+    const meadowY = height * 0.74 + Math.sin(adjustedX * 0.006) * 15 + Math.sin(adjustedX * 0.015 + 2) * 8;
+    const flowerY = meadowY - 4 - seededRandom(seed + 50) * 10;
+    const flowerSize = 4 + seededRandom(seed + 100) * 2;
+    const colorIndex = Math.floor(seededRandom(seed + 150) * flowers.length);
+    
+    // Draw simple daisy flower
+    ctx.fillStyle = flowers[colorIndex];
+    // Petals
+    for (let p = 0; p < 5; p++) {
+      const angle = (p / 5) * Math.PI * 2 + 0.3;
+      const petalX = flowerX + Math.cos(angle) * flowerSize * 0.6;
+      const petalY = flowerY + Math.sin(angle) * flowerSize * 0.6;
+      ctx.beginPath();
+      ctx.arc(petalX, petalY, flowerSize * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Center
+    ctx.fillStyle = 'rgba(255, 230, 120, 0.8)';
+    ctx.beginPath();
+    ctx.arc(flowerX, flowerY, flowerSize * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
 }
 
 // Helper: Draw improved grass on ground platforms
