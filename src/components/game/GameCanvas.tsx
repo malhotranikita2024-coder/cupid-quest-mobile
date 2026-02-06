@@ -253,9 +253,15 @@ export function GameCanvas({
       newPlayer.x = levelData.levelWidth - PLAYER_WIDTH;
     }
 
-    // Fall into pit detection
+    // Fall into pit detection - trigger death ONCE and stop all processing
     if (newPlayer.y > 700) {
+      // Freeze player immediately to prevent further fall triggers
+      newPlayer.velocityX = 0;
+      newPlayer.velocityY = 0;
+      newPlayer.y = 700; // Clamp to prevent further fall
       onPlayerHit();
+      // CRITICAL: Update player state with frozen position, then return
+      onPlayerUpdate(newPlayer);
       return;
     }
 

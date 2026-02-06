@@ -83,6 +83,8 @@ export function GameEngine({
   const timerRef = useRef<NodeJS.Timeout>();
   const deathTimeoutRef = useRef<NodeJS.Timeout>();
   const plantingTimeoutRef = useRef<NodeJS.Timeout>();
+  // Synchronous death lock ref - prevents race conditions with async state updates
+  const isDeathLockedRef = useRef(false);
   
   const {
     controls,
@@ -103,16 +105,22 @@ export function GameEngine({
   const audioRef = useRef(audio);
   audioRef.current = audio;
 
+  // LEVEL START SPAWN POSITION - always respawn here
+  const LEVEL_START_SPAWN = { x: 100, y: 400 };
+
   // Initialize level and start music
   useEffect(() => {
     const data = getLevelData(currentLevel);
     setLevelData(data);
-    setPlayer({ ...INITIAL_PLAYER, x: 100, y: 400 });
+    // ALWAYS spawn at level start position
+    setPlayer({ ...INITIAL_PLAYER, x: LEVEL_START_SPAWN.x, y: LEVEL_START_SPAWN.y });
     setCameraX(0);
-    setCheckpointPosition({ x: 100, y: 400 });
+    // Remove checkpoint usage - we always restart from level start
+    setCheckpointPosition(LEVEL_START_SPAWN);
     resetControls();
     setShowDeathOverlay(false);
     setIsDying(false); // Reset death lock on level start
+    isDeathLockedRef.current = false; // Reset synchronous death lock
     
     // Start background music
     audioRef.current.initAudio();
@@ -632,29 +640,68 @@ export function GameEngine({
   }, [handleLeftStart, handleLeftEnd, handleRightStart, handleRightEnd, handleJumpStart, handleJumpEnd, handleRunStart, handleRunEnd, onPause, showDeathOverlay]);
 
   const handlePlayerDeath = useCallback(() => {
-    // Death lock: prevent multiple death triggers (e.g., falling draining all lives)
+    // SYNCHRONOUS death lock check using ref - prevents race conditions
+    // This is critical because React state updates are async
+    if (isDeathLockedRef.current) return;
+    
+    // Also check state-based locks as fallback
     if (showDeathOverlay || isDying) return;
     
-    // Engage death lock immediately
+    // Engage SYNCHRONOUS death lock IMMEDIATELY - this is the first line of defense
+    isDeathLockedRef.current = true;
+    
+    // Also set state-based lock
     setIsDying(true);
+    
+    // Freeze player completely to prevent any further collisions/triggers
+    setPlayer(prev => ({ 
+      ...prev, 
+      velocityX: 0, 
+      velocityY: 0,
+      // Clamp position to prevent falling further
+      y: Math.min(prev.y, 700)
+    }));
+    
     audio.playDeath();
     setShowDeathOverlay(true);
     
-    // Freeze player position to prevent further collisions
-    setPlayer(prev => ({ ...prev, velocityX: 0, velocityY: 0 }));
+    // Clear any existing death timeout
+    if (deathTimeoutRef.current) {
+      clearTimeout(deathTimeoutRef.current);
+    }
     
     // After death animation (~1 second), either restart level or game over
     deathTimeoutRef.current = setTimeout(() => {
       const isGameOver = onLoseLife();
       if (!isGameOver) {
-        // Restart current level from the BEGINNING (no checkpoint respawn)
+        // FORCE RESPAWN AT LEVEL START - reload level data and reset everything
+        const freshLevelData = getLevelData(currentLevel);
+        setLevelData(freshLevelData);
+        
+        // Reset player to LEVEL START position (x: 100, y: 400)
+        setPlayer({ 
+          ...INITIAL_PLAYER, 
+          x: 100, 
+          y: 400 
+        });
+        
+        // Reset camera to start
+        setCameraX(0);
+        
+        // Reset controls
+        resetControls();
+        
+        // Clear ALL death locks (both ref and state)
+        isDeathLockedRef.current = false;
         setShowDeathOverlay(false);
         setIsDying(false);
+        
+        // Notify parent to reset level-specific state (collectibles, shield, etc.)
         onRestartLevel();
       }
-      // If game over, isDying stays true (screen changes to game over)
+      // If game over, death locks stay true (screen changes to game over)
     }, 1000);
-  }, [audio, onLoseLife, onRestartLevel, showDeathOverlay, isDying]);
+  }, [audio, onLoseLife, onRestartLevel, showDeathOverlay, isDying, currentLevel, resetControls]);
 
   const handlePlayerUpdate = useCallback((newPlayer: PlayerState) => {
     setPlayer(newPlayer);
@@ -716,7 +763,10 @@ export function GameEngine({
   }, [audio]);
 
   const handlePlayerHit = useCallback(() => {
-    // Ignore hits if already dying (death lock active)
+    // SYNCHRONOUS check using ref - prevents multiple hits in same frame
+    if (isDeathLockedRef.current) return;
+    
+    // Ignore hits if already dying (state-based lock as fallback)
     if (isDying || showDeathOverlay) return;
     
     // If player has shield, absorb the hit instead of dying
