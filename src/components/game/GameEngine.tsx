@@ -78,6 +78,7 @@ export function GameEngine({
   const [checkpointPosition, setCheckpointPosition] = useState({ x: 100, y: 400 });
   const [showDeathOverlay, setShowDeathOverlay] = useState(false);
   const [isPlantingFlag, setIsPlantingFlag] = useState(false);
+  const [isDying, setIsDying] = useState(false); // Death lock to prevent multiple life loss
   
   const timerRef = useRef<NodeJS.Timeout>();
   const deathTimeoutRef = useRef<NodeJS.Timeout>();
@@ -111,6 +112,7 @@ export function GameEngine({
     setCheckpointPosition({ x: 100, y: 400 });
     resetControls();
     setShowDeathOverlay(false);
+    setIsDying(false); // Reset death lock on level start
     
     // Start background music
     audioRef.current.initAudio();
@@ -630,21 +632,29 @@ export function GameEngine({
   }, [handleLeftStart, handleLeftEnd, handleRightStart, handleRightEnd, handleJumpStart, handleJumpEnd, handleRunStart, handleRunEnd, onPause, showDeathOverlay]);
 
   const handlePlayerDeath = useCallback(() => {
-    if (showDeathOverlay) return;
+    // Death lock: prevent multiple death triggers (e.g., falling draining all lives)
+    if (showDeathOverlay || isDying) return;
     
+    // Engage death lock immediately
+    setIsDying(true);
     audio.playDeath();
     setShowDeathOverlay(true);
     
-    // After death animation, either restart level or game over
+    // Freeze player position to prevent further collisions
+    setPlayer(prev => ({ ...prev, velocityX: 0, velocityY: 0 }));
+    
+    // After death animation (~1 second), either restart level or game over
     deathTimeoutRef.current = setTimeout(() => {
       const isGameOver = onLoseLife();
       if (!isGameOver) {
-        // Restart current level from beginning
+        // Restart current level from the BEGINNING (no checkpoint respawn)
         setShowDeathOverlay(false);
+        setIsDying(false);
         onRestartLevel();
       }
-    }, 1500);
-  }, [audio, onLoseLife, onRestartLevel, showDeathOverlay]);
+      // If game over, isDying stays true (screen changes to game over)
+    }, 1000);
+  }, [audio, onLoseLife, onRestartLevel, showDeathOverlay, isDying]);
 
   const handlePlayerUpdate = useCallback((newPlayer: PlayerState) => {
     setPlayer(newPlayer);
@@ -706,6 +716,9 @@ export function GameEngine({
   }, [audio]);
 
   const handlePlayerHit = useCallback(() => {
+    // Ignore hits if already dying (death lock active)
+    if (isDying || showDeathOverlay) return;
+    
     // If player has shield, absorb the hit instead of dying
     if (hasShield) {
       onUseShield();
@@ -713,7 +726,7 @@ export function GameEngine({
       return;
     }
     handlePlayerDeath();
-  }, [handlePlayerDeath, hasShield, onUseShield, audio]);
+  }, [handlePlayerDeath, hasShield, onUseShield, audio, isDying, showDeathOverlay]);
 
   const handleBlockHit = useCallback((index: number) => {
     setLevelData(prev => {
@@ -878,7 +891,7 @@ export function GameEngine({
         onMidFlagCollected={handleMidFlagCollected}
         onBlockHit={handleBlockHit}
         onJump={handleJump}
-        isPaused={isPaused || showDeathOverlay}
+        isPaused={isPaused || showDeathOverlay || isDying}
         cameraX={cameraX}
         onCameraUpdate={handleCameraUpdate}
         onFireballHit={handlePlayerHit}
