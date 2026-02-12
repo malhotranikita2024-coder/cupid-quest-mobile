@@ -10,7 +10,9 @@ import { StoryScreen } from './screens/StoryScreen';
 import { GameOverScreen } from './screens/GameOverScreen';
 import { FinalEndingScreen } from './screens/FinalEndingScreen';
 import { BadgesScreen } from './screens/BadgesScreen';
+import { LeaderboardScreen } from './screens/LeaderboardScreen';
 import { LandscapeHint } from './screens/LandscapeHint';
+import { submitScore } from '@/hooks/useLeaderboard';
 
 export function Game() {
   const {
@@ -128,6 +130,7 @@ export function Game() {
   // Handle game over restart
   const handleGameOverRestart = () => {
     audio.playGameOver();
+    submitScore(gameState.playerName, gameState.score, gameState.currentLevel);
     restartGame();
   };
 
@@ -155,6 +158,7 @@ export function Game() {
           onPlay={handlePlay}
           onHowToPlay={() => setScreen('howToPlay')}
           onSettings={() => setScreen('settings')}
+          onLeaderboard={() => setScreen('leaderboard')}
           musicEnabled={gameState.musicEnabled}
           onToggleMusic={toggleMusic}
           onFirstInteraction={() => {
@@ -243,8 +247,14 @@ export function Game() {
         <FinalEndingScreen
           playerName={gameState.playerName}
           score={gameState.score}
-          onPlayAgain={restartGame}
-          onMainMenu={goToMenu}
+          onPlayAgain={() => {
+            submitScore(gameState.playerName, gameState.score, 7);
+            restartGame();
+          }}
+          onMainMenu={() => {
+            submitScore(gameState.playerName, gameState.score, 7);
+            goToMenu();
+          }}
           onBadges={() => setScreen('badges')}
         />
       )}
@@ -254,6 +264,10 @@ export function Game() {
           completedLevels={gameState.completedLevels}
           onBack={goToMenu}
         />
+      )}
+
+      {gameState.screen === 'leaderboard' && (
+        <LeaderboardScreen onBack={goToMenu} />
       )}
     </div>
   );
