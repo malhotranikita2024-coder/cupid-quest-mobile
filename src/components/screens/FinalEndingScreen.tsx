@@ -1,6 +1,7 @@
-import React from 'react';
-import { RotateCcw, Home, Share2, Award, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { RotateCcw, Home, Share2, Award, Sparkles, Upload } from 'lucide-react';
 import { LEVEL_INFO } from '@/types/game';
+import { submitScore } from '@/hooks/useLeaderboard';
 
 interface FinalEndingScreenProps {
   playerName: string;
@@ -17,6 +18,13 @@ export function FinalEndingScreen({
   onMainMenu,
   onBadges,
 }: FinalEndingScreenProps) {
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmitScore = async () => {
+    await submitScore(playerName, score, 7);
+    setSubmitted(true);
+  };
+
   const handleShare = () => {
     const text = `I completed Super Love Quest with ${score} points! 💕🎮`;
     if (navigator.share) {
@@ -109,6 +117,15 @@ export function FinalEndingScreen({
 
         {/* Buttons */}
         <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={handleSubmitScore}
+            disabled={submitted}
+            className="btn-love flex items-center justify-center gap-2 py-3 col-span-2"
+          >
+            <Upload className="w-5 h-5" />
+            {submitted ? 'Score Submitted ✓' : 'Submit Score'}
+          </button>
+
           <button
             onClick={onPlayAgain}
             className="btn-love flex items-center justify-center gap-2 py-3"

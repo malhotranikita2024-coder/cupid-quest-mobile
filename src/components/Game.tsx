@@ -12,7 +12,7 @@ import { FinalEndingScreen } from './screens/FinalEndingScreen';
 import { BadgesScreen } from './screens/BadgesScreen';
 import { LeaderboardScreen } from './screens/LeaderboardScreen';
 import { LandscapeHint } from './screens/LandscapeHint';
-import { submitScore } from '@/hooks/useLeaderboard';
+
 
 export function Game() {
   const {
@@ -130,7 +130,6 @@ export function Game() {
   // Handle game over restart
   const handleGameOverRestart = () => {
     audio.playGameOver();
-    submitScore(gameState.playerName, gameState.score, gameState.currentLevel);
     restartGame();
   };
 
@@ -247,14 +246,8 @@ export function Game() {
         <FinalEndingScreen
           playerName={gameState.playerName}
           score={gameState.score}
-          onPlayAgain={() => {
-            submitScore(gameState.playerName, gameState.score, 7);
-            restartGame();
-          }}
-          onMainMenu={() => {
-            submitScore(gameState.playerName, gameState.score, 7);
-            goToMenu();
-          }}
+          onPlayAgain={() => restartGame()}
+          onMainMenu={() => goToMenu()}
           onBadges={() => setScreen('badges')}
         />
       )}

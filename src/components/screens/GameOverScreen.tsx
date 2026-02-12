@@ -1,5 +1,6 @@
-import React from 'react';
-import { RotateCcw, Home, Heart } from 'lucide-react';
+import React, { useState } from 'react';
+import { RotateCcw, Home, Heart, Upload } from 'lucide-react';
+import { submitScore } from '@/hooks/useLeaderboard';
 
 interface GameOverScreenProps {
   score: number;
@@ -16,6 +17,13 @@ export function GameOverScreen({
   onRestart,
   onMainMenu,
 }: GameOverScreenProps) {
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmitScore = async () => {
+    await submitScore(playerName, score, level);
+    setSubmitted(true);
+  };
+
   return (
     <div 
       className="fixed inset-0 flex flex-col items-center justify-center p-6"
@@ -75,6 +83,15 @@ export function GameOverScreen({
 
         {/* Buttons */}
         <div className="flex flex-col gap-3 items-center">
+          <button
+            onClick={handleSubmitScore}
+            disabled={submitted}
+            className="btn-love flex items-center justify-center gap-3 min-w-[200px]"
+          >
+            <Upload className="w-5 h-5" />
+            {submitted ? 'SCORE SUBMITTED ✓' : 'SUBMIT SCORE'}
+          </button>
+
           <button
             onClick={onRestart}
             className="btn-love flex items-center justify-center gap-3 min-w-[200px]"
