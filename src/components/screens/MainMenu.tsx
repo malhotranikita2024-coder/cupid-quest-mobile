@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, HelpCircle, Settings, User, Volume2, VolumeX } from 'lucide-react';
+import { Play, HelpCircle, Settings, User, Volume2, VolumeX, Trophy } from 'lucide-react';
 
 interface MainMenuProps {
   playerName: string;
@@ -7,6 +7,7 @@ interface MainMenuProps {
   onPlay: () => void;
   onHowToPlay: () => void;
   onSettings: () => void;
+  onLeaderboard: () => void;
   musicEnabled: boolean;
   onToggleMusic: () => void;
   onFirstInteraction: () => void;
@@ -18,6 +19,7 @@ export function MainMenu({
   onPlay,
   onHowToPlay,
   onSettings,
+  onLeaderboard,
   musicEnabled,
   onToggleMusic,
   onFirstInteraction,
@@ -690,11 +692,11 @@ export function MainMenu({
             </button>
             
             {/* Secondary Buttons - Golden */}
-            <div className="flex gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={onHowToPlay}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-display font-bold rounded-lg transition-transform hover:scale-[1.02]"
+                className="flex flex-col items-center justify-center gap-1 py-2 text-xs font-display font-bold rounded-lg transition-transform hover:scale-[1.02]"
                 style={{
                   background: 'linear-gradient(180deg, #FFE082 0%, #FFD54F 100%)',
                   border: 'none',
@@ -708,8 +710,23 @@ export function MainMenu({
               
               <button
                 type="button"
+                onClick={onLeaderboard}
+                className="flex flex-col items-center justify-center gap-1 py-2 text-xs font-display font-bold rounded-lg transition-transform hover:scale-[1.02]"
+                style={{
+                  background: 'linear-gradient(180deg, #FFE082 0%, #FFD54F 100%)',
+                  border: 'none',
+                  color: '#5D4E37',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                }}
+              >
+                <Trophy className="w-4 h-4" />
+                Leaderboard
+              </button>
+              
+              <button
+                type="button"
                 onClick={onSettings}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm font-display font-bold rounded-lg transition-transform hover:scale-[1.02]"
+                className="flex flex-col items-center justify-center gap-1 py-2 text-xs font-display font-bold rounded-lg transition-transform hover:scale-[1.02]"
                 style={{
                   background: 'linear-gradient(180deg, #FFE082 0%, #FFD54F 100%)',
                   border: 'none',

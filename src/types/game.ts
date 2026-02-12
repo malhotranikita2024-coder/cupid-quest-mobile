@@ -7,7 +7,8 @@ export type GameScreen =
   | 'gameOver' 
   | 'story' 
   | 'finalEnding'
-  | 'badges';
+  | 'badges'
+  | 'leaderboard';
 
 export interface GameState {
   screen: GameScreen;
