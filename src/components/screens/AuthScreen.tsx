@@ -13,10 +13,15 @@ export function AuthScreen() {
     setError('');
     setLoading(true);
 
+    // Never redirect to localhost — use the deployed preview URL as fallback
+    const redirectUrl = window.location.origin.includes('localhost')
+      ? 'https://id-preview--3bea97cb-e3f2-420a-a33b-d8e6aafd60bc.lovable.app'
+      : window.location.origin;
+
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: redirectUrl,
       },
     });
 
