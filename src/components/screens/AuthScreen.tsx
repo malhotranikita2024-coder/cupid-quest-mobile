@@ -1,12 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Mail, Loader2, Heart } from 'lucide-react';
+import { Mail, Loader2, Heart, CheckCircle } from 'lucide-react';
 
 export function AuthScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
+  const [authenticated, setAuthenticated] = useState(false);
+
+  // Listen for auth state changes (e.g. magic link opened in another tab)
+  useEffect(() => {
+    if (!sent) return;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setAuthenticated(true);
+      }
+    });
+    // Also check immediately in case session already exists
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setAuthenticated(true);
+    });
+    return () => subscription.unsubscribe();
+  }, [sent]);
 
   const handleSendMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +103,19 @@ export function AuthScreen() {
               )}
             </button>
           </form>
+        ) : authenticated ? (
+          <div className="space-y-4">
+            <CheckCircle className="w-12 h-12 mx-auto" style={{ color: 'hsl(var(--love-pink))' }} />
+            <p className="font-display font-semibold text-lg" style={{ color: 'hsl(var(--love-dark))' }}>
+              ✅ Login successful! Starting your adventure…
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="btn-love w-full"
+            >
+              Continue
+            </button>
+          </div>
         ) : (
           <div className="space-y-4">
             <div className="text-4xl animate-bounce-soft">📧</div>
