@@ -14,7 +14,12 @@ import { LeaderboardScreen } from './screens/LeaderboardScreen';
 import { LandscapeHint } from './screens/LandscapeHint';
 
 
-export function Game() {
+interface GameProps {
+  userId: string;
+  onSignOut: () => void;
+}
+
+export function Game({ userId, onSignOut }: GameProps) {
   const {
     gameState,
     setScreen,
@@ -181,6 +186,7 @@ export function Game() {
           onToggleMusic={toggleMusic}
           onToggleSfx={toggleSfx}
           onBack={goToMenu}
+          onSignOut={onSignOut}
         />
       )}
 

@@ -1,0 +1,105 @@
+import React, { useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { Mail, Loader2, Heart } from 'lucide-react';
+
+export function AuthScreen() {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleSendMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    const { error: authError } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin,
+      },
+    });
+
+    setLoading(false);
+
+    if (authError) {
+      setError(authError.message);
+    } else {
+      setSent(true);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 flex flex-col items-center justify-center p-6"
+      style={{ background: 'var(--gradient-sky)' }}
+    >
+      {/* Floating hearts decoration */}
+      <div className="absolute top-10 left-10 text-4xl animate-float opacity-40">💕</div>
+      <div className="absolute top-20 right-16 text-3xl animate-bounce-soft opacity-30">💖</div>
+      <div className="absolute bottom-20 left-20 text-3xl animate-pulse-love opacity-30">❤️</div>
+
+      <div className="card-love max-w-sm w-full text-center">
+        {/* Title */}
+        <div className="mb-6">
+          <Heart className="w-12 h-12 mx-auto mb-3 text-love-pink animate-heart-beat" style={{ color: 'hsl(var(--love-pink))' }} />
+          <h1 className="game-title text-3xl mb-2">Super Love Quest</h1>
+          <p className="text-muted-foreground font-medium">Sign in to start your adventure</p>
+        </div>
+
+        {!sent ? (
+          <form onSubmit={handleSendMagicLink} className="space-y-4">
+            <div className="relative">
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+              <input
+                type="email"
+                placeholder="Enter your email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="input-love pl-12 text-left"
+              />
+            </div>
+
+            {error && (
+              <p className="text-sm font-medium" style={{ color: 'hsl(var(--destructive))' }}>
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading || !email}
+              className="btn-love w-full flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Sending…
+                </>
+              ) : (
+                'Send Magic Link ✨'
+              )}
+            </button>
+          </form>
+        ) : (
+          <div className="space-y-4">
+            <div className="text-4xl animate-bounce-soft">📧</div>
+            <p className="font-display font-semibold text-lg" style={{ color: 'hsl(var(--love-dark))' }}>
+              Check your email for a sign-in link
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Check Spam/Promotions if you don't see it
+            </p>
+            <button
+              onClick={() => { setSent(false); setEmail(''); }}
+              className="text-sm font-medium underline text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Use a different email
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

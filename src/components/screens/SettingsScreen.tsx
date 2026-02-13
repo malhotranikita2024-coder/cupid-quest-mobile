@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Music, Music2, Volume2, VolumeX } from 'lucide-react';
+import { ArrowLeft, Music, Music2, Volume2, VolumeX, LogOut } from 'lucide-react';
 
 interface SettingsScreenProps {
   musicEnabled: boolean;
@@ -7,6 +7,7 @@ interface SettingsScreenProps {
   onToggleMusic: () => void;
   onToggleSfx: () => void;
   onBack: () => void;
+  onSignOut: () => void;
 }
 
 export function SettingsScreen({
@@ -15,6 +16,7 @@ export function SettingsScreen({
   onToggleMusic,
   onToggleSfx,
   onBack,
+  onSignOut,
 }: SettingsScreenProps) {
   return (
     <div 
@@ -97,6 +99,20 @@ export function SettingsScreen({
           className="btn-love w-full mt-8"
         >
           Save & Back
+        </button>
+
+        <button
+          onClick={onSignOut}
+          className="w-full mt-3 flex items-center justify-center gap-2 px-8 py-3 rounded-2xl font-bold text-base transition-all duration-200 border-2"
+          style={{
+            fontFamily: "'Fredoka', sans-serif",
+            borderColor: 'hsl(var(--destructive))',
+            color: 'hsl(var(--destructive))',
+            background: 'transparent',
+          }}
+        >
+          <LogOut className="w-5 h-5" />
+          Log Out
         </button>
       </div>
     </div>
