@@ -25,7 +25,7 @@ export default function AuthConfirm() {
   // Auto-redirect after authentication detected
   useEffect(() => {
     if (!authenticated) return;
-    const timer = setTimeout(() => navigate('/', { replace: true }), 1500);
+    const timer = setTimeout(() => navigate('/', { replace: true }), 5000);
     return () => clearTimeout(timer);
   }, [authenticated, navigate]);
 
