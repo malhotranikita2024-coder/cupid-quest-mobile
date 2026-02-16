@@ -102,7 +102,7 @@ export function GameEngine({
   } = useTouchControls();
 
   const audio = useAudio(musicEnabled, sfxEnabled);
-  const { activeNudge, nudgeMessage, nudgeDuration, triggerNudge, dismissNudge } = useTutorialNudges(currentLevel);
+  const { activeNudge, triggerNudge, dismissNudge, canTrigger, isTutorialPaused } = useTutorialNudges(currentLevel);
 
   // Store audio functions in refs to avoid dependency issues
   const audioRef = useRef(audio);
@@ -642,6 +642,23 @@ export function GameEngine({
     };
   }, [handleLeftStart, handleLeftEnd, handleRightStart, handleRightEnd, handleJumpStart, handleJumpEnd, handleRunStart, handleRunEnd, onPause, showDeathOverlay]);
 
+  // Tutorial: detect when first enemy enters camera view
+  useEffect(() => {
+    if (currentLevel !== 1 || isPaused || showDeathOverlay) return;
+    if (!canTrigger('enemy')) return;
+
+    const screenWidth = window.innerWidth;
+    const firstVisibleEnemy = levelData.enemies.find(enemy =>
+      !enemy.isDefeated &&
+      enemy.x + enemy.width > cameraX &&
+      enemy.x < cameraX + screenWidth
+    );
+
+    if (firstVisibleEnemy) {
+      triggerNudge('enemy', firstVisibleEnemy.x + firstVisibleEnemy.width / 2, firstVisibleEnemy.y - 15);
+    }
+  }, [cameraX, currentLevel, levelData.enemies, isPaused, showDeathOverlay, canTrigger, triggerNudge]);
+
   const handlePlayerDeath = useCallback(() => {
     // SYNCHRONOUS death lock check using ref - prevents race conditions
     // This is critical because React state updates are async
@@ -717,9 +734,8 @@ export function GameEngine({
       return { ...prev, collectibles: newCollectibles };
     });
     audio.playCollect();
-    triggerNudge('rose');
     onCollectItem();
-  }, [audio, onCollectItem, triggerNudge]);
+  }, [audio, onCollectItem]);
 
   const handleCollectCookie = useCallback((index: number) => {
     setLevelData(prev => {
@@ -728,9 +744,8 @@ export function GameEngine({
       return { ...prev, collectibles: newCollectibles };
     });
     audio.playCookieCollect();
-    triggerNudge('cookie');
     onCollectCookie();
-  }, [audio, onCollectCookie, triggerNudge]);
+  }, [audio, onCollectCookie]);
 
   const handleCollectShield = useCallback((index: number) => {
     setLevelData(prev => {
@@ -743,11 +758,10 @@ export function GameEngine({
       audio.playCollect();
       onCollectBurst(5);
     } else {
-       audio.playShieldActivate(); // Special shield activation sound
-      triggerNudge('shield');
+       audio.playShieldActivate();
       onCollectShield();
     }
-  }, [audio, hasShield, onCollectShield, onCollectBurst, triggerNudge]);
+  }, [audio, hasShield, onCollectShield, onCollectBurst]);
 
   const handleCollectBurst = useCallback((index: number) => {
     setLevelData(prev => {
@@ -766,8 +780,7 @@ export function GameEngine({
       return { ...prev, enemies: newEnemies };
     });
     audio.playEnemyStomp();
-    triggerNudge('enemy');
-  }, [audio, triggerNudge]);
+  }, [audio]);
 
   const handlePlayerHit = useCallback(() => {
     // SYNCHRONOUS check using ref - prevents multiple hits in same frame
@@ -776,9 +789,6 @@ export function GameEngine({
     // Ignore hits if already dying (state-based lock as fallback)
     if (isDying || showDeathOverlay) return;
     
-    // Trigger enemy tutorial nudge on first hit too
-    triggerNudge('enemy');
-    
     // If player has shield, absorb the hit instead of dying
     if (hasShield) {
       onUseShield();
@@ -786,7 +796,7 @@ export function GameEngine({
       return;
     }
     handlePlayerDeath();
-  }, [handlePlayerDeath, hasShield, onUseShield, audio, isDying, showDeathOverlay, triggerNudge]);
+  }, [handlePlayerDeath, hasShield, onUseShield, audio, isDying, showDeathOverlay]);
 
   const handleBlockHit = useCallback((index: number) => {
     setLevelData(prev => {
@@ -800,8 +810,6 @@ export function GameEngine({
       // Spawn MOVING collectible if block has contents
       let newCollectibles = [...prev.collectibles];
       if (block.contents === 'burst') {
-        // Burst reward: spawn larger glowing collectible worth +5
-         // Random initial direction (left or right)
          const direction = Math.random() > 0.5 ? 1 : -1;
         newCollectibles.push({
           x: block.x + block.width / 2,
@@ -817,8 +825,9 @@ export function GameEngine({
            spawnTime: Date.now(),
            isGrounded: false,
         });
+        // Tutorial nudge for rose/collectible popping from block
+        triggerNudge('rose', block.x + block.width / 2, block.y - 50);
       } else if (block.contents === 'shield') {
-        // Shield reward: spawn heart power-up
          const direction = Math.random() > 0.5 ? 1 : -1;
         newCollectibles.push({
           x: block.x + block.width / 2,
@@ -829,12 +838,13 @@ export function GameEngine({
           fromBlock: true,
            velocityX: direction * (4 + Math.random() * 2),
            velocityY: -8,
-           isBurst: true, // Shield now expires like burst items
+           isBurst: true,
            spawnTime: Date.now(),
            isGrounded: false,
         });
+        // Tutorial nudge for shield popping from block
+        triggerNudge('shield', block.x + block.width / 2, block.y - 50);
       } else if (block.contents === 'collectible') {
-        // Legacy support for 'collectible' type
          const direction = Math.random() > 0.5 ? 1 : -1;
         newCollectibles.push({
           x: block.x + block.width / 2,
@@ -849,6 +859,8 @@ export function GameEngine({
            spawnTime: Date.now(),
            isGrounded: false,
         });
+        // Tutorial nudge for rose/collectible popping from block
+        triggerNudge('rose', block.x + block.width / 2, block.y - 50);
       } else if (block.contents === 'cookie') {
         newCollectibles.push({
           x: block.x + block.width / 2,
@@ -859,15 +871,17 @@ export function GameEngine({
           fromBlock: true,
           velocityX: 0,
           velocityY: -8,
-           isBurst: false, // Cookies don't expire either
+           isBurst: false,
         });
+        // Tutorial nudge for cookie popping from block
+        triggerNudge('cookie', block.x + block.width / 2, block.y - 50);
       }
       // 'none' content = empty block, no collectible spawned
       
       return { ...prev, hitBlocks: newBlocks, collectibles: newCollectibles };
     });
     audio.playBlockHit();
-  }, [audio]);
+  }, [audio, triggerNudge]);
 
   const handleJump = useCallback(() => {
     audio.playJump();
@@ -924,9 +938,10 @@ export function GameEngine({
       ...prev,
       midFlag: { ...prev.midFlag, collected: true },
     }));
-    audio.playCheckpoint(); // Use checkpoint sound for mid-flag
-    triggerNudge('midFlag');
-  }, [audio, triggerNudge]);
+    audio.playCheckpoint();
+    // Trigger mid-flag tutorial nudge at the flag's position
+    triggerNudge('midFlag', levelData.midFlag.x + 15, levelData.midFlag.y - 10);
+  }, [audio, triggerNudge, levelData.midFlag.x, levelData.midFlag.y]);
 
   const handleCameraUpdate = useCallback((x: number) => {
     setCameraX(x);
@@ -952,7 +967,7 @@ export function GameEngine({
         onMidFlagCollected={handleMidFlagCollected}
         onBlockHit={handleBlockHit}
         onJump={handleJump}
-        isPaused={isPaused || showDeathOverlay || isDying}
+        isPaused={isPaused || showDeathOverlay || isDying || isTutorialPaused}
         cameraX={cameraX}
         onCameraUpdate={handleCameraUpdate}
         onFireballHit={handlePlayerHit}
@@ -984,12 +999,11 @@ export function GameEngine({
         />
       )}
 
-      {/* Tutorial nudges - Level 1 only */}
-      {nudgeMessage && (
+      {/* Tutorial nudges - Level 1 only, anchored to world objects */}
+      {activeNudge && (
         <TutorialNudge
-          message={nudgeMessage}
-          duration={nudgeDuration}
-          onDismiss={dismissNudge}
+          nudge={activeNudge}
+          cameraX={cameraX}
         />
       )}
       
