@@ -3,8 +3,10 @@ import { GameCanvas } from './GameCanvas';
 import { MobileControls } from './MobileControls';
 import { GameHUD } from './GameHUD';
 import { PauseMenu } from './PauseMenu';
+import { TutorialNudge } from './TutorialNudge';
 import { useTouchControls } from '@/hooks/useTouchControls';
 import { useAudio } from '@/hooks/useAudio';
+import { useTutorialNudges } from '@/hooks/useTutorialNudges';
 import { getLevelData, COLLECTIBLE_EMOJIS } from '@/data/levels';
 import { PlayerState, LevelData, Collectible, Fireball } from '@/types/game';
 
@@ -100,6 +102,7 @@ export function GameEngine({
   } = useTouchControls();
 
   const audio = useAudio(musicEnabled, sfxEnabled);
+  const { activeNudge, nudgeMessage, nudgeDuration, triggerNudge, dismissNudge } = useTutorialNudges(currentLevel);
 
   // Store audio functions in refs to avoid dependency issues
   const audioRef = useRef(audio);
@@ -714,8 +717,9 @@ export function GameEngine({
       return { ...prev, collectibles: newCollectibles };
     });
     audio.playCollect();
+    triggerNudge('rose');
     onCollectItem();
-  }, [audio, onCollectItem]);
+  }, [audio, onCollectItem, triggerNudge]);
 
   const handleCollectCookie = useCallback((index: number) => {
     setLevelData(prev => {
@@ -724,8 +728,9 @@ export function GameEngine({
       return { ...prev, collectibles: newCollectibles };
     });
     audio.playCookieCollect();
+    triggerNudge('cookie');
     onCollectCookie();
-  }, [audio, onCollectCookie]);
+  }, [audio, onCollectCookie, triggerNudge]);
 
   const handleCollectShield = useCallback((index: number) => {
     setLevelData(prev => {
@@ -739,9 +744,10 @@ export function GameEngine({
       onCollectBurst(5);
     } else {
        audio.playShieldActivate(); // Special shield activation sound
+      triggerNudge('shield');
       onCollectShield();
     }
-  }, [audio, hasShield, onCollectShield, onCollectBurst]);
+  }, [audio, hasShield, onCollectShield, onCollectBurst, triggerNudge]);
 
   const handleCollectBurst = useCallback((index: number) => {
     setLevelData(prev => {
@@ -760,7 +766,8 @@ export function GameEngine({
       return { ...prev, enemies: newEnemies };
     });
     audio.playEnemyStomp();
-  }, [audio]);
+    triggerNudge('enemy');
+  }, [audio, triggerNudge]);
 
   const handlePlayerHit = useCallback(() => {
     // SYNCHRONOUS check using ref - prevents multiple hits in same frame
@@ -769,6 +776,9 @@ export function GameEngine({
     // Ignore hits if already dying (state-based lock as fallback)
     if (isDying || showDeathOverlay) return;
     
+    // Trigger enemy tutorial nudge on first hit too
+    triggerNudge('enemy');
+    
     // If player has shield, absorb the hit instead of dying
     if (hasShield) {
       onUseShield();
@@ -776,7 +786,7 @@ export function GameEngine({
       return;
     }
     handlePlayerDeath();
-  }, [handlePlayerDeath, hasShield, onUseShield, audio, isDying, showDeathOverlay]);
+  }, [handlePlayerDeath, hasShield, onUseShield, audio, isDying, showDeathOverlay, triggerNudge]);
 
   const handleBlockHit = useCallback((index: number) => {
     setLevelData(prev => {
@@ -915,7 +925,8 @@ export function GameEngine({
       midFlag: { ...prev.midFlag, collected: true },
     }));
     audio.playCheckpoint(); // Use checkpoint sound for mid-flag
-  }, [audio]);
+    triggerNudge('midFlag');
+  }, [audio, triggerNudge]);
 
   const handleCameraUpdate = useCallback((x: number) => {
     setCameraX(x);
@@ -970,6 +981,15 @@ export function GameEngine({
           onJumpEnd={handleJumpEnd}
           onRunStart={handleRunStart}
           onRunEnd={handleRunEnd}
+        />
+      )}
+
+      {/* Tutorial nudges - Level 1 only */}
+      {nudgeMessage && (
+        <TutorialNudge
+          message={nudgeMessage}
+          duration={nudgeDuration}
+          onDismiss={dismissNudge}
         />
       )}
       
