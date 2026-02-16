@@ -2,6 +2,15 @@ import { useState, useCallback, useRef } from 'react';
 
 export type TutorialNudgeType = 'enemy' | 'rose' | 'shield' | 'cookie' | 'midFlag';
 
+export interface ActiveNudge {
+  type: TutorialNudgeType;
+  message: string;
+  worldX: number;
+  worldY: number;
+  pauseGame: boolean;
+  duration: number;
+}
+
 const NUDGE_MESSAGES: Record<TutorialNudgeType, string> = {
   enemy: "Hey there… one touch and it's game over 😈",
   rose: "I'm valuable! Grab me for bonus points 🌹",
@@ -10,12 +19,12 @@ const NUDGE_MESSAGES: Record<TutorialNudgeType, string> = {
   midFlag: "🚩 I'm mandatory!\nTake me to the end to win.",
 };
 
-const NUDGE_DURATIONS: Record<TutorialNudgeType, number> = {
-  enemy: 3500,
-  rose: 3500,
-  shield: 3500,
-  cookie: 3500,
-  midFlag: 5000, // Stays longer to emphasize importance
+const NUDGE_CONFIG: Record<TutorialNudgeType, { duration: number; pauseGame: boolean }> = {
+  enemy: { duration: 2000, pauseGame: true },
+  rose: { duration: 3500, pauseGame: false },
+  shield: { duration: 3500, pauseGame: false },
+  cookie: { duration: 3500, pauseGame: false },
+  midFlag: { duration: 3000, pauseGame: true },
 };
 
 const STORAGE_KEY = 'slq_tutorial_seen';
@@ -37,54 +46,57 @@ function markNudgeSeen(type: TutorialNudgeType) {
 }
 
 export function useTutorialNudges(currentLevel: number) {
-  const [activeNudge, setActiveNudge] = useState<TutorialNudgeType | null>(null);
+  const [activeNudge, setActiveNudge] = useState<ActiveNudge | null>(null);
   const seenRef = useRef(getSeenNudges());
-  // Queue to show nudges one at a time
-  const queueRef = useRef<TutorialNudgeType[]>([]);
-  const isShowingRef = useRef(false);
+  const dismissTimerRef = useRef<NodeJS.Timeout>();
 
-  const triggerNudge = useCallback((type: TutorialNudgeType) => {
-    // Only show in Level 1
+  const triggerNudge = useCallback((type: TutorialNudgeType, worldX: number, worldY: number) => {
     if (currentLevel !== 1) return;
-    // Only show each nudge once ever
     if (seenRef.current.has(type)) return;
+    // Don't interrupt an active nudge
+    if (dismissTimerRef.current) return;
 
-    // Mark as seen immediately so it won't re-trigger
     seenRef.current.add(type);
     markNudgeSeen(type);
 
-    if (isShowingRef.current) {
-      // Queue it
-      queueRef.current.push(type);
-      return;
-    }
+    const config = NUDGE_CONFIG[type];
+    const nudge: ActiveNudge = {
+      type,
+      message: NUDGE_MESSAGES[type],
+      worldX,
+      worldY,
+      pauseGame: config.pauseGame,
+      duration: config.duration,
+    };
 
-    isShowingRef.current = true;
-    setActiveNudge(type);
+    setActiveNudge(nudge);
+
+    dismissTimerRef.current = setTimeout(() => {
+      setActiveNudge(null);
+      dismissTimerRef.current = undefined;
+    }, config.duration);
   }, [currentLevel]);
 
   const dismissNudge = useCallback(() => {
-    setActiveNudge(null);
-    isShowingRef.current = false;
-
-    // Show next queued nudge after a short gap
-    if (queueRef.current.length > 0) {
-      const next = queueRef.current.shift()!;
-      setTimeout(() => {
-        isShowingRef.current = true;
-        setActiveNudge(next);
-      }, 400);
+    if (dismissTimerRef.current) {
+      clearTimeout(dismissTimerRef.current);
+      dismissTimerRef.current = undefined;
     }
+    setActiveNudge(null);
   }, []);
 
-  const nudgeMessage = activeNudge ? NUDGE_MESSAGES[activeNudge] : null;
-  const nudgeDuration = activeNudge ? NUDGE_DURATIONS[activeNudge] : 3500;
+  const canTrigger = useCallback((type: TutorialNudgeType): boolean => {
+    if (currentLevel !== 1) return false;
+    if (seenRef.current.has(type)) return false;
+    if (dismissTimerRef.current) return false;
+    return true;
+  }, [currentLevel]);
 
   return {
     activeNudge,
-    nudgeMessage,
-    nudgeDuration,
     triggerNudge,
     dismissNudge,
+    canTrigger,
+    isTutorialPaused: activeNudge?.pauseGame ?? false,
   };
 }
