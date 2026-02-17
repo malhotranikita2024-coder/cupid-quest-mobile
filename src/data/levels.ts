@@ -106,7 +106,7 @@ function createLevel1(): LevelData {
   collectibles.push({ x: 3580, y: 190, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
-    { x: 500, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 300, patrolEnd: 700 },
+    { x: 1800, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 1600, patrolEnd: 2000 },
     { x: 1100, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 1.5, isDefeated: false, direction: -1, patrolStart: 950, patrolEnd: 1400 },
     { x: 2400, y: GROUND_Y - 40, width: 50, height: 40, type: 'brokenHeartSlime', velocityX: 1, isDefeated: false, direction: 1, patrolStart: 2250, patrolEnd: 2800 },
     { x: 3200, y: GROUND_Y - 40, width: 50, height: 40, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 3050, patrolEnd: 3500 },
@@ -119,7 +119,7 @@ function createLevel1(): LevelData {
   const hitBlocks: HitBlock[] = [
     // Golden blocks at y=420 (100px above ground at y=520) - easy to hit from below
     // Positioned away from floating platforms for clear access
-    ...createBlockRow(150, 420, ['brick', 'question', 'brick']),
+    ...createBlockRow(1000, 420, ['brick', 'question', 'brick']),
     ...createBlockRow(950, 420, ['brick', 'question', 'brick']),
     ...createBlockRow(1650, 420, ['brick', 'question', 'brick']),
     ...createBlockRow(2350, 420, ['brick', 'question', 'brick']),
