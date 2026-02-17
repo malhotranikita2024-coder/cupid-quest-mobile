@@ -28,7 +28,7 @@ const NUDGE_CONFIG: Record<TutorialNudgeType, { displayDuration: number; pauseDu
 };
 
 const GAP_MS = 2000;
-const STORAGE_KEY = 'slq_tutorial_seen';
+const STORAGE_KEY = 'slq_tutorial_seen_v2';
 
 function getSeenNudges(): Set<TutorialNudgeType> {
   try {
