@@ -642,22 +642,62 @@ export function GameEngine({
     };
   }, [handleLeftStart, handleLeftEnd, handleRightStart, handleRightEnd, handleJumpStart, handleJumpEnd, handleRunStart, handleRunEnd, onPause, showDeathOverlay]);
 
-  // Tutorial: detect when first enemy enters camera view
+  // Tutorial: enemy nudge - visible in viewport AND player within ~250px proximity
   useEffect(() => {
     if (currentLevel !== 1 || isPaused || showDeathOverlay) return;
     if (!canTrigger('enemy')) return;
 
     const screenWidth = window.innerWidth;
-    const firstVisibleEnemy = levelData.enemies.find(enemy =>
-      !enemy.isDefeated &&
-      enemy.x + enemy.width > cameraX &&
-      enemy.x < cameraX + screenWidth
-    );
+    const playerCenterX = player.x + 20; // PLAYER_WIDTH / 2
 
-    if (firstVisibleEnemy) {
-      triggerNudge('enemy', firstVisibleEnemy.x + firstVisibleEnemy.width / 2, firstVisibleEnemy.y - 15);
+    for (const enemy of levelData.enemies) {
+      if (enemy.isDefeated) continue;
+      const enemyCenterX = enemy.x + enemy.width / 2;
+      // Must be visible in viewport
+      if (enemy.x + enemy.width < cameraX || enemy.x > cameraX + screenWidth) continue;
+      // Must be within ~250px of player
+      const dist = Math.abs(playerCenterX - enemyCenterX);
+      if (dist <= 250) {
+        triggerNudge('enemy', enemyCenterX, enemy.y - 20);
+        break;
+      }
     }
-  }, [cameraX, currentLevel, levelData.enemies, isPaused, showDeathOverlay, canTrigger, triggerNudge]);
+  }, [cameraX, player.x, currentLevel, levelData.enemies, isPaused, showDeathOverlay, canTrigger, triggerNudge]);
+
+  // Tutorial: mid-flag nudge - trigger on approach (~220px) BEFORE pickup
+  useEffect(() => {
+    if (currentLevel !== 1 || isPaused || showDeathOverlay) return;
+    if (!canTrigger('midFlag')) return;
+    if (levelData.midFlag.collected) return;
+
+    const screenWidth = window.innerWidth;
+    const mfx = levelData.midFlag.x;
+    const mfy = levelData.midFlag.y;
+    // Must be visible in viewport
+    if (mfx + 30 < cameraX || mfx > cameraX + screenWidth) return;
+
+    const playerCenterX = player.x + 20;
+    const dist = Math.abs(playerCenterX - mfx);
+    if (dist <= 220) {
+      triggerNudge('midFlag', mfx + 15, mfy - 15);
+    }
+  }, [cameraX, player.x, currentLevel, levelData.midFlag, isPaused, showDeathOverlay, canTrigger, triggerNudge]);
+
+  // Tutorial: cookie nudge - trigger when cookie first enters camera viewport
+  useEffect(() => {
+    if (currentLevel !== 1 || isPaused || showDeathOverlay) return;
+    if (!canTrigger('cookie')) return;
+
+    const screenWidth = window.innerWidth;
+    for (const c of levelData.collectibles) {
+      if (c.collected || c.type !== 'cookie') continue;
+      // Check if visible in viewport
+      if (c.x > cameraX && c.x < cameraX + screenWidth) {
+        triggerNudge('cookie', c.x, c.y - 25);
+        break;
+      }
+    }
+  }, [cameraX, currentLevel, levelData.collectibles, isPaused, showDeathOverlay, canTrigger, triggerNudge]);
 
   const handlePlayerDeath = useCallback(() => {
     // SYNCHRONOUS death lock check using ref - prevents race conditions
@@ -939,9 +979,7 @@ export function GameEngine({
       midFlag: { ...prev.midFlag, collected: true },
     }));
     audio.playCheckpoint();
-    // Trigger mid-flag tutorial nudge at the flag's position
-    triggerNudge('midFlag', levelData.midFlag.x + 15, levelData.midFlag.y - 10);
-  }, [audio, triggerNudge, levelData.midFlag.x, levelData.midFlag.y]);
+  }, [audio]);
 
   const handleCameraUpdate = useCallback((x: number) => {
     setCameraX(x);
