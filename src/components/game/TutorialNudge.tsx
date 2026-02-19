@@ -11,65 +11,73 @@ export function TutorialNudge({ nudge, cameraX }: TutorialNudgeProps) {
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
-    const showTimer = setTimeout(() => setVisible(true), 50);
-    const fadeTimer = setTimeout(() => setFading(true), nudge.displayDuration - 600);
+    const showTimer = setTimeout(() => setVisible(true), 80);
+    const fadeTimer = setTimeout(() => setFading(true), nudge.displayDuration - 800);
     return () => {
       clearTimeout(showTimer);
       clearTimeout(fadeTimer);
     };
   }, [nudge.displayDuration]);
 
-  // Convert world coordinates to screen coordinates
+  // Convert world X to screen X (camera only scrolls horizontally)
   const screenX = nudge.worldX - cameraX;
 
-  // Clamp horizontally so bubble stays on screen with margin
-  const clampedX = Math.max(170, Math.min(screenX, window.innerWidth - 170));
+  // Clamp horizontally so bubble stays on screen
+  const margin = 160;
+  const clampedX = Math.max(margin, Math.min(screenX, window.innerWidth - margin));
 
-  // Position bubble well above the object — use a fixed band in the upper portion of screen
-  // so it's always clearly visible regardless of object Y position
-  const bubbleY = Math.min(
-    Math.max(20, nudge.worldY - 120), // Above the object
-    window.innerHeight * 0.35 // Never below 35% of screen height
-  );
+  // Position bubble ABOVE the anchored object in screen space
+  // worldY IS screen Y in this game (no vertical camera scroll)
+  // Place bubble 90-110px above the object so the tail visually connects
+  const anchorScreenY = nudge.worldY;
+  const bubbleBottomY = Math.max(60, anchorScreenY - 25); // bottom of bubble (where tail starts)
 
-  // Calculate tail offset to point at actual object position
-  const tailOffsetX = screenX - clampedX; // How far off-center the object is
-  const clampedTailOffset = Math.max(-80, Math.min(80, tailOffsetX));
+  // Tail offset: point tail toward actual object screen position
+  const tailOffsetX = screenX - clampedX;
+  const clampedTailOffset = Math.max(-90, Math.min(90, tailOffsetX));
 
   return (
     <div
-      className={`fixed z-[60] pointer-events-none transition-all duration-500 ${
-        visible && !fading ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'
+      className={`fixed z-[60] pointer-events-none transition-all ${
+        visible && !fading
+          ? 'opacity-100 scale-100'
+          : 'opacity-0 scale-90'
       }`}
       style={{
         left: `${clampedX}px`,
-        top: `${bubbleY}px`,
+        bottom: `${window.innerHeight - bubbleBottomY}px`,
         transform: 'translateX(-50%)',
+        transitionDuration: visible && !fading ? '500ms' : '600ms',
+        transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
       }}
     >
       <div
-        className="relative px-6 py-4 rounded-2xl max-w-[300px] text-center"
+        className="relative px-5 py-3.5 rounded-2xl text-center"
         style={{
+          maxWidth: '300px',
+          minWidth: '180px',
           background: 'hsl(0 0% 100% / 0.97)',
-          border: '2.5px solid hsl(340 70% 80% / 0.7)',
-          boxShadow: '0 10px 40px hsl(0 0% 0% / 0.18), 0 4px 12px hsl(340 70% 60% / 0.12)',
+          border: '2.5px solid hsl(340 82% 76% / 0.8)',
+          boxShadow:
+            '0 8px 32px hsl(0 0% 0% / 0.22), 0 2px 8px hsl(340 70% 60% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.6)',
         }}
       >
         <p
-          className="font-display text-base leading-relaxed whitespace-pre-line font-semibold"
-          style={{ color: 'hsl(340 40% 25%)' }}
+          className="font-display text-[15px] leading-relaxed whitespace-pre-line font-bold tracking-wide"
+          style={{ color: 'hsl(340 45% 22%)' }}
         >
           {nudge.message}
         </p>
-        {/* Tail pointing down toward the anchored object */}
+
+        {/* Speech bubble tail pointing DOWN toward the object */}
         <div
-          className="absolute -bottom-[10px] w-5 h-5 rotate-45"
+          className="absolute -bottom-[11px] w-[18px] h-[18px] rotate-45"
           style={{
             left: `calc(50% + ${clampedTailOffset}px)`,
             transform: 'translateX(-50%) rotate(45deg)',
             background: 'hsl(0 0% 100% / 0.97)',
-            borderRight: '2.5px solid hsl(340 70% 80% / 0.7)',
-            borderBottom: '2.5px solid hsl(340 70% 80% / 0.7)',
+            borderRight: '2.5px solid hsl(340 82% 76% / 0.8)',
+            borderBottom: '2.5px solid hsl(340 82% 76% / 0.8)',
           }}
         />
       </div>
