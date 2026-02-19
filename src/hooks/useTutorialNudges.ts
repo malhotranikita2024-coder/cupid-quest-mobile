@@ -2,6 +2,15 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 
 export type TutorialNudgeType = 'enemy' | 'rose' | 'shield' | 'cookie' | 'midFlag';
 
+export interface EntityTrackingInfo {
+  kind: 'enemy' | 'collectible' | 'midFlag';
+  /** Index in the levelData array at time of trigger (used as initial lookup hint) */
+  initialIndex?: number;
+  /** Snapshot of initial x to help re-identify the entity */
+  initialX: number;
+  initialY: number;
+}
+
 export interface ActiveNudge {
   type: TutorialNudgeType;
   message: string;
@@ -9,6 +18,7 @@ export interface ActiveNudge {
   worldY: number;
   pauseDuration: number;
   displayDuration: number;
+  tracking?: EntityTrackingInfo;
 }
 
 const NUDGE_MESSAGES: Record<TutorialNudgeType, string> = {
@@ -50,6 +60,7 @@ interface QueuedNudge {
   type: TutorialNudgeType;
   worldX: number;
   worldY: number;
+  tracking?: EntityTrackingInfo;
 }
 
 export function useTutorialNudges(currentLevel: number) {
@@ -69,7 +80,7 @@ export function useTutorialNudges(currentLevel: number) {
   // Use a ref for processQueue to break circular dependency
   const processQueueRef = useRef<() => void>(() => {});
 
-  const showNudge = useCallback((type: TutorialNudgeType, worldX: number, worldY: number) => {
+  const showNudge = useCallback((type: TutorialNudgeType, worldX: number, worldY: number, tracking?: EntityTrackingInfo) => {
     const config = NUDGE_CONFIG[type];
     activeRef.current = true;
 
@@ -80,6 +91,7 @@ export function useTutorialNudges(currentLevel: number) {
       worldY,
       pauseDuration: config.pauseDuration,
       displayDuration: config.displayDuration,
+      tracking,
     });
 
     // Pause gameplay if needed
@@ -113,11 +125,15 @@ export function useTutorialNudges(currentLevel: number) {
     if (activeRef.current || cooldownRef.current) return;
     const next = queueRef.current.shift();
     if (next) {
-      showNudge(next.type, next.worldX, next.worldY);
+      showNudge(next.type, next.worldX, next.worldY, next.tracking);
     }
   };
 
-  const triggerNudge = useCallback((type: TutorialNudgeType, worldX: number, worldY: number) => {
+  const updateNudgePosition = useCallback((worldX: number, worldY: number) => {
+    setActiveNudge(prev => prev ? { ...prev, worldX, worldY } : null);
+  }, []);
+
+  const triggerNudge = useCallback((type: TutorialNudgeType, worldX: number, worldY: number, tracking?: EntityTrackingInfo) => {
     if (currentLevel !== 1) return;
     if (seenRef.current.has(type)) return;
 
@@ -126,11 +142,11 @@ export function useTutorialNudges(currentLevel: number) {
     markNudgeSeen(type);
 
     if (activeRef.current || cooldownRef.current) {
-      queueRef.current.push({ type, worldX, worldY });
+      queueRef.current.push({ type, worldX, worldY, tracking });
       return;
     }
 
-    showNudge(type, worldX, worldY);
+    showNudge(type, worldX, worldY, tracking);
   }, [currentLevel, showNudge]);
 
   const dismissNudge = useCallback(() => {
@@ -163,5 +179,6 @@ export function useTutorialNudges(currentLevel: number) {
     dismissNudge,
     canTrigger,
     isTutorialPaused,
+    updateNudgePosition,
   };
 }

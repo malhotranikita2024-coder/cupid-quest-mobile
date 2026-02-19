@@ -102,7 +102,7 @@ export function GameEngine({
   } = useTouchControls();
 
   const audio = useAudio(musicEnabled, sfxEnabled);
-  const { activeNudge, triggerNudge, dismissNudge, canTrigger, isTutorialPaused } = useTutorialNudges(currentLevel);
+  const { activeNudge, triggerNudge, dismissNudge, canTrigger, isTutorialPaused, updateNudgePosition } = useTutorialNudges(currentLevel);
 
   // Store audio functions in refs to avoid dependency issues
   const audioRef = useRef(audio);
@@ -650,7 +650,8 @@ export function GameEngine({
     const screenWidth = window.innerWidth;
     const playerCenterX = player.x + 20; // PLAYER_WIDTH / 2
 
-    for (const enemy of levelData.enemies) {
+    for (let i = 0; i < levelData.enemies.length; i++) {
+      const enemy = levelData.enemies[i];
       if (enemy.isDefeated) continue;
       const enemyCenterX = enemy.x + enemy.width / 2;
       // Must be visible in viewport
@@ -658,7 +659,7 @@ export function GameEngine({
       // Must be within ~250px of player
       const dist = Math.abs(playerCenterX - enemyCenterX);
       if (dist <= 250) {
-        triggerNudge('enemy', enemyCenterX, enemy.y - 20);
+        triggerNudge('enemy', enemyCenterX, enemy.y - 20, { kind: 'enemy', initialIndex: i, initialX: enemy.x, initialY: enemy.y });
         break;
       }
     }
@@ -679,7 +680,7 @@ export function GameEngine({
     const playerCenterX = player.x + 20;
     const dist = Math.abs(playerCenterX - mfx);
     if (dist <= 220) {
-      triggerNudge('midFlag', mfx + 15, mfy - 15);
+      triggerNudge('midFlag', mfx + 15, mfy - 15, { kind: 'midFlag', initialX: mfx, initialY: mfy });
     }
   }, [cameraX, player.x, currentLevel, levelData.midFlag, isPaused, showDeathOverlay, canTrigger, triggerNudge]);
 
@@ -689,15 +690,52 @@ export function GameEngine({
     if (!canTrigger('cookie')) return;
 
     const screenWidth = window.innerWidth;
-    for (const c of levelData.collectibles) {
+    for (let i = 0; i < levelData.collectibles.length; i++) {
+      const c = levelData.collectibles[i];
       if (c.collected || c.type !== 'cookie') continue;
       // Check if visible in viewport
       if (c.x > cameraX && c.x < cameraX + screenWidth) {
-        triggerNudge('cookie', c.x, c.y - 25);
+        triggerNudge('cookie', c.x, c.y - 25, { kind: 'collectible', initialIndex: i, initialX: c.x, initialY: c.y });
         break;
       }
     }
   }, [cameraX, currentLevel, levelData.collectibles, isPaused, showDeathOverlay, canTrigger, triggerNudge]);
+
+  // Tutorial: live-track moving entities so bubble follows them
+  useEffect(() => {
+    if (!activeNudge?.tracking) return;
+    const { kind, initialIndex, initialX, initialY } = activeNudge.tracking;
+    const screenWidth = window.innerWidth;
+
+    if (kind === 'enemy') {
+      // Find the enemy - try initialIndex first, then search by proximity to initial position
+      let enemy = initialIndex !== undefined ? levelData.enemies[initialIndex] : undefined;
+      if (!enemy || enemy.isDefeated) {
+        enemy = levelData.enemies.find(e => !e.isDefeated && Math.abs(e.x - initialX) < 200 && Math.abs(e.y - initialY) < 100);
+      }
+      if (!enemy || enemy.isDefeated || enemy.x + enemy.width < cameraX || enemy.x > cameraX + screenWidth) {
+        dismissNudge();
+        return;
+      }
+      updateNudgePosition(enemy.x + enemy.width / 2, enemy.y - 20);
+    } else if (kind === 'collectible') {
+      let collectible = initialIndex !== undefined ? levelData.collectibles[initialIndex] : undefined;
+      if (!collectible || collectible.collected) {
+        collectible = levelData.collectibles.find(c => !c.collected && Math.abs(c.x - initialX) < 200 && Math.abs(c.y - initialY) < 100);
+      }
+      if (!collectible || collectible.collected || collectible.x + 30 < cameraX || collectible.x > cameraX + screenWidth) {
+        dismissNudge();
+        return;
+      }
+      updateNudgePosition(collectible.x, collectible.y - 25);
+    } else if (kind === 'midFlag') {
+      if (levelData.midFlag.collected) {
+        dismissNudge();
+        return;
+      }
+      updateNudgePosition(levelData.midFlag.x + 15, levelData.midFlag.y - 15);
+    }
+  }, [activeNudge, levelData.enemies, levelData.collectibles, levelData.midFlag, cameraX, dismissNudge, updateNudgePosition]);
 
   const handlePlayerDeath = useCallback(() => {
     // SYNCHRONOUS death lock check using ref - prevents race conditions
@@ -865,8 +903,9 @@ export function GameEngine({
            spawnTime: Date.now(),
            isGrounded: false,
         });
-        // Tutorial nudge for rose/collectible popping from block
-        triggerNudge('rose', block.x + block.width / 2, block.y - 50);
+        // Tutorial nudge for rose/collectible popping from block - track the newly added collectible
+        const newIdx = newCollectibles.length - 1;
+        triggerNudge('rose', block.x + block.width / 2, block.y - 50, { kind: 'collectible', initialIndex: newIdx, initialX: block.x + block.width / 2, initialY: block.y - 40 });
       } else if (block.contents === 'shield') {
          const direction = Math.random() > 0.5 ? 1 : -1;
         newCollectibles.push({
@@ -883,7 +922,8 @@ export function GameEngine({
            isGrounded: false,
         });
         // Tutorial nudge for shield popping from block
-        triggerNudge('shield', block.x + block.width / 2, block.y - 50);
+        const shieldIdx = newCollectibles.length - 1;
+        triggerNudge('shield', block.x + block.width / 2, block.y - 50, { kind: 'collectible', initialIndex: shieldIdx, initialX: block.x + block.width / 2, initialY: block.y - 40 });
       } else if (block.contents === 'collectible') {
          const direction = Math.random() > 0.5 ? 1 : -1;
         newCollectibles.push({
@@ -900,7 +940,8 @@ export function GameEngine({
            isGrounded: false,
         });
         // Tutorial nudge for rose/collectible popping from block
-        triggerNudge('rose', block.x + block.width / 2, block.y - 50);
+        const collectIdx = newCollectibles.length - 1;
+        triggerNudge('rose', block.x + block.width / 2, block.y - 50, { kind: 'collectible', initialIndex: collectIdx, initialX: block.x + block.width / 2, initialY: block.y - 40 });
       } else if (block.contents === 'cookie') {
         newCollectibles.push({
           x: block.x + block.width / 2,
@@ -914,7 +955,8 @@ export function GameEngine({
            isBurst: false,
         });
         // Tutorial nudge for cookie popping from block
-        triggerNudge('cookie', block.x + block.width / 2, block.y - 50);
+        const cookieIdx = newCollectibles.length - 1;
+        triggerNudge('cookie', block.x + block.width / 2, block.y - 50, { kind: 'collectible', initialIndex: cookieIdx, initialX: block.x + block.width / 2, initialY: block.y - 30 });
       }
       // 'none' content = empty block, no collectible spawned
       
