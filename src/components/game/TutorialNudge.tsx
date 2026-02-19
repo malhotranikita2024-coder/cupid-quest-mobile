@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { ActiveNudge } from '@/hooks/useTutorialNudges';
+import { TutorialNudgeType } from '@/hooks/useTutorialNudges';
+
+const SPEAKER_BADGES: Record<TutorialNudgeType, string> = {
+  enemy: '😈',
+  rose: '🌹',
+  shield: '❤️',
+  cookie: '🥠',
+  midFlag: '🚩',
+};
 
 interface TutorialNudgeProps {
   nudge: ActiveNudge;
@@ -7,77 +16,110 @@ interface TutorialNudgeProps {
 }
 
 export function TutorialNudge({ nudge, cameraX }: TutorialNudgeProps) {
-  const [visible, setVisible] = useState(false);
-  const [fading, setFading] = useState(false);
+  const [phase, setPhase] = useState<'enter' | 'visible' | 'exit'>('enter');
 
   useEffect(() => {
-    const showTimer = setTimeout(() => setVisible(true), 80);
-    const fadeTimer = setTimeout(() => setFading(true), nudge.displayDuration - 800);
+    const enterTimer = setTimeout(() => setPhase('visible'), 60);
+    const exitTimer = setTimeout(
+      () => setPhase('exit'),
+      nudge.displayDuration - 600
+    );
     return () => {
-      clearTimeout(showTimer);
-      clearTimeout(fadeTimer);
+      clearTimeout(enterTimer);
+      clearTimeout(exitTimer);
     };
   }, [nudge.displayDuration]);
 
-  // Convert world X to screen X (camera only scrolls horizontally)
+  // World → screen X
   const screenX = nudge.worldX - cameraX;
 
-  // Clamp horizontally so bubble stays on screen
-  const margin = 160;
+  // Clamp so bubble stays on-screen
+  const margin = 150;
   const clampedX = Math.max(margin, Math.min(screenX, window.innerWidth - margin));
 
-  // Position bubble ABOVE the anchored object in screen space
-  // worldY IS screen Y in this game (no vertical camera scroll)
-  // Place bubble 90-110px above the object so the tail visually connects
+  // Anchor bubble above the object (worldY IS screenY — no vertical camera)
   const anchorScreenY = nudge.worldY;
-  const bubbleBottomY = Math.max(60, anchorScreenY - 25); // bottom of bubble (where tail starts)
+  const bubbleBottom = window.innerHeight - Math.max(80, anchorScreenY - 30);
 
-  // Tail offset: point tail toward actual object screen position
+  // Tail points toward the actual object
   const tailOffsetX = screenX - clampedX;
-  const clampedTailOffset = Math.max(-90, Math.min(90, tailOffsetX));
+  const clampedTail = Math.max(-80, Math.min(80, tailOffsetX));
+
+  const badge = SPEAKER_BADGES[nudge.type];
+
+  const isVisible = phase === 'visible';
+  const isExiting = phase === 'exit';
 
   return (
     <div
-      className={`fixed z-[60] pointer-events-none transition-all ${
-        visible && !fading
-          ? 'opacity-100 scale-100'
-          : 'opacity-0 scale-90'
-      }`}
+      className="fixed z-[60] pointer-events-none"
       style={{
         left: `${clampedX}px`,
-        bottom: `${window.innerHeight - bubbleBottomY}px`,
+        bottom: `${bubbleBottom}px`,
         transform: 'translateX(-50%)',
-        transitionDuration: visible && !fading ? '500ms' : '600ms',
-        transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+        opacity: isExiting ? 0 : isVisible ? 1 : 0,
+        scale: isExiting ? '0.92' : isVisible ? '1' : '0.85',
+        transition: isVisible
+          ? 'opacity 400ms cubic-bezier(0.34,1.56,0.64,1), scale 400ms cubic-bezier(0.34,1.56,0.64,1)'
+          : 'opacity 500ms ease-out, scale 500ms ease-out',
       }}
     >
+      {/* Speaker badge */}
       <div
-        className="relative px-5 py-3.5 rounded-2xl text-center"
+        className="absolute -top-3 -left-3 w-9 h-9 rounded-full flex items-center justify-center text-lg z-10"
+        style={{
+          background: 'hsl(0 0% 100%)',
+          border: '2px solid hsl(340 70% 72% / 0.7)',
+          boxShadow: '0 2px 8px hsl(0 0% 0% / 0.15)',
+        }}
+      >
+        {badge}
+      </div>
+
+      {/* Bubble body */}
+      <div
+        className="relative px-5 py-3 rounded-2xl text-center"
         style={{
           maxWidth: '300px',
-          minWidth: '180px',
-          background: 'hsl(0 0% 100% / 0.97)',
-          border: '2.5px solid hsl(340 82% 76% / 0.8)',
+          minWidth: '170px',
+          background: 'linear-gradient(180deg, hsl(0 0% 100% / 0.98), hsl(340 30% 97% / 0.96))',
+          border: '2px solid hsl(340 75% 75% / 0.7)',
           boxShadow:
-            '0 8px 32px hsl(0 0% 0% / 0.22), 0 2px 8px hsl(340 70% 60% / 0.15), inset 0 1px 0 hsl(0 0% 100% / 0.6)',
+            '0 6px 24px hsl(0 0% 0% / 0.18), 0 2px 6px hsl(340 60% 60% / 0.12), inset 0 1px 0 hsl(0 0% 100% / 0.7)',
         }}
       >
         <p
-          className="font-display text-[15px] leading-relaxed whitespace-pre-line font-bold tracking-wide"
-          style={{ color: 'hsl(340 45% 22%)' }}
+          className="font-display text-[14px] leading-relaxed whitespace-pre-line font-bold tracking-wide"
+          style={{ color: 'hsl(340 40% 24%)' }}
         >
           {nudge.message}
         </p>
 
-        {/* Speech bubble tail pointing DOWN toward the object */}
+        {/* Speech bubble tail — triangle pointing DOWN toward object */}
         <div
-          className="absolute -bottom-[11px] w-[18px] h-[18px] rotate-45"
+          className="absolute -bottom-[10px]"
           style={{
-            left: `calc(50% + ${clampedTailOffset}px)`,
-            transform: 'translateX(-50%) rotate(45deg)',
-            background: 'hsl(0 0% 100% / 0.97)',
-            borderRight: '2.5px solid hsl(340 82% 76% / 0.8)',
-            borderBottom: '2.5px solid hsl(340 82% 76% / 0.8)',
+            left: `calc(50% + ${clampedTail}px)`,
+            transform: 'translateX(-50%)',
+            width: 0,
+            height: 0,
+            borderLeft: '10px solid transparent',
+            borderRight: '10px solid transparent',
+            borderTop: '12px solid hsl(340 75% 75% / 0.7)',
+            filter: 'drop-shadow(0 2px 2px hsl(0 0% 0% / 0.08))',
+          }}
+        />
+        {/* Inner tail (fills the border gap) */}
+        <div
+          className="absolute -bottom-[8px]"
+          style={{
+            left: `calc(50% + ${clampedTail}px)`,
+            transform: 'translateX(-50%)',
+            width: 0,
+            height: 0,
+            borderLeft: '9px solid transparent',
+            borderRight: '9px solid transparent',
+            borderTop: '10px solid hsl(340 30% 97% / 0.96)',
           }}
         />
       </div>
