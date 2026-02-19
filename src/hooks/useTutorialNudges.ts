@@ -20,15 +20,15 @@ const NUDGE_MESSAGES: Record<TutorialNudgeType, string> = {
 };
 
 const NUDGE_CONFIG: Record<TutorialNudgeType, { displayDuration: number; pauseDuration: number }> = {
-  enemy: { displayDuration: 5500, pauseDuration: 1600 },
-  rose: { displayDuration: 5500, pauseDuration: 0 },
-  shield: { displayDuration: 5500, pauseDuration: 0 },
-  cookie: { displayDuration: 5500, pauseDuration: 700 },
-  midFlag: { displayDuration: 7000, pauseDuration: 1800 },
+  enemy: { displayDuration: 3200, pauseDuration: 1500 },
+  rose: { displayDuration: 3000, pauseDuration: 0 },
+  shield: { displayDuration: 3000, pauseDuration: 0 },
+  cookie: { displayDuration: 3000, pauseDuration: 500 },
+  midFlag: { displayDuration: 3500, pauseDuration: 1800 },
 };
 
 const GAP_MS = 2000;
-const STORAGE_KEY = 'slq_tutorial_seen_v4';
+const STORAGE_KEY = 'slq_tutorial_seen_v5';
 
 function getSeenNudges(): Set<TutorialNudgeType> {
   try {
