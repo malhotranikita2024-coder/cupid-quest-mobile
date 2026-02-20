@@ -702,32 +702,47 @@ export function GameEngine({
   }, [cameraX, currentLevel, levelData.collectibles, isPaused, showDeathOverlay, canTrigger, triggerNudge]);
 
   // Tutorial: live-track moving entities so bubble follows them
+  // SAFE: never dismiss due to viewport exit; only dismiss on collect/defeat/despawn
   useEffect(() => {
     if (!activeNudge?.tracking) return;
     const { kind, initialIndex, initialX, initialY } = activeNudge.tracking;
-    const screenWidth = window.innerWidth;
+
+    // Fallback position: anchor near player
+    const playerFallbackX = player.x + 20;
+    const playerFallbackY = player.y - 60;
 
     if (kind === 'enemy') {
-      // Find the enemy - try initialIndex first, then search by proximity to initial position
       let enemy = initialIndex !== undefined ? levelData.enemies[initialIndex] : undefined;
+      if (enemy && enemy.isDefeated) {
+        // Enemy was defeated → dismiss
+        dismissNudge();
+        return;
+      }
       if (!enemy || enemy.isDefeated) {
         enemy = levelData.enemies.find(e => !e.isDefeated && Math.abs(e.x - initialX) < 200 && Math.abs(e.y - initialY) < 100);
       }
-      if (!enemy || enemy.isDefeated || enemy.x + enemy.width < cameraX || enemy.x > cameraX + screenWidth) {
+      if (enemy && !enemy.isDefeated) {
+        updateNudgePosition(enemy.x + enemy.width / 2, enemy.y - 20);
+      } else {
+        // Entity not found (despawned) but NOT defeated → fallback to player
+        updateNudgePosition(playerFallbackX, playerFallbackY);
+      }
+    } else if (kind === 'collectible') {
+      let collectible = initialIndex !== undefined ? levelData.collectibles[initialIndex] : undefined;
+      if (collectible && collectible.collected) {
+        // Collected → dismiss
         dismissNudge();
         return;
       }
-      updateNudgePosition(enemy.x + enemy.width / 2, enemy.y - 20);
-    } else if (kind === 'collectible') {
-      let collectible = initialIndex !== undefined ? levelData.collectibles[initialIndex] : undefined;
       if (!collectible || collectible.collected) {
         collectible = levelData.collectibles.find(c => !c.collected && Math.abs(c.x - initialX) < 200 && Math.abs(c.y - initialY) < 100);
       }
-      if (!collectible || collectible.collected || collectible.x + 30 < cameraX || collectible.x > cameraX + screenWidth) {
-        dismissNudge();
-        return;
+      if (collectible && !collectible.collected) {
+        updateNudgePosition(collectible.x, collectible.y - 25);
+      } else {
+        // Not found → fallback to player
+        updateNudgePosition(playerFallbackX, playerFallbackY);
       }
-      updateNudgePosition(collectible.x, collectible.y - 25);
     } else if (kind === 'midFlag') {
       if (levelData.midFlag.collected) {
         dismissNudge();
@@ -735,7 +750,7 @@ export function GameEngine({
       }
       updateNudgePosition(levelData.midFlag.x + 15, levelData.midFlag.y - 15);
     }
-  }, [activeNudge, levelData.enemies, levelData.collectibles, levelData.midFlag, cameraX, dismissNudge, updateNudgePosition]);
+  }, [activeNudge, levelData.enemies, levelData.collectibles, levelData.midFlag, cameraX, player.x, player.y, dismissNudge, updateNudgePosition]);
 
   const handlePlayerDeath = useCallback(() => {
     // SYNCHRONOUS death lock check using ref - prevents race conditions
