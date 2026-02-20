@@ -38,13 +38,29 @@ const NUDGE_CONFIG: Record<TutorialNudgeType, { displayDuration: number; pauseDu
 const GAP_MS = 2000;
 const STORAGE_KEY = 'slq_tutorial_seen_v5';
 
-/** Check if ?tutorialDebug=1 is in the URL */
+/** Check if debug mode is active via URL param OR localStorage flag */
 function isTutorialDebug(): boolean {
   try {
-    return new URLSearchParams(window.location.search).get('tutorialDebug') === '1';
+    if (new URLSearchParams(window.location.search).get('tutorialDebug') === '1') {
+      // Also persist to localStorage so it survives iframe reloads
+      localStorage.setItem('slq_tutorial_debug', '1');
+      return true;
+    }
+    return localStorage.getItem('slq_tutorial_debug') === '1';
   } catch {
     return false;
   }
+}
+
+/** Programmatically enable/disable tutorial debug mode */
+export function setTutorialDebugMode(enabled: boolean) {
+  try {
+    if (enabled) {
+      localStorage.setItem('slq_tutorial_debug', '1');
+    } else {
+      localStorage.removeItem('slq_tutorial_debug');
+    }
+  } catch {}
 }
 
 function getSeenNudges(): Set<TutorialNudgeType> {
@@ -90,7 +106,11 @@ export interface TutorialDebugInfo {
 export function useTutorialNudges(currentLevel: number) {
   const [activeNudge, setActiveNudge] = useState<ActiveNudge | null>(null);
   const [isTutorialPaused, setIsTutorialPaused] = useState(false);
-  const debugMode = useRef(isTutorialDebug()).current;
+  const debugMode = useRef(isTutorialDebug());
+
+  // Re-check debug mode on every render (so toggling localStorage works without reload)
+  debugMode.current = isTutorialDebug();
+
   const seenRef = useRef(getSeenNudges());
   const queueRef = useRef<QueuedNudge[]>([]);
   const activeRef = useRef(false);
@@ -99,7 +119,7 @@ export function useTutorialNudges(currentLevel: number) {
   const lastTriggerRef = useRef<string | null>(null);
 
   // Re-check seen on every render in debug mode (so reset button works instantly)
-  if (debugMode) {
+  if (debugMode.current) {
     seenRef.current = new Set();
   }
 
@@ -109,24 +129,24 @@ export function useTutorialNudges(currentLevel: number) {
     queueLength: 0,
     activeType: null,
     seenCount: 0,
-    debugMode,
+    debugMode: debugMode.current,
   });
 
-  // Keep debug info in sync
+  // Keep debug info in sync — always run so overlay works
   useEffect(() => {
-    if (!debugMode) return;
     const interval = setInterval(() => {
+      const isDebug = isTutorialDebug();
       setDebugInfo({
         mounted: true,
         lastTrigger: lastTriggerRef.current,
         queueLength: queueRef.current.length,
         activeType: activeRef.current ? (activeNudge?.type ?? null) : null,
         seenCount: seenRef.current.size,
-        debugMode: true,
+        debugMode: isDebug,
       });
     }, 500);
     return () => clearInterval(interval);
-  }, [debugMode, activeNudge]);
+  }, [activeNudge]);
 
   const clearAllTimers = useCallback(() => {
     timersRef.current.forEach(t => clearTimeout(t));
@@ -188,8 +208,8 @@ export function useTutorialNudges(currentLevel: number) {
     if (currentLevel !== 1) return;
 
     // In debug mode, allow re-triggering but still prevent duplicate active/queued
-    if (!debugMode && seenRef.current.has(type)) return;
-    if (debugMode && (activeRef.current && activeNudge?.type === type)) return;
+    if (!debugMode.current && seenRef.current.has(type)) return;
+    if (debugMode.current && (activeRef.current && activeNudge?.type === type)) return;
 
     // Mark as seen (no-op in debug mode)
     seenRef.current.add(type);
@@ -206,7 +226,7 @@ export function useTutorialNudges(currentLevel: number) {
     }
 
     showNudge(type, worldX, worldY, tracking);
-  }, [currentLevel, showNudge, debugMode, activeNudge]);
+  }, [currentLevel, showNudge, activeNudge]);
 
   const dismissNudge = useCallback(() => {
     clearAllTimers();
@@ -224,9 +244,9 @@ export function useTutorialNudges(currentLevel: number) {
 
   const canTrigger = useCallback((type: TutorialNudgeType): boolean => {
     if (currentLevel !== 1) return false;
-    if (debugMode) return true; // Always eligible in debug mode
+    if (debugMode.current) return true;
     return !seenRef.current.has(type);
-  }, [currentLevel, debugMode]);
+  }, [currentLevel]);
 
   useEffect(() => {
     return () => clearAllTimers();
@@ -239,6 +259,6 @@ export function useTutorialNudges(currentLevel: number) {
     canTrigger,
     isTutorialPaused,
     updateNudgePosition,
-    debugInfo: debugMode ? debugInfo : null,
+    debugInfo,
   };
 }

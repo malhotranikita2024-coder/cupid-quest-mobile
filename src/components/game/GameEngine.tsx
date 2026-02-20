@@ -5,6 +5,7 @@ import { GameHUD } from './GameHUD';
 import { PauseMenu } from './PauseMenu';
 import { TutorialNudge } from './TutorialNudge';
 import { TutorialDebugOverlay } from './TutorialDebugOverlay';
+import { setTutorialDebugMode } from '@/hooks/useTutorialNudges';
 import { useTouchControls } from '@/hooks/useTouchControls';
 import { useAudio } from '@/hooks/useAudio';
 import { useTutorialNudges } from '@/hooks/useTutorialNudges';
@@ -104,6 +105,23 @@ export function GameEngine({
 
   const audio = useAudio(musicEnabled, sfxEnabled);
   const { activeNudge, triggerNudge, dismissNudge, canTrigger, isTutorialPaused, updateNudgePosition, debugInfo } = useTutorialNudges(currentLevel);
+
+  // Keyboard shortcut to toggle tutorial debug: Ctrl+Shift+T
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'T') {
+        e.preventDefault();
+        const isNowDebug = !debugInfo?.debugMode;
+        setTutorialDebugMode(isNowDebug);
+        if (isNowDebug) {
+          // Force re-render by reloading to pick up debug state
+          window.location.reload();
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [debugInfo?.debugMode]);
 
   // Store audio functions in refs to avoid dependency issues
   const audioRef = useRef(audio);
@@ -1103,8 +1121,8 @@ export function GameEngine({
         />
       )}
 
-      {/* Tutorial debug overlay - only with ?tutorialDebug=1 */}
-      {debugInfo && (
+      {/* Tutorial debug overlay - always mounted, shows when debug mode active */}
+      {debugInfo?.debugMode && (
         <TutorialDebugOverlay info={debugInfo} levelId={currentLevel} />
       )}
       

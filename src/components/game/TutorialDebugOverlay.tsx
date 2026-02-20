@@ -1,5 +1,5 @@
 import React from 'react';
-import { TutorialDebugInfo, resetTutorialStorage } from '@/hooks/useTutorialNudges';
+import { TutorialDebugInfo, resetTutorialStorage, setTutorialDebugMode } from '@/hooks/useTutorialNudges';
 
 interface TutorialDebugOverlayProps {
   info: TutorialDebugInfo;
@@ -30,26 +30,46 @@ export function TutorialDebugOverlay({ info, levelId }: TutorialDebugOverlayProp
       <div>Queue length: <b>{info.queueLength}</b></div>
       <div>Last trigger: <b>{info.lastTrigger ?? 'none'}</b></div>
       <div>Seen count: <b>{info.seenCount}</b></div>
-      <button
-        onClick={() => {
-          resetTutorialStorage();
-          window.location.reload();
-        }}
-        style={{
-          marginTop: 6,
-          padding: '4px 10px',
-          background: 'hsl(0 70% 55%)',
-          color: 'white',
-          border: 'none',
-          borderRadius: 6,
-          cursor: 'pointer',
-          fontFamily: 'monospace',
-          fontSize: '11px',
-          fontWeight: 'bold',
-        }}
-      >
-        🔄 Reset Tutorials
-      </button>
+      <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+        <button
+          onClick={() => {
+            resetTutorialStorage();
+            window.location.reload();
+          }}
+          style={{
+            padding: '4px 10px',
+            background: 'hsl(0 70% 55%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 6,
+            cursor: 'pointer',
+            fontFamily: 'monospace',
+            fontSize: '11px',
+            fontWeight: 'bold',
+          }}
+        >
+          🔄 Reset
+        </button>
+        <button
+          onClick={() => {
+            setTutorialDebugMode(false);
+            window.location.reload();
+          }}
+          style={{
+            padding: '4px 10px',
+            background: 'hsl(200 70% 45%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: 6,
+            cursor: 'pointer',
+            fontFamily: 'monospace',
+            fontSize: '11px',
+            fontWeight: 'bold',
+          }}
+        >
+          ✖ Exit Debug
+        </button>
+      </div>
     </div>
   );
 }
