@@ -4,9 +4,7 @@ export type TutorialNudgeType = 'enemy' | 'rose' | 'shield' | 'cookie' | 'midFla
 
 export interface EntityTrackingInfo {
   kind: 'enemy' | 'collectible' | 'midFlag';
-  /** Index in the levelData array at time of trigger (used as initial lookup hint) */
   initialIndex?: number;
-  /** Snapshot of initial x to help re-identify the entity */
   initialX: number;
   initialY: number;
 }
@@ -40,7 +38,17 @@ const NUDGE_CONFIG: Record<TutorialNudgeType, { displayDuration: number; pauseDu
 const GAP_MS = 2000;
 const STORAGE_KEY = 'slq_tutorial_seen_v5';
 
+/** Check if ?tutorialDebug=1 is in the URL */
+function isTutorialDebug(): boolean {
+  try {
+    return new URLSearchParams(window.location.search).get('tutorialDebug') === '1';
+  } catch {
+    return false;
+  }
+}
+
 function getSeenNudges(): Set<TutorialNudgeType> {
+  if (isTutorialDebug()) return new Set(); // Debug mode: nothing is "seen"
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) return new Set(JSON.parse(stored));
@@ -49,10 +57,17 @@ function getSeenNudges(): Set<TutorialNudgeType> {
 }
 
 function markNudgeSeen(type: TutorialNudgeType) {
+  if (isTutorialDebug()) return; // Debug mode: don't persist
   try {
     const seen = getSeenNudges();
     seen.add(type);
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...seen]));
+  } catch {}
+}
+
+export function resetTutorialStorage() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
   } catch {}
 }
 
@@ -63,21 +78,61 @@ interface QueuedNudge {
   tracking?: EntityTrackingInfo;
 }
 
+export interface TutorialDebugInfo {
+  mounted: boolean;
+  lastTrigger: string | null;
+  queueLength: number;
+  activeType: string | null;
+  seenCount: number;
+  debugMode: boolean;
+}
+
 export function useTutorialNudges(currentLevel: number) {
   const [activeNudge, setActiveNudge] = useState<ActiveNudge | null>(null);
   const [isTutorialPaused, setIsTutorialPaused] = useState(false);
+  const debugMode = useRef(isTutorialDebug()).current;
   const seenRef = useRef(getSeenNudges());
   const queueRef = useRef<QueuedNudge[]>([]);
   const activeRef = useRef(false);
   const cooldownRef = useRef(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const lastTriggerRef = useRef<string | null>(null);
+
+  // Re-check seen on every render in debug mode (so reset button works instantly)
+  if (debugMode) {
+    seenRef.current = new Set();
+  }
+
+  const [debugInfo, setDebugInfo] = useState<TutorialDebugInfo>({
+    mounted: true,
+    lastTrigger: null,
+    queueLength: 0,
+    activeType: null,
+    seenCount: 0,
+    debugMode,
+  });
+
+  // Keep debug info in sync
+  useEffect(() => {
+    if (!debugMode) return;
+    const interval = setInterval(() => {
+      setDebugInfo({
+        mounted: true,
+        lastTrigger: lastTriggerRef.current,
+        queueLength: queueRef.current.length,
+        activeType: activeRef.current ? (activeNudge?.type ?? null) : null,
+        seenCount: seenRef.current.size,
+        debugMode: true,
+      });
+    }, 500);
+    return () => clearInterval(interval);
+  }, [debugMode, activeNudge]);
 
   const clearAllTimers = useCallback(() => {
     timersRef.current.forEach(t => clearTimeout(t));
     timersRef.current = [];
   }, []);
 
-  // Use a ref for processQueue to break circular dependency
   const processQueueRef = useRef<() => void>(() => {});
 
   const showNudge = useCallback((type: TutorialNudgeType, worldX: number, worldY: number, tracking?: EntityTrackingInfo) => {
@@ -94,7 +149,6 @@ export function useTutorialNudges(currentLevel: number) {
       tracking,
     });
 
-    // Pause gameplay if needed
     if (config.pauseDuration > 0) {
       setIsTutorialPaused(true);
       const unpauseTimer = setTimeout(() => {
@@ -103,13 +157,11 @@ export function useTutorialNudges(currentLevel: number) {
       timersRef.current.push(unpauseTimer);
     }
 
-    // Dismiss after display duration
     const dismissTimer = setTimeout(() => {
       setActiveNudge(null);
       setIsTutorialPaused(false);
       activeRef.current = false;
 
-      // Cooldown gap before next queued nudge
       cooldownRef.current = true;
       const gapTimer = setTimeout(() => {
         cooldownRef.current = false;
@@ -120,7 +172,6 @@ export function useTutorialNudges(currentLevel: number) {
     timersRef.current.push(dismissTimer);
   }, []);
 
-  // Keep processQueueRef in sync
   processQueueRef.current = () => {
     if (activeRef.current || cooldownRef.current) return;
     const next = queueRef.current.shift();
@@ -135,19 +186,27 @@ export function useTutorialNudges(currentLevel: number) {
 
   const triggerNudge = useCallback((type: TutorialNudgeType, worldX: number, worldY: number, tracking?: EntityTrackingInfo) => {
     if (currentLevel !== 1) return;
-    if (seenRef.current.has(type)) return;
 
-    // Mark as seen immediately to prevent re-triggers
+    // In debug mode, allow re-triggering but still prevent duplicate active/queued
+    if (!debugMode && seenRef.current.has(type)) return;
+    if (debugMode && (activeRef.current && activeNudge?.type === type)) return;
+
+    // Mark as seen (no-op in debug mode)
     seenRef.current.add(type);
     markNudgeSeen(type);
 
+    lastTriggerRef.current = `${type} @ ${Date.now()}`;
+
     if (activeRef.current || cooldownRef.current) {
-      queueRef.current.push({ type, worldX, worldY, tracking });
+      // Don't double-queue same type in debug mode
+      if (!queueRef.current.some(q => q.type === type)) {
+        queueRef.current.push({ type, worldX, worldY, tracking });
+      }
       return;
     }
 
     showNudge(type, worldX, worldY, tracking);
-  }, [currentLevel, showNudge]);
+  }, [currentLevel, showNudge, debugMode, activeNudge]);
 
   const dismissNudge = useCallback(() => {
     clearAllTimers();
@@ -165,10 +224,10 @@ export function useTutorialNudges(currentLevel: number) {
 
   const canTrigger = useCallback((type: TutorialNudgeType): boolean => {
     if (currentLevel !== 1) return false;
+    if (debugMode) return true; // Always eligible in debug mode
     return !seenRef.current.has(type);
-  }, [currentLevel]);
+  }, [currentLevel, debugMode]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => clearAllTimers();
   }, [clearAllTimers]);
@@ -180,5 +239,6 @@ export function useTutorialNudges(currentLevel: number) {
     canTrigger,
     isTutorialPaused,
     updateNudgePosition,
+    debugInfo: debugMode ? debugInfo : null,
   };
 }

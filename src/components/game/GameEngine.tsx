@@ -4,6 +4,7 @@ import { MobileControls } from './MobileControls';
 import { GameHUD } from './GameHUD';
 import { PauseMenu } from './PauseMenu';
 import { TutorialNudge } from './TutorialNudge';
+import { TutorialDebugOverlay } from './TutorialDebugOverlay';
 import { useTouchControls } from '@/hooks/useTouchControls';
 import { useAudio } from '@/hooks/useAudio';
 import { useTutorialNudges } from '@/hooks/useTutorialNudges';
@@ -102,7 +103,7 @@ export function GameEngine({
   } = useTouchControls();
 
   const audio = useAudio(musicEnabled, sfxEnabled);
-  const { activeNudge, triggerNudge, dismissNudge, canTrigger, isTutorialPaused, updateNudgePosition } = useTutorialNudges(currentLevel);
+  const { activeNudge, triggerNudge, dismissNudge, canTrigger, isTutorialPaused, updateNudgePosition, debugInfo } = useTutorialNudges(currentLevel);
 
   // Store audio functions in refs to avoid dependency issues
   const audioRef = useRef(audio);
@@ -1100,6 +1101,11 @@ export function GameEngine({
           nudge={activeNudge}
           cameraX={cameraX}
         />
+      )}
+
+      {/* Tutorial debug overlay - only with ?tutorialDebug=1 */}
+      {debugInfo && (
+        <TutorialDebugOverlay info={debugInfo} levelId={currentLevel} />
       )}
       
       {isPaused && !showDeathOverlay && (
