@@ -15,6 +15,7 @@ interface GameCanvasProps {
   onPlayerHit: () => void;
   onCheckpointReached: () => void;
   onFlagReached: () => void;
+  onFlagReachedNoFlag: () => void;
   onMidFlagCollected: () => void;
   onBlockHit: (index: number) => void;
   onJump: () => void;
@@ -48,6 +49,7 @@ export function GameCanvas({
   onPlayerHit,
   onCheckpointReached,
   onFlagReached,
+  onFlagReachedNoFlag,
   onMidFlagCollected,
   onBlockHit,
   onJump,
@@ -462,6 +464,8 @@ export function GameCanvas({
         // Only complete level if mid-flag is collected
         if (levelData.midFlag.collected) {
           onFlagReached();
+        } else {
+          onFlagReachedNoFlag();
         }
       }
     }
@@ -490,7 +494,7 @@ export function GameCanvas({
     onCameraUpdate(newCameraX);
 
     onPlayerUpdate(newPlayer);
-  }, [player, controls, levelData, isPaused, onPlayerUpdate, onCollectItem, onCollectCookie, onEnemyDefeated, onPlayerHit, onCheckpointReached, onFlagReached, onMidFlagCollected, onBlockHit, onJump, onCameraUpdate, onFireballHit]);
+  }, [player, controls, levelData, isPaused, onPlayerUpdate, onCollectItem, onCollectCookie, onEnemyDefeated, onPlayerHit, onCheckpointReached, onFlagReached, onFlagReachedNoFlag, onMidFlagCollected, onBlockHit, onJump, onCameraUpdate, onFireballHit]);
 
   const draw = useCallback((ctx: CanvasRenderingContext2D, time: number) => {
     const canvas = canvasRef.current;
@@ -1105,23 +1109,42 @@ export function GameCanvas({
    ctx.strokeText('FINISH', finishZoneX - cameraX + finishZoneWidth / 2, groundY - 35);
    ctx.fillText('FINISH', finishZoneX - cameraX + finishZoneWidth / 2, groundY - 35);
    
-   // Flag pole holder (empty pole that waits for the planted flag)
+   // Flag stand/pedestal
+   // Stone base - wider pedestal
+   ctx.fillStyle = '#888888';
+   ctx.strokeStyle = '#555555';
+   ctx.lineWidth = 2;
+   ctx.beginPath();
+   ctx.roundRect(flagX - 2 - cameraX, groundY - 12, 42, 12, 3);
+   ctx.stroke();
+   ctx.fill();
+   
+   // Pedestal highlight
+   ctx.fillStyle = '#AAAAAA';
+   ctx.fillRect(flagX - cameraX, groundY - 12, 38, 3);
+   
+   // Decorative hearts on pedestal
+   ctx.font = '10px Arial';
+   ctx.textAlign = 'center';
+   ctx.fillText('💕', flagX + 19 - cameraX, groundY - 1);
+   
+   // Flag pole holder (vertical pole)
    ctx.fillStyle = '#5D4037';
    ctx.strokeStyle = '#3E2723';
    ctx.lineWidth = 2;
    ctx.beginPath();
-   ctx.roundRect(flagX + 15 - cameraX, groundY - 60, 8, 60, 3);
+   ctx.roundRect(flagX + 15 - cameraX, groundY - 65, 8, 53, 3);
    ctx.stroke();
    ctx.fill();
    
-   // Pole base - stone block
-   ctx.fillStyle = '#666666';
-   ctx.strokeStyle = '#333333';
-   ctx.lineWidth = 2;
+   // Pole cap - golden ornament
    ctx.beginPath();
-   ctx.roundRect(flagX + 5 - cameraX, groundY - 15, 28, 15, 3);
-   ctx.stroke();
+   ctx.arc(flagX + 19 - cameraX, groundY - 67, 6, 0, Math.PI * 2);
+   ctx.fillStyle = '#FFD700';
    ctx.fill();
+   ctx.strokeStyle = '#CC9900';
+   ctx.lineWidth = 1.5;
+   ctx.stroke();
    
    // Draw planted flag if completed
    if (flagPlanted || flagIsPlanting) {
