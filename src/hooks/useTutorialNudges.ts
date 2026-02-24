@@ -37,12 +37,28 @@ const NUDGE_CONFIG: Record<TutorialNudgeType, { displayDuration: number; pauseDu
 
 const GAP_MS = 2000;
 const STORAGE_KEY = 'slq_tutorial_seen_v5';
+const MODE_KEY = 'slq_tutorial_mode';
+
+export type TutorialMode = 'first_time' | 'always_level1';
+
+export function getTutorialMode(): TutorialMode {
+  try {
+    const v = localStorage.getItem(MODE_KEY);
+    if (v === 'always_level1') return 'always_level1';
+  } catch {}
+  return 'first_time';
+}
+
+export function setTutorialMode(mode: TutorialMode) {
+  try {
+    localStorage.setItem(MODE_KEY, mode);
+  } catch {}
+}
 
 /** Check if debug mode is active via URL param OR localStorage flag */
 function isTutorialDebug(): boolean {
   try {
     if (new URLSearchParams(window.location.search).get('tutorialDebug') === '1') {
-      // Also persist to localStorage so it survives iframe reloads
       localStorage.setItem('slq_tutorial_debug', '1');
       return true;
     }
@@ -63,8 +79,18 @@ export function setTutorialDebugMode(enabled: boolean) {
   } catch {}
 }
 
+/**
+ * Clear Level 1 seen flags. Called when "always_level1" mode is active
+ * and Level 1 starts, so tutorials show again for that run.
+ */
+export function clearLevel1SeenFlags() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {}
+}
+
 function getSeenNudges(): Set<TutorialNudgeType> {
-  if (isTutorialDebug()) return new Set(); // Debug mode: nothing is "seen"
+  if (isTutorialDebug()) return new Set();
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) return new Set(JSON.parse(stored));
@@ -73,7 +99,7 @@ function getSeenNudges(): Set<TutorialNudgeType> {
 }
 
 function markNudgeSeen(type: TutorialNudgeType) {
-  if (isTutorialDebug()) return; // Debug mode: don't persist
+  if (isTutorialDebug()) return;
   try {
     const seen = getSeenNudges();
     seen.add(type);
@@ -110,6 +136,16 @@ export function useTutorialNudges(currentLevel: number) {
 
   // Re-check debug mode on every render (so toggling localStorage works without reload)
   debugMode.current = isTutorialDebug();
+
+  // "always_level1" mode: clear seen flags when Level 1 starts
+  const clearedForRunRef = useRef(false);
+  useEffect(() => {
+    if (currentLevel === 1 && getTutorialMode() === 'always_level1' && !clearedForRunRef.current) {
+      clearLevel1SeenFlags();
+      seenRef.current = new Set();
+      clearedForRunRef.current = true;
+    }
+  }, [currentLevel]);
 
   const seenRef = useRef(getSeenNudges());
   const queueRef = useRef<QueuedNudge[]>([]);
