@@ -1,5 +1,6 @@
-import React from 'react';
-import { ArrowLeft, Music, Music2, Volume2, VolumeX, LogOut } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Music, Music2, Volume2, VolumeX, LogOut, GraduationCap } from 'lucide-react';
+import { getTutorialMode, setTutorialMode, TutorialMode } from '@/hooks/useTutorialNudges';
 
 interface SettingsScreenProps {
   musicEnabled: boolean;
@@ -18,6 +19,13 @@ export function SettingsScreen({
   onBack,
   onSignOut,
 }: SettingsScreenProps) {
+  const [tutorialMode, setTutorialModeState] = useState<TutorialMode>(getTutorialMode);
+
+  const handleTutorialModeChange = (mode: TutorialMode) => {
+    setTutorialMode(mode);
+    setTutorialModeState(mode);
+  };
+
   return (
     <div 
       className="fixed inset-0 flex flex-col items-center justify-center p-6"
@@ -92,6 +100,38 @@ export function SettingsScreen({
               />
             </div>
           </button>
+
+          {/* Tutorial mode */}
+          <div className="p-4 rounded-2xl bg-love-cream">
+            <div className="flex items-center gap-3 mb-3">
+              <GraduationCap className="w-6 h-6 text-love-pink" />
+              <span className="font-display font-semibold text-love-dark">
+                Tutorials
+              </span>
+            </div>
+            <div className="space-y-2 pl-9">
+              <button
+                onClick={() => handleTutorialModeChange('first_time')}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  tutorialMode === 'first_time'
+                    ? 'bg-love-pink text-white'
+                    : 'bg-white/60 text-love-dark hover:bg-white'
+                }`}
+              >
+                🎮 First time only <span className="opacity-60">(Player)</span>
+              </button>
+              <button
+                onClick={() => handleTutorialModeChange('always_level1')}
+                className={`w-full text-left px-3 py-2 rounded-xl text-sm font-medium transition-colors ${
+                  tutorialMode === 'always_level1'
+                    ? 'bg-love-pink text-white'
+                    : 'bg-white/60 text-love-dark hover:bg-white'
+                }`}
+              >
+                🧪 Every Level 1 start <span className="opacity-60">(Tester)</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <button
