@@ -82,7 +82,10 @@ export function GameEngine({
   const [checkpointPosition, setCheckpointPosition] = useState({ x: 100, y: 400 });
   const [showDeathOverlay, setShowDeathOverlay] = useState(false);
   const [isPlantingFlag, setIsPlantingFlag] = useState(false);
-  const [isDying, setIsDying] = useState(false); // Death lock to prevent multiple life loss
+  const [isDying, setIsDying] = useState(false);
+  const [showNeedFlagMessage, setShowNeedFlagMessage] = useState(false);
+  const [showLevelCompleteOverlay, setShowLevelCompleteOverlay] = useState(false);
+  const [fireworkParticles, setFireworkParticles] = useState<Array<{id: number; x: number; y: number; vx: number; vy: number; color: string; life: number; size: number}>>([]);
   
   const timerRef = useRef<NodeJS.Timeout>();
   const deathTimeoutRef = useRef<NodeJS.Timeout>();
@@ -1013,28 +1016,44 @@ export function GameEngine({
   }, [levelData.checkpoint, audio]);
 
   const handleFlagReached = useCallback(() => {
-    // Start flag planting animation instead of immediate completion
-    if (isPlantingFlag) return; // Prevent double trigger
+    if (isPlantingFlag) return;
     
     setIsPlantingFlag(true);
     setLevelData(prev => ({
       ...prev,
-     flag: { ...prev.flag, isPlanting: true, plantProgress: 0 },
+      flag: { ...prev.flag, isPlanting: true, plantProgress: 0 },
     }));
-   audio.playCheckpoint(); // Play a sound for planting start
-   
-    // Run planting animation (0.8 seconds)
+    audio.playCheckpoint();
+    
+    // Run planting animation (1.5 seconds)
     let progress = 0;
     const plantInterval = setInterval(() => {
-      progress += 5;
+      progress += 3;
       setLevelData(prev => ({
         ...prev,
         flag: { ...prev.flag, plantProgress: progress },
       }));
       
+      // Spawn firework particles during planting
+      if (progress % 12 === 0) {
+        const flagScreenX = levelData.flag.x - cameraX + 20;
+        const flagScreenY = 120;
+        const colors = ['#FF69B4', '#FFD700', '#FF1493', '#00FF7F', '#FF6347', '#DA70D6', '#87CEEB'];
+        const newParticles = Array.from({ length: 8 }, (_, i) => ({
+          id: Date.now() + i + progress,
+          x: flagScreenX + (Math.random() - 0.5) * 200,
+          y: flagScreenY + Math.random() * 80,
+          vx: (Math.random() - 0.5) * 6,
+          vy: -Math.random() * 4 - 2,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          life: 60 + Math.random() * 40,
+          size: 3 + Math.random() * 4,
+        }));
+        setFireworkParticles(prev => [...prev, ...newParticles]);
+      }
+      
       if (progress >= 100) {
         clearInterval(plantInterval);
-        // Complete the planting
         setLevelData(prev => ({
           ...prev,
           flag: { ...prev.flag, reached: true, isPlanting: false, plantedFlag: true },
@@ -1042,12 +1061,63 @@ export function GameEngine({
         setIsPlantingFlag(false);
         audio.playLevelComplete();
         audio.stopBackgroundMusic();
-        onLevelComplete();
+        
+        // Big firework burst at completion
+        const flagScreenX = levelData.flag.x - cameraX + 20;
+        const colors = ['#FF69B4', '#FFD700', '#FF1493', '#00FF7F', '#FF6347', '#DA70D6', '#87CEEB', '#FFF'];
+        const burstParticles = Array.from({ length: 30 }, (_, i) => {
+          const angle = (i / 30) * Math.PI * 2;
+          const speed = 2 + Math.random() * 5;
+          return {
+            id: Date.now() + 1000 + i,
+            x: flagScreenX,
+            y: 100,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed - 2,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            life: 80 + Math.random() * 40,
+            size: 3 + Math.random() * 5,
+          };
+        });
+        setFireworkParticles(prev => [...prev, ...burstParticles]);
+        
+        // Show Level Complete overlay after a beat
+        setTimeout(() => {
+          setShowLevelCompleteOverlay(true);
+        }, 800);
+        
+        // Auto-continue after 4 seconds
+        setTimeout(() => {
+          setShowLevelCompleteOverlay(false);
+          setFireworkParticles([]);
+          onLevelComplete();
+        }, 4000);
       }
-    }, 40); // ~25 updates over 1 second
+    }, 45);
     
     plantingTimeoutRef.current = plantInterval as unknown as NodeJS.Timeout;
-  }, [audio, onLevelComplete, isPlantingFlag]);
+  }, [audio, onLevelComplete, isPlantingFlag, levelData.flag.x, cameraX]);
+
+  const handleFlagReachedNoFlag = useCallback(() => {
+    if (showNeedFlagMessage) return;
+    setShowNeedFlagMessage(true);
+    // Shake the flag pole with decrementing timer
+    let shakeVal = 30;
+    setLevelData(prev => ({
+      ...prev,
+      flag: { ...prev.flag, shakeTimer: shakeVal },
+    }));
+    const shakeInterval = setInterval(() => {
+      shakeVal -= 1;
+      if (shakeVal <= 0) {
+        clearInterval(shakeInterval);
+        setLevelData(prev => ({ ...prev, flag: { ...prev.flag, shakeTimer: 0 } }));
+      } else {
+        setLevelData(prev => ({ ...prev, flag: { ...prev.flag, shakeTimer: shakeVal } }));
+      }
+    }, 30);
+    setTimeout(() => setShowNeedFlagMessage(false), 2500);
+  }, [showNeedFlagMessage]);
 
   const handleMidFlagCollected = useCallback(() => {
     setLevelData(prev => ({
@@ -1062,6 +1132,25 @@ export function GameEngine({
   }, []);
 
   const collectibleEmoji = COLLECTIBLE_EMOJIS[levelData.collectibleType] || '🌹';
+  // Firework particle animation
+  useEffect(() => {
+    if (fireworkParticles.length === 0) return;
+    const interval = setInterval(() => {
+      setFireworkParticles(prev => 
+        prev
+          .map(p => ({
+            ...p,
+            x: p.x + p.vx,
+            y: p.y + p.vy,
+            vy: p.vy + 0.08,
+            life: p.life - 1,
+            size: p.size * 0.98,
+          }))
+          .filter(p => p.life > 0)
+      );
+    }, 1000 / 60);
+    return () => clearInterval(interval);
+  }, [fireworkParticles.length > 0]);
 
   return (
     <div className="fixed inset-0 overflow-hidden game-active">
@@ -1078,6 +1167,7 @@ export function GameEngine({
         onPlayerHit={handlePlayerHit}
         onCheckpointReached={handleCheckpointReached}
         onFlagReached={handleFlagReached}
+        onFlagReachedNoFlag={handleFlagReachedNoFlag}
         onMidFlagCollected={handleMidFlagCollected}
         onBlockHit={handleBlockHit}
         onJump={handleJump}
@@ -1143,6 +1233,60 @@ export function GameEngine({
           <div className="text-center">
             <div className="text-6xl mb-4 animate-bounce">💔</div>
             <div className="retro-text text-4xl text-white">OUCH!</div>
+          </div>
+        </div>
+      )}
+
+      {/* Firework particles overlay */}
+      {fireworkParticles.length > 0 && (
+        <div className="fixed inset-0 z-40 pointer-events-none overflow-hidden">
+          {fireworkParticles.map(p => (
+            <div
+              key={p.id}
+              className="absolute rounded-full"
+              style={{
+                left: `${p.x}px`,
+                top: `${p.y}px`,
+                width: `${p.size}px`,
+                height: `${p.size}px`,
+                backgroundColor: p.color,
+                opacity: Math.min(1, p.life / 30),
+                boxShadow: `0 0 ${p.size * 2}px ${p.color}`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* "Need flag" message */}
+      {showNeedFlagMessage && (
+        <div className="fixed inset-x-0 top-24 z-50 flex justify-center pointer-events-none animate-fade-in">
+          <div className="bg-black/80 text-white px-6 py-3 rounded-2xl text-lg font-display flex items-center gap-2 shadow-lg border border-white/20">
+            <span className="text-2xl">🚩</span>
+            You need the flag to finish!
+          </div>
+        </div>
+      )}
+
+      {/* Level Complete overlay */}
+      {showLevelCompleteOverlay && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-fade-in">
+          <div className="text-center">
+            <div className="text-6xl mb-4">✅</div>
+            <div className="font-display text-5xl text-white mb-2" style={{ textShadow: '0 0 20px rgba(255,215,0,0.8), 0 2px 4px rgba(0,0,0,0.5)' }}>
+              Level Complete!
+            </div>
+            <div className="text-3xl mt-2">🎉✨🎊</div>
+            <button
+              onClick={() => {
+                setShowLevelCompleteOverlay(false);
+                setFireworkParticles([]);
+                onLevelComplete();
+              }}
+              className="mt-6 px-8 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-display text-lg rounded-full shadow-lg hover:scale-105 transition-transform border-2 border-white/30"
+            >
+              Continue →
+            </button>
           </div>
         </div>
       )}
