@@ -951,6 +951,85 @@ function createLevel7(): LevelData {
   };
 }
 
+// --- Overlap resolution for Level 2+ ---
+interface Rect { x: number; y: number; width: number; height: number; }
+
+function rectsOverlap(a: Rect, b: Rect, minGapX = 40, minGapY = 60): boolean {
+  // Check if two rects overlap or are too close
+  const sameYBand = Math.abs(a.y - b.y) < 20;
+  const effectiveGapX = sameYBand ? minGapX : 0;
+  const xOverlap = a.x < b.x + b.width + effectiveGapX && a.x + a.width + effectiveGapX > b.x;
+  const yOverlap = a.y < b.y + b.height + minGapY && a.y + a.height + minGapY > b.y;
+  // True overlap (ignoring gap enforcement) 
+  const trueXOverlap = a.x < b.x + b.width && a.x + a.width > b.x;
+  const trueYOverlap = a.y < b.y + b.height && a.y + a.height > b.y;
+  // Overlaps if truly intersecting OR too close on both axes
+  return (trueXOverlap && trueYOverlap) || (xOverlap && yOverlap);
+}
+
+function resolveOverlaps(data: LevelData): LevelData {
+  // Collect all placed rects: ground platforms are immovable anchors
+  const anchors: Rect[] = data.platforms
+    .filter(p => p.type === 'ground')
+    .map(p => ({ x: p.x, y: p.y, width: p.width, height: p.height }));
+  
+  // Also treat pipes as anchors (they shouldn't be overlapped)
+  data.pipes.forEach(p => anchors.push({ x: p.x, y: p.y, width: p.width, height: p.height }));
+
+  const placed: Rect[] = [...anchors];
+
+  function canPlace(rect: Rect): boolean {
+    return !placed.some(p => rectsOverlap(rect, p));
+  }
+
+  function tryResolve(rect: Rect): Rect | null {
+    if (canPlace(rect)) return rect;
+    const xShifts = [60, -60, 120, -120, 180, -180];
+    const yShifts = [0, 50, -50, 100, -100];
+    for (const dy of yShifts) {
+      for (const dx of xShifts) {
+        const candidate = { ...rect, x: rect.x + dx, y: rect.y + dy };
+        // Keep within level bounds and reasonable Y range
+        if (candidate.x < 50 || candidate.x + candidate.width > data.levelWidth - 50) continue;
+        if (candidate.y < 150 || candidate.y > 480) continue;
+        if (canPlace(candidate)) return candidate;
+      }
+    }
+    return null; // skip this object
+  }
+
+  // Process floating/moving platforms (not ground)
+  const resolvedPlatforms: Platform[] = [];
+  for (const p of data.platforms) {
+    if (p.type === 'ground') {
+      resolvedPlatforms.push(p);
+      continue;
+    }
+    const resolved = tryResolve({ x: p.x, y: p.y, width: p.width, height: p.height });
+    if (resolved) {
+      const newP = { ...p, x: resolved.x, y: resolved.y };
+      if (p.originalX !== undefined) newP.originalX = resolved.x;
+      if (p.originalY !== undefined) newP.originalY = resolved.y;
+      resolvedPlatforms.push(newP);
+      placed.push(resolved);
+    }
+    // else: skip this platform (overlap couldn't be resolved)
+  }
+
+  // Process hit blocks
+  const resolvedBlocks: HitBlock[] = [];
+  for (const b of data.hitBlocks) {
+    const resolved = tryResolve({ x: b.x, y: b.y, width: b.width, height: b.height });
+    if (resolved) {
+      resolvedBlocks.push({ ...b, x: resolved.x, y: resolved.y });
+      placed.push(resolved);
+    }
+    // else: skip this block
+  }
+
+  return { ...data, platforms: resolvedPlatforms, hitBlocks: resolvedBlocks };
+}
+
 export function getLevelData(levelId: number): LevelData {
   let data: LevelData;
   switch (levelId) {
@@ -977,6 +1056,11 @@ export function getLevelData(levelId: number): LevelData {
       break;
     default:
       data = createLevel1();
+  }
+  
+  // Resolve overlapping platforms/blocks for Level 2+ (Level 1 is hand-tuned)
+  if (levelId >= 2) {
+    data = resolveOverlaps(data);
   }
   
   // Apply adaptive reward distribution to golden blocks
