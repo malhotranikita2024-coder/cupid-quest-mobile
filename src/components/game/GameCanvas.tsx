@@ -1336,6 +1336,40 @@ export function GameCanvas({
     if (blinkVisible) {
       ctx.save();
       
+      // Crouch/bounce animation during flag planting
+      if (isPlantingFlag) {
+        const flagPlantProg = levelData.flag.plantProgress || 0;
+        // Crouch down in first 40%, bounce up in 40-70%, settle in 70-100%
+        let squashY = 0;
+        let stretchX = 1;
+        let stretchY = 1;
+        if (flagPlantProg < 40) {
+          // Crouch: squash vertically, widen slightly
+          const t = flagPlantProg / 40;
+          squashY = t * 8; // Push down by up to 8px
+          stretchY = 1 - t * 0.15; // Squash to 85%
+          stretchX = 1 + t * 0.08; // Widen to 108%
+        } else if (flagPlantProg < 70) {
+          // Spring up: stretch vertically
+          const t = (flagPlantProg - 40) / 30;
+          squashY = 8 * (1 - t) - t * 6; // Rise above original
+          stretchY = 0.85 + t * 0.25; // Stretch to 110%
+          stretchX = 1.08 - t * 0.12; // Narrow to 96%
+        } else {
+          // Settle back to normal
+          const t = (flagPlantProg - 70) / 30;
+          squashY = -6 * (1 - t);
+          stretchY = 1.1 - t * 0.1;
+          stretchX = 0.96 + t * 0.04;
+        }
+        
+        const cx = player.x + PLAYER_WIDTH / 2;
+        const cy = player.y + PLAYER_HEIGHT; // Scale from feet
+        ctx.translate(cx, cy + squashY);
+        ctx.scale(stretchX, stretchY);
+        ctx.translate(-cx, -cy);
+      }
+      
       // Draw shield aura if player has shield
       if (hasShield) {
         const shieldPulse = Math.sin(time / 200) * 0.15 + 0.85;
