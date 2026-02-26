@@ -32,13 +32,30 @@ export function MobileControls({
     callback();
   };
 
+  // Responsive: scale down controls on short screens
+  const isShort = typeof window !== 'undefined' && window.innerHeight < 500;
+  const btnSize = isShort ? 'w-14 h-14' : 'w-20 h-20';
+  const jumpSize = isShort ? 'w-18 h-18' : 'w-24 h-24';
+  const runSize = isShort ? 'w-12 h-12' : 'w-16 h-16';
+  const iconSm = isShort ? 'w-7 h-7' : 'w-10 h-10';
+  const iconLg = isShort ? 'w-9 h-9' : 'w-12 h-12';
+  const iconRun = isShort ? 'w-6 h-6' : 'w-8 h-8';
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-40 pointer-events-none z-40">
+    <div
+      className="fixed bottom-0 left-0 right-0 pointer-events-none z-40"
+      style={{
+        height: isShort ? '100px' : '160px',
+        paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0.5rem))',
+        paddingLeft: 'max(0.5rem, env(safe-area-inset-left, 0.5rem))',
+        paddingRight: 'max(0.5rem, env(safe-area-inset-right, 0.5rem))',
+      }}
+    >
       {/* Left side - Movement controls */}
-      <div className="absolute bottom-6 left-6 flex gap-3 pointer-events-auto">
+      <div className={`absolute ${isShort ? 'bottom-2 left-2' : 'bottom-6 left-6'} flex gap-3 pointer-events-auto`}>
         {/* Left button */}
         <button
-          className="game-control-btn w-20 h-20 active:scale-95"
+          className={`game-control-btn ${btnSize} active:scale-95`}
           onTouchStart={(e) => handleTouchStart(e, onLeftStart)}
           onTouchEnd={(e) => handleTouchEnd(e, onLeftEnd)}
           onTouchCancel={(e) => handleTouchEnd(e, onLeftEnd)}
@@ -46,12 +63,12 @@ export function MobileControls({
           onMouseUp={onLeftEnd}
           onMouseLeave={onLeftEnd}
         >
-          <ChevronLeft className="w-10 h-10 text-white drop-shadow-lg" strokeWidth={3} />
+          <ChevronLeft className={`${iconSm} text-white drop-shadow-lg`} strokeWidth={3} />
         </button>
         
         {/* Right button */}
         <button
-          className="game-control-btn w-20 h-20 active:scale-95"
+          className={`game-control-btn ${btnSize} active:scale-95`}
           onTouchStart={(e) => handleTouchStart(e, onRightStart)}
           onTouchEnd={(e) => handleTouchEnd(e, onRightEnd)}
           onTouchCancel={(e) => handleTouchEnd(e, onRightEnd)}
@@ -59,15 +76,15 @@ export function MobileControls({
           onMouseUp={onRightEnd}
           onMouseLeave={onRightEnd}
         >
-          <ChevronRight className="w-10 h-10 text-white drop-shadow-lg" strokeWidth={3} />
+          <ChevronRight className={`${iconSm} text-white drop-shadow-lg`} strokeWidth={3} />
         </button>
       </div>
 
       {/* Right side - Action controls */}
-      <div className="absolute bottom-6 right-6 flex gap-3 pointer-events-auto">
-        {/* Run button (smaller, positioned above/left of jump) */}
+      <div className={`absolute ${isShort ? 'bottom-2 right-2' : 'bottom-6 right-6'} flex gap-3 pointer-events-auto`}>
+        {/* Run button */}
         <button
-          className="game-control-btn w-16 h-16 self-start mt-4 active:scale-95"
+          className={`game-control-btn ${runSize} self-start ${isShort ? 'mt-2' : 'mt-4'} active:scale-95`}
           style={{ 
             background: 'rgba(255, 215, 0, 0.35)',
             borderColor: 'rgba(255, 215, 0, 0.6)'
@@ -79,12 +96,12 @@ export function MobileControls({
           onMouseUp={onRunEnd}
           onMouseLeave={onRunEnd}
         >
-          <Zap className="w-8 h-8 text-yellow-200 drop-shadow-lg" strokeWidth={2.5} />
+          <Zap className={`${iconRun} text-yellow-200 drop-shadow-lg`} strokeWidth={2.5} />
         </button>
         
-        {/* Jump button (largest) */}
+        {/* Jump button */}
         <button
-          className="game-control-btn w-24 h-24 active:scale-95"
+          className={`game-control-btn ${jumpSize} active:scale-95`}
           style={{ 
             background: 'rgba(255, 105, 180, 0.35)',
             borderColor: 'rgba(255, 182, 193, 0.6)'
@@ -96,15 +113,15 @@ export function MobileControls({
           onMouseUp={onJumpEnd}
           onMouseLeave={onJumpEnd}
         >
-          <ArrowUp className="w-12 h-12 text-white drop-shadow-lg" strokeWidth={3} />
+          <ArrowUp className={`${iconLg} text-white drop-shadow-lg`} strokeWidth={3} />
         </button>
       </div>
 
-      {/* Control labels (subtle) */}
-      <div className="absolute bottom-1 left-6 text-white/50 text-xs font-medium tracking-wide">
+      {/* Control labels */}
+      <div className={`absolute ${isShort ? 'bottom-0 left-2' : 'bottom-1 left-6'} text-white/50 text-xs font-medium tracking-wide`}>
         MOVE
       </div>
-      <div className="absolute bottom-1 right-6 text-white/50 text-xs font-medium tracking-wide">
+      <div className={`absolute ${isShort ? 'bottom-0 right-2' : 'bottom-1 right-6'} text-white/50 text-xs font-medium tracking-wide`}>
         RUN + JUMP
       </div>
     </div>
