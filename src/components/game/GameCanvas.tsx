@@ -484,8 +484,9 @@ export function GameCanvas({
       }
     }
 
-    // Camera follow
-    const screenWidth = window.innerWidth;
+    // Camera follow (use virtual width for proper framing on mobile)
+    const gameScale = Math.min(1, window.innerHeight / 720);
+    const screenWidth = window.innerWidth / gameScale;
     let newCameraX = newPlayer.x - screenWidth / 3;
     if (newCameraX < 0) newCameraX = 0;
     if (newCameraX > levelData.levelWidth - screenWidth) {
@@ -500,8 +501,17 @@ export function GameCanvas({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const width = canvas.width;
-    const height = canvas.height;
+    const physWidth = canvas.width;
+    const physHeight = canvas.height;
+
+    // Mobile scaling: ensure game world (720px tall) fits on short screens
+    const gameScale = Math.min(1, physHeight / 720);
+    const width = physWidth / gameScale;
+    const height = physHeight / gameScale;
+
+    // Apply scale transform for mobile viewport fitting
+    ctx.save();
+    ctx.scale(gameScale, gameScale);
 
     // Clear canvas
     ctx.fillStyle = levelData.backgroundColor;
@@ -1500,7 +1510,9 @@ export function GameCanvas({
       ctx.restore();
     }
 
-    ctx.restore();
+    ctx.restore(); // camera translate
+
+    ctx.restore(); // gameScale
   }, [levelData, player, cameraX]);
 
   useEffect(() => {

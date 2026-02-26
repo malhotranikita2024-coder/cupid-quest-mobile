@@ -67,11 +67,12 @@ export function Game({ userId, onSignOut }: GameProps) {
     }
   }, [gameState.musicEnabled, audio]);
 
-  // Check orientation
+  // Check orientation - show rotate screen on ALL screens for mobile portrait
   useEffect(() => {
     const checkOrientation = () => {
+      const isMobileDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
       const isPortraitMode = window.innerHeight > window.innerWidth;
-      setIsPortrait(isPortraitMode && gameState.screen === 'game');
+      setIsPortrait(isPortraitMode && isMobileDevice);
     };
 
     checkOrientation();
@@ -82,7 +83,7 @@ export function Game({ userId, onSignOut }: GameProps) {
       window.removeEventListener('resize', checkOrientation);
       window.removeEventListener('orientationchange', checkOrientation);
     };
-  }, [gameState.screen]);
+  }, []);
 
   // Handle level complete -> show story
   const handleLevelCompleteContinue = () => {

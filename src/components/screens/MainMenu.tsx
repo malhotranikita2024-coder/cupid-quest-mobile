@@ -594,11 +594,11 @@ export function MainMenu({
         </div>
       </div>
       
-      {/* TITLE - SUPER LOVE QUEST */}
-      <div className="absolute top-[12%] left-1/2 -translate-x-1/2 z-20 text-center">
+      {/* TITLE - SUPER LOVE QUEST - responsive for short screens */}
+      <div className="absolute top-[12%] left-1/2 -translate-x-1/2 z-20 text-center" style={{ maxHeight: '30vh' }}>
         <div className="flex items-start justify-center gap-1">
           <span 
-            className="font-display text-3xl md:text-5xl font-black"
+            className="font-display text-2xl sm:text-3xl md:text-5xl font-black"
             style={{
               background: 'linear-gradient(180deg, #FF69B4 0%, #FF1493 50%, #C71585 100%)',
               WebkitBackgroundClip: 'text',
@@ -609,11 +609,11 @@ export function MainMenu({
           >
             SUPER
           </span>
-          <span className="text-2xl md:text-3xl mt-1">💕</span>
+          <span className="text-xl sm:text-2xl md:text-3xl mt-1">💕</span>
         </div>
         <div className="flex items-center justify-center -mt-2">
           <span 
-            className="font-display text-4xl md:text-6xl font-black"
+            className="font-display text-3xl sm:text-4xl md:text-6xl font-black"
             style={{
               background: 'linear-gradient(180deg, #6BB3D9 0%, #4A90A4 50%, #357A8C 100%)',
               WebkitBackgroundClip: 'text',
@@ -625,7 +625,7 @@ export function MainMenu({
             LOVE
           </span>
           <span 
-            className="font-display text-4xl md:text-6xl font-black ml-2"
+            className="font-display text-3xl sm:text-4xl md:text-6xl font-black ml-2"
             style={{
               background: 'linear-gradient(180deg, #FFD700 0%, #FFA500 50%, #E69500 100%)',
               WebkitBackgroundClip: 'text',
@@ -640,7 +640,7 @@ export function MainMenu({
       </div>
       
       {/* UI PANEL - Cream colored, rounded, centered in lower-middle */}
-      <div className="absolute bottom-[22%] left-1/2 -translate-x-1/2 z-30">
+      <div className="absolute bottom-[18%] sm:bottom-[22%] left-1/2 -translate-x-1/2 z-30" style={{ maxHeight: '50vh', overflowY: 'auto' }}>
         <div 
           className="px-6 py-4 min-w-[280px] md:min-w-[320px]"
           style={{
