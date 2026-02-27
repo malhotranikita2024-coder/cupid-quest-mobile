@@ -1037,9 +1037,7 @@ export function GameEngine({
       // Spawn firework particles during planting
       if (progress % 12 === 0) {
         const flagScreenX = levelData.flag.x - cameraX + 20;
-        const isMobileFw = window.innerWidth < 1024 && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-        const camYFw = isMobileFw && window.innerHeight < 720 ? Math.max(0, Math.min(720 - window.innerHeight, player.y - window.innerHeight / 2 + 25)) : 0;
-        const flagScreenY = 120 - camYFw;
+        const flagScreenY = 120;
         const colors = ['#FF69B4', '#FFD700', '#FF1493', '#00FF7F', '#FF6347', '#DA70D6', '#87CEEB'];
         const newParticles = Array.from({ length: 8 }, (_, i) => ({
           id: Date.now() + i + progress,
@@ -1210,7 +1208,6 @@ export function GameEngine({
         <TutorialNudge
           nudge={activeNudge}
           cameraX={cameraX}
-          playerY={player.y}
         />
       )}
 
