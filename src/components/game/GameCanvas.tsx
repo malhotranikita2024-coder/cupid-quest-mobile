@@ -484,9 +484,10 @@ export function GameCanvas({
       }
     }
 
-    // Camera follow (use virtual width for proper framing on mobile)
-    const gameScale = Math.min(1, window.innerHeight / 720);
-    const screenWidth = window.innerWidth / gameScale;
+    // Camera follow — desktop uses raw width, mobile uses scaled width
+    const isMobileCam = window.innerWidth < 1024 && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    const camScale = isMobileCam ? Math.min(1, window.innerHeight / 500) : 1;
+    const screenWidth = window.innerWidth / camScale;
     let newCameraX = newPlayer.x - screenWidth / 3;
     if (newCameraX < 0) newCameraX = 0;
     if (newCameraX > levelData.levelWidth - screenWidth) {
@@ -504,18 +505,24 @@ export function GameCanvas({
     const physWidth = canvas.width;
     const physHeight = canvas.height;
 
-    // Mobile scaling: ensure game world (720px tall) fits on short screens
-    const gameScale = Math.min(1, physHeight / 720);
+    // Desktop: no scaling. Mobile: moderate scale to avoid extreme squeeze
+    const isMobile = physWidth < 1024;
+    const gameScale = isMobile ? Math.min(1, physHeight / 500) : 1;
     const width = physWidth / gameScale;
     const height = physHeight / gameScale;
 
-    // Apply scale transform for mobile viewport fitting
     ctx.save();
     ctx.scale(gameScale, gameScale);
 
+    // On mobile, offset vertically to keep ground visible (crop sky instead)
+    if (isMobile && height < 720) {
+      const cameraY = Math.max(0, 720 - height);
+      ctx.translate(0, -cameraY);
+    }
+
     // Clear canvas
     ctx.fillStyle = levelData.backgroundColor;
-    ctx.fillRect(0, 0, width, height);
+    ctx.fillRect(0, 0, width, height + (isMobile ? 200 : 0));
 
     // === STARS IN THE SKY ===
     drawStars(ctx, width, height, cameraX * 0.05, levelData.id);

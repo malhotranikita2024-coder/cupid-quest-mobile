@@ -669,7 +669,8 @@ export function GameEngine({
     if (currentLevel !== 1 || isPaused || showDeathOverlay) return;
     if (!canTrigger('enemy')) return;
 
-    const gameScale = Math.min(1, window.innerHeight / 720);
+    const isMobileTut = window.innerWidth < 1024 && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    const gameScale = isMobileTut ? Math.min(1, window.innerHeight / 500) : 1;
     const screenWidth = window.innerWidth / gameScale;
     const playerCenterX = player.x + 20; // PLAYER_WIDTH / 2
 
@@ -694,7 +695,7 @@ export function GameEngine({
     if (!canTrigger('midFlag')) return;
     if (levelData.midFlag.collected) return;
 
-    const screenWidth = window.innerWidth / Math.min(1, window.innerHeight / 720);
+    const screenWidth = window.innerWidth / (window.innerWidth < 1024 ? Math.min(1, window.innerHeight / 500) : 1);
     const mfx = levelData.midFlag.x;
     const mfy = levelData.midFlag.y;
     // Must be visible in viewport
@@ -712,7 +713,7 @@ export function GameEngine({
     if (currentLevel !== 1 || isPaused || showDeathOverlay) return;
     if (!canTrigger('cookie')) return;
 
-    const screenWidth = window.innerWidth / Math.min(1, window.innerHeight / 720);
+    const screenWidth = window.innerWidth / (window.innerWidth < 1024 ? Math.min(1, window.innerHeight / 500) : 1);
     for (let i = 0; i < levelData.collectibles.length; i++) {
       const c = levelData.collectibles[i];
       if (c.collected || c.type !== 'cookie') continue;
@@ -1037,7 +1038,8 @@ export function GameEngine({
       
       // Spawn firework particles during planting
       if (progress % 12 === 0) {
-        const gameScaleForParticles = Math.min(1, window.innerHeight / 720);
+        const isMobileFw = window.innerWidth < 1024;
+        const gameScaleForParticles = isMobileFw ? Math.min(1, window.innerHeight / 500) : 1;
         const flagScreenX = (levelData.flag.x - cameraX + 20) * gameScaleForParticles;
         const flagScreenY = 120 * gameScaleForParticles;
         const colors = ['#FF69B4', '#FFD700', '#FF1493', '#00FF7F', '#FF6347', '#DA70D6', '#87CEEB'];
@@ -1065,7 +1067,8 @@ export function GameEngine({
         audio.stopBackgroundMusic();
         
         // Big firework burst at completion
-        const gameScaleForBurst = Math.min(1, window.innerHeight / 720);
+        const isMobileBurst = window.innerWidth < 1024;
+        const gameScaleForBurst = isMobileBurst ? Math.min(1, window.innerHeight / 500) : 1;
         const flagScreenX = (levelData.flag.x - cameraX + 20) * gameScaleForBurst;
         const colors = ['#FF69B4', '#FFD700', '#FF1493', '#00FF7F', '#FF6347', '#DA70D6', '#87CEEB', '#FFF'];
         const burstParticles = Array.from({ length: 30 }, (_, i) => {

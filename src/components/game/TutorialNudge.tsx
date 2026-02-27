@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActiveNudge } from '@/hooks/useTutorialNudges';
 import { TutorialNudgeType } from '@/hooks/useTutorialNudges';
+import { getIsMobileGame, getMobileGameScale, getMobileCameraY } from '@/hooks/useViewport';
 
 const SPEAKER_BADGES: Record<TutorialNudgeType, string> = {
   enemy: '😈',
@@ -30,16 +31,21 @@ export function TutorialNudge({ nudge, cameraX }: TutorialNudgeProps) {
     };
   }, [nudge.displayDuration]);
 
-  // World → screen X
-  const screenX = nudge.worldX - cameraX;
+  // On mobile, account for gameScale and vertical camera offset
+  const isMobile = getIsMobileGame();
+  const gameScale = isMobile ? getMobileGameScale() : 1;
+  const cameraY = isMobile ? getMobileCameraY() : 0;
+
+  // World → screen coordinates
+  const screenX = (nudge.worldX - cameraX) * gameScale;
+  const anchorScreenY = (nudge.worldY - cameraY) * gameScale;
 
   // Clamp so bubble stays on-screen
   const margin = 150;
   const clampedX = Math.max(margin, Math.min(screenX, window.innerWidth - margin));
 
-  // Anchor bubble above the object (worldY IS screenY — no vertical camera)
-  const anchorScreenY = nudge.worldY;
-  const bubbleBottom = window.innerHeight - Math.max(80, anchorScreenY - 30);
+  // Anchor bubble above the object
+  const bubbleBottom = window.innerHeight - Math.max(80 * gameScale, anchorScreenY - 30 * gameScale);
 
   // Tail points toward the actual object
   const tailOffsetX = screenX - clampedX;

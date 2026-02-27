@@ -1,52 +1,47 @@
 import { useState, useEffect } from 'react';
 
-const BASE_HEIGHT = 720;
-
-/** Compute the game scale factor: 1 on desktop, <1 on short mobile screens */
-export function getGameScale(): number {
-  return Math.min(1, window.innerHeight / BASE_HEIGHT);
+/** Check if we're on a mobile game device (touch + small screen) */
+export function getIsMobileGame(): boolean {
+  return window.innerWidth < 1024 && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 }
 
-/** Get virtual (game-world) dimensions after scaling */
-export function getVirtualDimensions() {
-  const scale = getGameScale();
-  return {
-    scale,
-    virtualWidth: window.innerWidth / scale,
-    virtualHeight: window.innerHeight / scale,
-  };
+/** Get game scale — 1.0 on desktop, scaled on mobile to fit without extreme squeeze */
+export function getMobileGameScale(): number {
+  if (!getIsMobileGame()) return 1;
+  // Use 500 as base so mobile doesn't squeeze as much (shows ~500px of world height)
+  return Math.min(1, window.innerHeight / 500);
+}
+
+/** Get vertical camera offset for mobile — keeps ground visible by showing bottom of world */
+export function getMobileCameraY(): number {
+  if (!getIsMobileGame()) return 0;
+  const scale = getMobileGameScale();
+  const visibleHeight = window.innerHeight / scale;
+  if (visibleHeight >= 720) return 0;
+  return Math.max(0, 720 - visibleHeight);
 }
 
 export interface ViewportInfo {
   width: number;
   height: number;
-  scale: number;
-  virtualWidth: number;
-  virtualHeight: number;
   isMobile: boolean;
   isPortrait: boolean;
 }
 
 export function useViewport(): ViewportInfo {
-  const [viewport, setViewport] = useState<ViewportInfo>(() => {
-    const dims = getVirtualDimensions();
-    return {
-      width: window.innerWidth,
-      height: window.innerHeight,
-      ...dims,
-      isMobile: window.innerWidth <= 1024 && ('ontouchstart' in window || navigator.maxTouchPoints > 0),
-      isPortrait: window.innerHeight > window.innerWidth,
-    };
-  });
+  const [viewport, setViewport] = useState<ViewportInfo>(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+    isMobile: getIsMobileGame(),
+    isPortrait: window.innerHeight > window.innerWidth,
+  }));
 
   useEffect(() => {
     const update = () => {
-      const dims = getVirtualDimensions();
       setViewport({
         width: window.innerWidth,
         height: window.innerHeight,
-        ...dims,
-        isMobile: window.innerWidth <= 1024 && ('ontouchstart' in window || navigator.maxTouchPoints > 0),
+        isMobile: getIsMobileGame(),
         isPortrait: window.innerHeight > window.innerWidth,
       });
     };

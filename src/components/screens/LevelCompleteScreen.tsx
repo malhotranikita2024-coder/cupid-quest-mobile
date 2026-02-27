@@ -23,7 +23,7 @@ export function LevelCompleteScreen({
 
   return (
     <div 
-      className="fixed inset-0 flex flex-col items-center justify-center p-6"
+      className="fixed inset-0 flex flex-col items-center justify-start overflow-y-auto p-6 pt-10 max-[1023px]:pt-4 max-[1023px]:p-4"
       style={{ background: 'var(--gradient-sky)' }}
     >
       {/* Celebration effects */}
