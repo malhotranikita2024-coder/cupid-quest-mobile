@@ -484,10 +484,8 @@ export function GameCanvas({
       }
     }
 
-    // Camera follow — desktop uses raw width, mobile uses scaled width
-    const isMobileCam = window.innerWidth < 1024 && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-    const camScale = isMobileCam ? Math.min(1, window.innerHeight / 500) : 1;
-    const screenWidth = window.innerWidth / camScale;
+    // Camera follow — use raw screen width (mobile shows less world, not scaled)
+    const screenWidth = window.innerWidth;
     let newCameraX = newPlayer.x - screenWidth / 3;
     if (newCameraX < 0) newCameraX = 0;
     if (newCameraX > levelData.levelWidth - screenWidth) {
@@ -505,24 +503,23 @@ export function GameCanvas({
     const physWidth = canvas.width;
     const physHeight = canvas.height;
 
-    // Desktop: no scaling. Mobile: moderate scale to avoid extreme squeeze
-    const isMobile = physWidth < 1024;
-    const gameScale = isMobile ? Math.min(1, physHeight / 500) : 1;
-    const width = physWidth / gameScale;
-    const height = physHeight / gameScale;
+    // No scaling on any device — mobile shows cropped desktop view (same object sizes)
+    const width = physWidth;
+    const height = physHeight;
+    const isMobile = width < 1024 && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
     ctx.save();
-    ctx.scale(gameScale, gameScale);
 
-    // On mobile, offset vertically to keep ground visible (crop sky instead)
+    // On mobile with short screens, apply vertical camera to follow player
     if (isMobile && height < 720) {
-      const cameraY = Math.max(0, 720 - height);
-      ctx.translate(0, -cameraY);
+      const targetY = player.y - height / 2 + 25;
+      const camY = Math.max(0, Math.min(720 - height, targetY));
+      ctx.translate(0, -camY);
     }
 
-    // Clear canvas
+    // Clear canvas — cover full world height on mobile
     ctx.fillStyle = levelData.backgroundColor;
-    ctx.fillRect(0, 0, width, height + (isMobile ? 200 : 0));
+    ctx.fillRect(0, 0, width, isMobile ? 920 : height);
 
     // === STARS IN THE SKY ===
     drawStars(ctx, width, height, cameraX * 0.05, levelData.id);

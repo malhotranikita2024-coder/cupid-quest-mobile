@@ -5,20 +5,19 @@ export function getIsMobileGame(): boolean {
   return window.innerWidth < 1024 && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 }
 
-/** Get game scale — 1.0 on desktop, scaled on mobile to fit without extreme squeeze */
+/** Get game scale — always 1.0. Mobile shows cropped desktop view, not scaled down. */
 export function getMobileGameScale(): number {
-  if (!getIsMobileGame()) return 1;
-  // Use 500 as base so mobile doesn't squeeze as much (shows ~500px of world height)
-  return Math.min(1, window.innerHeight / 500);
+  return 1;
 }
 
-/** Get vertical camera offset for mobile — keeps ground visible by showing bottom of world */
-export function getMobileCameraY(): number {
+/** Get vertical camera offset for mobile — dynamically follows player to keep them visible */
+export function getMobileCameraY(playerY: number = 400): number {
   if (!getIsMobileGame()) return 0;
-  const scale = getMobileGameScale();
-  const visibleHeight = window.innerHeight / scale;
-  if (visibleHeight >= 720) return 0;
-  return Math.max(0, 720 - visibleHeight);
+  const height = window.innerHeight;
+  if (height >= 720) return 0;
+  // Center player vertically in the visible area, clamped to world bounds
+  const targetY = playerY - height / 2 + 25; // 25 ≈ PLAYER_HEIGHT / 2
+  return Math.max(0, Math.min(720 - height, targetY));
 }
 
 export interface ViewportInfo {
