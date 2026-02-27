@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, ArrowUp, Zap } from 'lucide-react';
+import { getIsMobileGame } from '@/hooks/useViewport';
 
 interface MobileControlsProps {
   onLeftStart: () => void;
@@ -32,8 +33,9 @@ export function MobileControls({
     callback();
   };
 
-  // Responsive: scale down controls on short screens
-  const isShort = typeof window !== 'undefined' && window.innerHeight < 500;
+  // Only apply compact sizing on actual mobile devices — desktop stays full size
+  const isMobile = getIsMobileGame();
+  const isShort = isMobile && window.innerHeight < 500;
   const btnSize = isShort ? 'w-14 h-14' : 'w-20 h-20';
   const jumpSize = isShort ? 'w-18 h-18' : 'w-24 h-24';
   const runSize = isShort ? 'w-12 h-12' : 'w-16 h-16';
@@ -46,9 +48,9 @@ export function MobileControls({
       className="fixed bottom-0 left-0 right-0 pointer-events-none z-40"
       style={{
         height: isShort ? '100px' : '160px',
-        paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0.5rem))',
-        paddingLeft: 'max(0.5rem, env(safe-area-inset-left, 0.5rem))',
-        paddingRight: 'max(0.5rem, env(safe-area-inset-right, 0.5rem))',
+        paddingBottom: isMobile ? 'max(0.5rem, env(safe-area-inset-bottom, 0.5rem))' : '0.5rem',
+        paddingLeft: isMobile ? 'max(0.5rem, env(safe-area-inset-left, 0.5rem))' : '0.5rem',
+        paddingRight: isMobile ? 'max(0.5rem, env(safe-area-inset-right, 0.5rem))' : '0.5rem',
       }}
     >
       {/* Left side - Movement controls */}
