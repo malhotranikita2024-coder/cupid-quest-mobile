@@ -1082,34 +1082,50 @@ export function GameCanvas({
     const fzX = finishZoneX - cameraX;
     const shimmer = Math.sin(time / 300) * 0.3 + 0.7; // 0.4–1.0 pulse
 
-    // Outer golden aura glow
+    // 1) Outer golden aura glow — soft radial attached to platform center
     const auraGrad = ctx.createRadialGradient(
-      fzX + finishZoneWidth / 2, groundY - 12, 10,
-      fzX + finishZoneWidth / 2, groundY - 12, finishZoneWidth * 0.7
+      fzX + finishZoneWidth / 2, groundY - 12, 8,
+      fzX + finishZoneWidth / 2, groundY - 12, finishZoneWidth * 0.8
     );
-    auraGrad.addColorStop(0, `rgba(255, 215, 0, ${0.25 * shimmer})`);
-    auraGrad.addColorStop(0.5, `rgba(255, 182, 193, ${0.12 * shimmer})`);
+    auraGrad.addColorStop(0, `rgba(255, 215, 0, ${0.30 * shimmer})`);
+    auraGrad.addColorStop(0.4, `rgba(255, 182, 193, ${0.15 * shimmer})`);
     auraGrad.addColorStop(1, 'rgba(255, 215, 0, 0)');
     ctx.fillStyle = auraGrad;
-    ctx.fillRect(fzX - 40, groundY - 90, finishZoneWidth + 80, 100);
+    ctx.fillRect(fzX - 40, groundY - 100, finishZoneWidth + 80, 110);
 
     // Soft ground glow beneath platform
-    const groundGlow = ctx.createLinearGradient(fzX, groundY, fzX, groundY + 20);
-    groundGlow.addColorStop(0, `rgba(255, 215, 0, ${0.3 * shimmer})`);
+    const groundGlow = ctx.createLinearGradient(fzX, groundY, fzX, groundY + 22);
+    groundGlow.addColorStop(0, `rgba(255, 215, 0, ${0.35 * shimmer})`);
     groundGlow.addColorStop(1, 'rgba(255, 215, 0, 0)');
     ctx.fillStyle = groundGlow;
-    ctx.fillRect(fzX - 10, groundY, finishZoneWidth + 20, 20);
+    ctx.fillRect(fzX - 10, groundY, finishZoneWidth + 20, 22);
 
     // Checkered finish floor with golden tint
     const squareSize = 15;
     for (let i = 0; i < finishZoneWidth / squareSize; i++) {
       for (let j = 0; j < 2; j++) {
         ctx.fillStyle = (i + j) % 2 === 0
-          ? `rgba(255, 248, 220, ${0.9 + shimmer * 0.1})`  // Warm cream
-          : '#FFB6C1'; // Soft pink
+          ? `rgba(255, 248, 220, ${0.9 + shimmer * 0.1})`
+          : '#FFB6C1';
         ctx.fillRect(fzX + i * squareSize, groundY - 25 + j * squareSize, squareSize, squareSize);
       }
     }
+
+    // 4) Slow shimmering light sweep across surface
+    const sweepX = ((time / 12) % (finishZoneWidth + 60)) - 30; // slow sweep
+    const sweepGrad = ctx.createLinearGradient(
+      fzX + sweepX - 20, 0, fzX + sweepX + 20, 0
+    );
+    sweepGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+    sweepGrad.addColorStop(0.5, `rgba(255, 255, 230, ${0.35 * shimmer})`);
+    sweepGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(fzX, groundY - 25, finishZoneWidth, 25);
+    ctx.clip();
+    ctx.fillStyle = sweepGrad;
+    ctx.fillRect(fzX + sweepX - 20, groundY - 25, 40, 25);
+    ctx.restore();
 
     // Golden glowing border
     ctx.strokeStyle = `rgba(255, 215, 0, ${0.6 + shimmer * 0.4})`;
@@ -1124,29 +1140,44 @@ export function GameCanvas({
     ctx.lineWidth = 1;
     ctx.strokeRect(fzX + 2, groundY - 23, finishZoneWidth - 4, 21);
 
-    // Floating sparkles around finish zone
-    for (let s = 0; s < 6; s++) {
-      const sparklePhase = time / 600 + s * 1.05;
-      const sx = fzX + 10 + (s * 28) % finishZoneWidth;
-      const sy = groundY - 30 - Math.sin(sparklePhase) * 25 - s * 4;
-      const sparkleAlpha = (Math.sin(sparklePhase * 2) * 0.5 + 0.5) * 0.8;
-      const sparkleSize = 2 + Math.sin(sparklePhase * 3) * 1.5;
+    // 3) Sparkle particles emitted from platform edges
+    for (let s = 0; s < 8; s++) {
+      const sparklePhase = time / 500 + s * 0.8;
+      const edgeSide = s % 2 === 0; // alternate left/right edge
+      const sx = edgeSide
+        ? fzX + Math.sin(sparklePhase * 1.3) * 12          // left edge
+        : fzX + finishZoneWidth + Math.sin(sparklePhase * 1.3) * -12; // right edge
+      const sy = groundY - 25 - Math.abs(Math.sin(sparklePhase)) * 35 - 5;
+      const sparkleAlpha = (Math.sin(sparklePhase * 2) * 0.5 + 0.5) * 0.85;
+      const sparkleSize = 1.5 + Math.sin(sparklePhase * 3) * 1.5;
 
       ctx.beginPath();
       ctx.arc(sx, sy, sparkleSize, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(255, 223, 100, ${sparkleAlpha})`;
-      ctx.shadowColor = 'rgba(255, 215, 0, 0.6)';
+      ctx.shadowColor = 'rgba(255, 215, 0, 0.7)';
       ctx.shadowBlur = 6;
       ctx.fill();
       ctx.shadowBlur = 0;
+
+      // Cross sparkle shape for larger ones
+      if (sparkleSize > 2.2) {
+        ctx.strokeStyle = `rgba(255, 240, 180, ${sparkleAlpha * 0.7})`;
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(sx - sparkleSize * 1.5, sy);
+        ctx.lineTo(sx + sparkleSize * 1.5, sy);
+        ctx.moveTo(sx, sy - sparkleSize * 1.5);
+        ctx.lineTo(sx, sy + sparkleSize * 1.5);
+        ctx.stroke();
+      }
     }
 
-    // Floating hearts
+    // 2) 4 floating hearts positioned above the platform
     for (let h = 0; h < 4; h++) {
       const heartPhase = time / 800 + h * 1.6;
-      const hx = fzX + 20 + (h * 40) % (finishZoneWidth - 20);
-      const hy = groundY - 35 - Math.sin(heartPhase) * 18 - h * 5;
-      const heartAlpha = (Math.sin(heartPhase) * 0.3 + 0.5);
+      const hx = fzX + 20 + (h * 38) % (finishZoneWidth - 20);
+      const hy = groundY - 32 - Math.sin(heartPhase) * 16 - h * 4;
+      const heartAlpha = (Math.sin(heartPhase) * 0.3 + 0.55);
       const heartScale = 0.6 + Math.sin(heartPhase * 1.5) * 0.15;
 
       ctx.save();
@@ -1154,6 +1185,8 @@ export function GameCanvas({
       ctx.scale(heartScale, heartScale);
       ctx.globalAlpha = heartAlpha;
       ctx.fillStyle = '#FF69B4';
+      ctx.shadowColor = 'rgba(255, 105, 180, 0.4)';
+      ctx.shadowBlur = 4;
       ctx.beginPath();
       ctx.moveTo(0, 3);
       ctx.bezierCurveTo(-4, -2, -7, 1, -7, 4);
@@ -1162,11 +1195,34 @@ export function GameCanvas({
       ctx.bezierCurveTo(7, 1, 4, -2, 0, 3);
       ctx.closePath();
       ctx.fill();
+      ctx.shadowBlur = 0;
       ctx.globalAlpha = 1.0;
       ctx.restore();
     }
 
-    // "FINISH" banner with glow
+    // 5) Decorative heart banner attached to the left side of the platform
+    const bannerX = fzX + 6;
+    const bannerY = groundY - 55;
+    // Pole
+    ctx.fillStyle = '#DAA520';
+    ctx.fillRect(bannerX, bannerY, 3, 32);
+    // Banner ribbon
+    ctx.fillStyle = `rgba(255, 105, 180, ${0.8 + shimmer * 0.2})`;
+    ctx.beginPath();
+    ctx.moveTo(bannerX + 3, bannerY + 2);
+    ctx.lineTo(bannerX + 24, bannerY + 2);
+    ctx.lineTo(bannerX + 20, bannerY + 10);
+    ctx.lineTo(bannerX + 24, bannerY + 18);
+    ctx.lineTo(bannerX + 3, bannerY + 18);
+    ctx.closePath();
+    ctx.fill();
+    // Heart on banner
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#FFF';
+    ctx.fillText('♥', bannerX + 14, bannerY + 14);
+
+    // "FINISH" text with glow
     ctx.font = 'bold 15px Arial';
     ctx.textAlign = 'center';
     ctx.shadowColor = 'rgba(255, 215, 0, 0.7)';
