@@ -1000,7 +1000,7 @@ export function GameCanvas({
       : 0;
     
     ctx.save();
-    ctx.translate(flagX + flagShake, 0);
+    ctx.translate(flagShake, 0);
     
    // Get ground level from end platform (elevated brick platform at end of level)
    const endPlatform = levelData.platforms.find(p => 
