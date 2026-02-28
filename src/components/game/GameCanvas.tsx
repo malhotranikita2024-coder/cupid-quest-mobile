@@ -1077,74 +1077,152 @@ export function GameCanvas({
      ctx.strokeRect(stepX - cameraX, stepY, stairWidth, stepHeight);
    }
    
-   // Finish zone ground indicator (checkered pattern behind flag)
-   const finishZoneWidth = 160;
-   ctx.fillStyle = '#FFD700';
-   ctx.fillRect(finishZoneX - cameraX, groundY - 8, finishZoneWidth, 8);
-   
-   // Checkered pattern
-   const squareSize = 15;
-   for (let i = 0; i < finishZoneWidth / squareSize; i++) {
-     for (let j = 0; j < 2; j++) {
-       if ((i + j) % 2 === 0) {
-         ctx.fillStyle = '#FFFFFF';
-       } else {
-         ctx.fillStyle = '#FF1493';
-       }
-       ctx.fillRect(finishZoneX - cameraX + i * squareSize, groundY - 25 + j * squareSize, squareSize, squareSize);
-     }
-   }
-   
-   // Border around finish zone
-   ctx.strokeStyle = '#333333';
-   ctx.lineWidth = 2;
-   ctx.strokeRect(finishZoneX - cameraX, groundY - 25, finishZoneWidth, 25);
-   
-   // "FINISH" text above zone
-   ctx.font = 'bold 14px Arial';
-   ctx.textAlign = 'center';
-   ctx.fillStyle = '#FFFFFF';
-   ctx.strokeStyle = '#333333';
-   ctx.lineWidth = 3;
-   ctx.strokeText('FINISH', finishZoneX - cameraX + finishZoneWidth / 2, groundY - 35);
-   ctx.fillText('FINISH', finishZoneX - cameraX + finishZoneWidth / 2, groundY - 35);
-   
-   // Flag stand/pedestal
-   // Stone base - wider pedestal
-   ctx.fillStyle = '#888888';
-   ctx.strokeStyle = '#555555';
-   ctx.lineWidth = 2;
-   ctx.beginPath();
-   ctx.roundRect(flagX - 2 - cameraX, groundY - 12, 42, 12, 3);
-   ctx.stroke();
-   ctx.fill();
-   
-   // Pedestal highlight
-   ctx.fillStyle = '#AAAAAA';
-   ctx.fillRect(flagX - cameraX, groundY - 12, 38, 3);
-   
-   // Decorative hearts on pedestal
-   ctx.font = '10px Arial';
-   ctx.textAlign = 'center';
-   ctx.fillText('💕', flagX + 19 - cameraX, groundY - 1);
-   
-   // Flag pole holder (vertical pole)
-   ctx.fillStyle = '#5D4037';
-   ctx.strokeStyle = '#3E2723';
-   ctx.lineWidth = 2;
-   ctx.beginPath();
-   ctx.roundRect(flagX + 15 - cameraX, groundY - 65, 8, 53, 3);
-   ctx.stroke();
-   ctx.fill();
-   
-   // Pole cap - golden ornament
-   ctx.beginPath();
-   ctx.arc(flagX + 19 - cameraX, groundY - 67, 6, 0, Math.PI * 2);
-   ctx.fillStyle = '#FFD700';
-   ctx.fill();
-   ctx.strokeStyle = '#CC9900';
-   ctx.lineWidth = 1.5;
-   ctx.stroke();
+    // === FINISH ZONE — Glowing Goal Area ===
+    const finishZoneWidth = 160;
+    const fzX = finishZoneX - cameraX;
+    const shimmer = Math.sin(time / 300) * 0.3 + 0.7; // 0.4–1.0 pulse
+
+    // Outer golden aura glow
+    const auraGrad = ctx.createRadialGradient(
+      fzX + finishZoneWidth / 2, groundY - 12, 10,
+      fzX + finishZoneWidth / 2, groundY - 12, finishZoneWidth * 0.7
+    );
+    auraGrad.addColorStop(0, `rgba(255, 215, 0, ${0.25 * shimmer})`);
+    auraGrad.addColorStop(0.5, `rgba(255, 182, 193, ${0.12 * shimmer})`);
+    auraGrad.addColorStop(1, 'rgba(255, 215, 0, 0)');
+    ctx.fillStyle = auraGrad;
+    ctx.fillRect(fzX - 40, groundY - 90, finishZoneWidth + 80, 100);
+
+    // Soft ground glow beneath platform
+    const groundGlow = ctx.createLinearGradient(fzX, groundY, fzX, groundY + 20);
+    groundGlow.addColorStop(0, `rgba(255, 215, 0, ${0.3 * shimmer})`);
+    groundGlow.addColorStop(1, 'rgba(255, 215, 0, 0)');
+    ctx.fillStyle = groundGlow;
+    ctx.fillRect(fzX - 10, groundY, finishZoneWidth + 20, 20);
+
+    // Checkered finish floor with golden tint
+    const squareSize = 15;
+    for (let i = 0; i < finishZoneWidth / squareSize; i++) {
+      for (let j = 0; j < 2; j++) {
+        ctx.fillStyle = (i + j) % 2 === 0
+          ? `rgba(255, 248, 220, ${0.9 + shimmer * 0.1})`  // Warm cream
+          : '#FFB6C1'; // Soft pink
+        ctx.fillRect(fzX + i * squareSize, groundY - 25 + j * squareSize, squareSize, squareSize);
+      }
+    }
+
+    // Golden glowing border
+    ctx.strokeStyle = `rgba(255, 215, 0, ${0.6 + shimmer * 0.4})`;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = 'rgba(255, 215, 0, 0.5)';
+    ctx.shadowBlur = 8 * shimmer;
+    ctx.strokeRect(fzX, groundY - 25, finishZoneWidth, 25);
+    ctx.shadowBlur = 0;
+
+    // Inner gold edge highlight
+    ctx.strokeStyle = `rgba(255, 255, 200, ${0.3 * shimmer})`;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(fzX + 2, groundY - 23, finishZoneWidth - 4, 21);
+
+    // Floating sparkles around finish zone
+    for (let s = 0; s < 6; s++) {
+      const sparklePhase = time / 600 + s * 1.05;
+      const sx = fzX + 10 + (s * 28) % finishZoneWidth;
+      const sy = groundY - 30 - Math.sin(sparklePhase) * 25 - s * 4;
+      const sparkleAlpha = (Math.sin(sparklePhase * 2) * 0.5 + 0.5) * 0.8;
+      const sparkleSize = 2 + Math.sin(sparklePhase * 3) * 1.5;
+
+      ctx.beginPath();
+      ctx.arc(sx, sy, sparkleSize, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 223, 100, ${sparkleAlpha})`;
+      ctx.shadowColor = 'rgba(255, 215, 0, 0.6)';
+      ctx.shadowBlur = 6;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+
+    // Floating hearts
+    for (let h = 0; h < 4; h++) {
+      const heartPhase = time / 800 + h * 1.6;
+      const hx = fzX + 20 + (h * 40) % (finishZoneWidth - 20);
+      const hy = groundY - 35 - Math.sin(heartPhase) * 18 - h * 5;
+      const heartAlpha = (Math.sin(heartPhase) * 0.3 + 0.5);
+      const heartScale = 0.6 + Math.sin(heartPhase * 1.5) * 0.15;
+
+      ctx.save();
+      ctx.translate(hx, hy);
+      ctx.scale(heartScale, heartScale);
+      ctx.globalAlpha = heartAlpha;
+      ctx.fillStyle = '#FF69B4';
+      ctx.beginPath();
+      ctx.moveTo(0, 3);
+      ctx.bezierCurveTo(-4, -2, -7, 1, -7, 4);
+      ctx.bezierCurveTo(-7, 7, 0, 11, 0, 13);
+      ctx.bezierCurveTo(0, 11, 7, 7, 7, 4);
+      ctx.bezierCurveTo(7, 1, 4, -2, 0, 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+      ctx.restore();
+    }
+
+    // "FINISH" banner with glow
+    ctx.font = 'bold 15px Arial';
+    ctx.textAlign = 'center';
+    ctx.shadowColor = 'rgba(255, 215, 0, 0.7)';
+    ctx.shadowBlur = 10 * shimmer;
+    ctx.fillStyle = '#FFD700';
+    ctx.strokeStyle = '#8B6914';
+    ctx.lineWidth = 3;
+    ctx.strokeText('✦ FINISH ✦', fzX + finishZoneWidth / 2, groundY - 33);
+    ctx.fillText('✦ FINISH ✦', fzX + finishZoneWidth / 2, groundY - 33);
+    ctx.shadowBlur = 0;
+
+    // Flag stand / pedestal — golden with glow
+    ctx.shadowColor = 'rgba(255, 215, 0, 0.4)';
+    ctx.shadowBlur = 6;
+    const pedGrad = ctx.createLinearGradient(flagX - 2 - cameraX, groundY - 12, flagX - 2 - cameraX, groundY);
+    pedGrad.addColorStop(0, '#FFD700');
+    pedGrad.addColorStop(0.5, '#DAA520');
+    pedGrad.addColorStop(1, '#B8860B');
+    ctx.fillStyle = pedGrad;
+    ctx.strokeStyle = '#8B6914';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(flagX - 2 - cameraX, groundY - 12, 42, 12, 3);
+    ctx.stroke();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Pedestal shine strip
+    ctx.fillStyle = `rgba(255, 255, 230, ${0.4 + shimmer * 0.3})`;
+    ctx.fillRect(flagX - cameraX, groundY - 12, 38, 3);
+
+    // Decorative hearts on pedestal
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('💕', flagX + 19 - cameraX, groundY - 1);
+
+    // Flag pole holder — warm brown with subtle glow
+    ctx.fillStyle = '#5D4037';
+    ctx.strokeStyle = '#3E2723';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(flagX + 15 - cameraX, groundY - 65, 8, 53, 3);
+    ctx.stroke();
+    ctx.fill();
+
+    // Pole cap — golden ornament with glow
+    ctx.shadowColor = 'rgba(255, 215, 0, 0.6)';
+    ctx.shadowBlur = 8 * shimmer;
+    ctx.beginPath();
+    ctx.arc(flagX + 19 - cameraX, groundY - 67, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#FFD700';
+    ctx.fill();
+    ctx.strokeStyle = '#CC9900';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
    
    // Draw planted flag if completed
    if (flagPlanted || flagIsPlanting) {
