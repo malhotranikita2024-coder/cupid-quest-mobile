@@ -1037,49 +1037,49 @@ export function GameCanvas({
            const drawWidth = Math.min(brickWidth - 2, stairWidth - actualBx - 2);
            if (drawWidth > 0) {
              // Brick base
-             ctx.fillStyle = '#8B4513';
-             ctx.fillRect(
-               stepX + actualBx - cameraX, 
-               stepY + by, 
-               drawWidth, 
-               brickHeight - 2
-             );
-             
-             // Brick highlight (top edge)
-             ctx.fillStyle = '#A0522D';
-             ctx.fillRect(
-               stepX + actualBx - cameraX, 
-               stepY + by, 
-               drawWidth, 
-               3
-             );
-             
-             // Brick shadow (bottom edge)
-             ctx.fillStyle = '#5D3A1A';
-             ctx.fillRect(
-               stepX + actualBx - cameraX, 
-               stepY + by + brickHeight - 4, 
-               drawWidth, 
-               2
-             );
+              ctx.fillStyle = '#8B4513';
+              ctx.fillRect(
+                stepX + actualBx, 
+                stepY + by, 
+                drawWidth, 
+                brickHeight - 2
+              );
+              
+              // Brick highlight (top edge)
+              ctx.fillStyle = '#A0522D';
+              ctx.fillRect(
+                stepX + actualBx, 
+                stepY + by, 
+                drawWidth, 
+                3
+              );
+              
+              // Brick shadow (bottom edge)
+              ctx.fillStyle = '#5D3A1A';
+              ctx.fillRect(
+                stepX + actualBx, 
+                stepY + by + brickHeight - 4, 
+                drawWidth, 
+                2
+              );
            }
          }
        }
      }
      
      // Step top surface (lighter brown)
-     ctx.fillStyle = '#CD853F';
-     ctx.fillRect(stepX - cameraX, stepY - 3, stairWidth, 3);
-     
-     // Step edge highlight
-     ctx.strokeStyle = '#3E2723';
-     ctx.lineWidth = 1;
-     ctx.strokeRect(stepX - cameraX, stepY, stairWidth, stepHeight);
+      ctx.fillStyle = '#CD853F';
+      ctx.fillRect(stepX, stepY - 3, stairWidth, 3);
+      
+      // Step edge highlight
+      ctx.strokeStyle = '#3E2723';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(stepX, stepY, stairWidth, stepHeight);
    }
    
     // === FINISH ZONE — Glowing Goal Area ===
-    const finishZoneWidth = 160;
-    const fzX = finishZoneX - cameraX;
+     const finishZoneWidth = 160;
+    const fzX = finishZoneX; // Already in world coords; ctx.translate(-cameraX) handles offset
     const shimmer = Math.sin(time / 300) * 0.3 + 0.7; // 0.4–1.0 pulse
 
     // 1) Outer golden aura glow — soft radial attached to platform center
@@ -1237,7 +1237,7 @@ export function GameCanvas({
     // Flag stand / pedestal — golden with glow
     ctx.shadowColor = 'rgba(255, 215, 0, 0.4)';
     ctx.shadowBlur = 6;
-    const pedGrad = ctx.createLinearGradient(flagX - 2 - cameraX, groundY - 12, flagX - 2 - cameraX, groundY);
+    const pedGrad = ctx.createLinearGradient(flagX - 2, groundY - 12, flagX - 2, groundY);
     pedGrad.addColorStop(0, '#FFD700');
     pedGrad.addColorStop(0.5, '#DAA520');
     pedGrad.addColorStop(1, '#B8860B');
@@ -1245,26 +1245,26 @@ export function GameCanvas({
     ctx.strokeStyle = '#8B6914';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.roundRect(flagX - 2 - cameraX, groundY - 12, 42, 12, 3);
+    ctx.roundRect(flagX - 2, groundY - 12, 42, 12, 3);
     ctx.stroke();
     ctx.fill();
     ctx.shadowBlur = 0;
 
     // Pedestal shine strip
     ctx.fillStyle = `rgba(255, 255, 230, ${0.4 + shimmer * 0.3})`;
-    ctx.fillRect(flagX - cameraX, groundY - 12, 38, 3);
+    ctx.fillRect(flagX, groundY - 12, 38, 3);
 
     // Decorative hearts on pedestal
     ctx.font = '10px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('💕', flagX + 19 - cameraX, groundY - 1);
+    ctx.fillText('💕', flagX + 19, groundY - 1);
 
     // Flag pole holder — warm brown with subtle glow
     ctx.fillStyle = '#5D4037';
     ctx.strokeStyle = '#3E2723';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.roundRect(flagX + 15 - cameraX, groundY - 65, 8, 53, 3);
+    ctx.roundRect(flagX + 15, groundY - 65, 8, 53, 3);
     ctx.stroke();
     ctx.fill();
 
@@ -1272,7 +1272,7 @@ export function GameCanvas({
     ctx.shadowColor = 'rgba(255, 215, 0, 0.6)';
     ctx.shadowBlur = 8 * shimmer;
     ctx.beginPath();
-    ctx.arc(flagX + 19 - cameraX, groundY - 67, 6, 0, Math.PI * 2);
+    ctx.arc(flagX + 19, groundY - 67, 6, 0, Math.PI * 2);
     ctx.fillStyle = '#FFD700';
     ctx.fill();
     ctx.strokeStyle = '#CC9900';
@@ -1291,13 +1291,13 @@ export function GameCanvas({
      ctx.strokeStyle = '#CC9900';
      ctx.lineWidth = 2;
      ctx.beginPath();
-     ctx.roundRect(flagX + 16 - cameraX, plantedFlagY, 6, 50, 2);
+     ctx.roundRect(flagX + 16, plantedFlagY, 6, 50, 2);
      ctx.stroke();
      ctx.fill();
      
      // Golden ball cap
      ctx.beginPath();
-     ctx.arc(flagX + 19 - cameraX, plantedFlagY - 3, 5, 0, Math.PI * 2);
+     ctx.arc(flagX + 19, plantedFlagY - 3, 5, 0, Math.PI * 2);
      ctx.fillStyle = '#FFD700';
      ctx.fill();
      ctx.strokeStyle = '#CC9900';
@@ -1310,16 +1310,16 @@ export function GameCanvas({
      ctx.strokeStyle = '#FFFFFF';
      ctx.lineWidth = 2;
      ctx.beginPath();
-     ctx.moveTo(flagX + 22 - cameraX, plantedFlagY + 2);
-     ctx.quadraticCurveTo(flagX + 48 - cameraX + victoryWave, plantedFlagY + 4, flagX + 45 - cameraX + victoryWave, plantedFlagY + 15);
-     ctx.quadraticCurveTo(flagX + 42 - cameraX + victoryWave, plantedFlagY + 26, flagX + 22 - cameraX, plantedFlagY + 28);
+      ctx.moveTo(flagX + 22, plantedFlagY + 2);
+      ctx.quadraticCurveTo(flagX + 48 + victoryWave, plantedFlagY + 4, flagX + 45 + victoryWave, plantedFlagY + 15);
+      ctx.quadraticCurveTo(flagX + 42 + victoryWave, plantedFlagY + 26, flagX + 22, plantedFlagY + 28);
      ctx.closePath();
      ctx.fill();
      ctx.stroke();
      
      // White heart on victory flag
      ctx.save();
-     ctx.translate(flagX + 32 - cameraX + victoryWave * 0.4, plantedFlagY + 15);
+     ctx.translate(flagX + 32 + victoryWave * 0.4, plantedFlagY + 15);
      ctx.fillStyle = '#FFFFFF';
      ctx.beginPath();
      ctx.moveTo(0, 2);
@@ -1337,7 +1337,7 @@ export function GameCanvas({
        for (let i = 0; i < sparkleCount; i++) {
          const sparkleAngle = (time / 200) + (i * Math.PI * 2 / sparkleCount);
          const sparkleRadius = 30 + (plantProgress / 100) * 20;
-         const sparkleX = flagX + 20 - cameraX + Math.cos(sparkleAngle) * sparkleRadius;
+         const sparkleX = flagX + 20 + Math.cos(sparkleAngle) * sparkleRadius;
          const sparkleY = plantedFlagY + 20 + Math.sin(sparkleAngle) * sparkleRadius * 0.6;
          
          ctx.font = '14px Arial';
@@ -1353,8 +1353,8 @@ export function GameCanvas({
        ctx.fillStyle = '#FFD700';
        ctx.strokeStyle = '#000000';
        ctx.lineWidth = 3;
-       ctx.strokeText('VICTORY!', flagX + 20 - cameraX, plantedFlagY - 15);
-       ctx.fillText('VICTORY!', flagX + 20 - cameraX, plantedFlagY - 15);
+        ctx.strokeText('VICTORY!', flagX + 20, plantedFlagY - 15);
+        ctx.fillText('VICTORY!', flagX + 20, plantedFlagY - 15);
      }
    } else {
      // Show "PLANT FLAG HERE" or "NEED FLAG" hint
@@ -1364,14 +1364,14 @@ export function GameCanvas({
        ctx.fillStyle = '#00FF00';
        ctx.strokeStyle = '#000000';
        ctx.lineWidth = 2;
-       ctx.strokeText('PLANT FLAG!', flagX + 20 - cameraX, groundY - 70);
-       ctx.fillText('PLANT FLAG!', flagX + 20 - cameraX, groundY - 70);
-     } else {
-       ctx.fillStyle = '#FF6666';
-       ctx.strokeStyle = '#000000';
-       ctx.lineWidth = 2;
-       ctx.strokeText('NEED FLAG!', flagX + 20 - cameraX, groundY - 70);
-       ctx.fillText('NEED FLAG!', flagX + 20 - cameraX, groundY - 70);
+        ctx.strokeText('PLANT FLAG!', flagX + 20, groundY - 70);
+        ctx.fillText('PLANT FLAG!', flagX + 20, groundY - 70);
+      } else {
+        ctx.fillStyle = '#FF6666';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.strokeText('NEED FLAG!', flagX + 20, groundY - 70);
+        ctx.fillText('NEED FLAG!', flagX + 20, groundY - 70);
      }
    }
     
