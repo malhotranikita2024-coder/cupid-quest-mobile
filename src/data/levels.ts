@@ -3,6 +3,24 @@ import { LevelData, Platform, Collectible, Enemy, HitBlock, Pipe, FallingHazard,
 const GROUND_Y = 520;
 const LEVEL_WIDTH = 6000; // Extended level width for 4-5 min gameplay
 
+// Helper to create stair platforms leading up to the end platform
+// These are real collision platforms matching the visual stairs in GameCanvas
+function createStairPlatforms(): Platform[] {
+  const endPlatformX = 5750;
+  const stairCount = 4;
+  const stairWidth = 35;
+  const stairHeight = 15;
+  const stairsStartX = endPlatformX - stairCount * stairWidth;
+  
+  return Array.from({ length: stairCount }, (_, i) => ({
+    x: stairsStartX + i * stairWidth,
+    y: GROUND_Y - (i + 1) * stairHeight,
+    width: stairWidth,
+    height: (i + 1) * stairHeight,
+    type: 'ground' as const,
+  }));
+}
+
 // Helper to create ground segments with gaps
 function createGroundSegments(segments: { start: number; width: number }[]): Platform[] {
   return segments.map(seg => ({
@@ -68,6 +86,7 @@ function createLevel1(): LevelData {
     ]),
     // End platform - wide brick platform for flag planting
     { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
+    ...createStairPlatforms(),
     // Floating platforms - generous spacing, no crowding
     // Only 2 height tiers: y=380 (low) and y=280 (high) - 100px apart for clear jumps
     createFloatingPlatform(400, 380, 120),    // Low tier
@@ -176,6 +195,7 @@ function createLevel2(): LevelData {
     ]),
     // End platform - wide brick platform for flag planting
     { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
+    ...createStairPlatforms(),
     createFloatingPlatform(350, 420, 130),
     createFloatingPlatform(550, 350, 100),
     createFloatingPlatform(900, 400, 150),
@@ -286,6 +306,7 @@ function createLevel3(): LevelData {
     ]),
     // End platform - wide brick platform for flag planting
     { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
+    ...createStairPlatforms(),
     // Vertical section - stacked platforms
     createFloatingPlatform(300, 420, 120),
     createFloatingPlatform(350, 340, 100),
@@ -412,6 +433,7 @@ function createLevel4(): LevelData {
     ]),
     // End platform - wide brick platform for flag planting
     { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
+    ...createStairPlatforms(),
     createFloatingPlatform(280, 400, 130),
     createFloatingPlatform(500, 320, 110),
     createFloatingPlatform(800, 380, 140),
@@ -543,6 +565,7 @@ function createLevel5(): LevelData {
     ]),
     // End platform - wide brick platform for flag planting
     { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
+    ...createStairPlatforms(),
     // Moving platforms (marked as type moving)
     { x: 550, y: 400, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 2, moveRange: 150, originalX: 550, originalY: 400 },
     { x: 1100, y: 350, width: 100, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 1.5, moveRange: 100, originalX: 1100, originalY: 350 },
@@ -677,6 +700,7 @@ function createLevel6(): LevelData {
     ]),
     // End platform - wide brick platform for flag planting
     { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
+    ...createStairPlatforms(),
     { x: 500, y: 380, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 2.5, moveRange: 120, originalX: 500, originalY: 380 },
     createFloatingPlatform(750, 320, 110),
     { x: 1000, y: 400, width: 100, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 2, moveRange: 100, originalX: 1000, originalY: 400 },
@@ -818,6 +842,7 @@ function createLevel7(): LevelData {
     ]),
     // End platform - wide brick platform for flag planting
     { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
+    ...createStairPlatforms(),
     { x: 450, y: 380, width: 100, height: 30, type: 'moving', moveDirection: 'horizontal', moveSpeed: 3, moveRange: 100, originalX: 450, originalY: 380 },
     createFloatingPlatform(700, 320, 90),
     { x: 900, y: 400, width: 90, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 2.5, moveRange: 120, originalX: 900, originalY: 400 },
