@@ -1586,8 +1586,8 @@ export function GameCanvas({
       ctx.textAlign = 'center';
       ctx.fillText('❤️', player.x + PLAYER_WIDTH / 2, player.y + 35);
       
-      // Draw carried flag if player has collected it
-      if (hasMidFlag) {
+      // Draw carried flag if player has collected it (hide during/after planting)
+      if (hasMidFlag && !isPlantingFlag && !levelData.flag.plantedFlag) {
         ctx.save();
         // Small flag on player's back
         const flagPoleX = player.facingRight ? player.x - 5 : player.x + PLAYER_WIDTH + 5;
