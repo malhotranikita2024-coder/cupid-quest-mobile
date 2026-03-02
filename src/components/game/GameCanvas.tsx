@@ -65,6 +65,16 @@ export function GameCanvas({
   const animationFrameRef = useRef<number>();
   const wasJumpingRef = useRef(false);
 
+  // Dust particle system
+  interface DustParticle {
+    x: number; y: number;
+    vx: number; vy: number;
+    life: number; maxLife: number;
+    size: number;
+  }
+  const dustParticlesRef = useRef<DustParticle[]>([]);
+  const lastDustSpawnRef = useRef(0);
+
   const updatePlayer = useCallback(() => {
     if (isPaused) return;
     
@@ -1535,6 +1545,16 @@ export function GameCanvas({
         }
       }
       
+      // Draw dust particles (behind player, in world space)
+      for (const dp of dustParticlesRef.current) {
+        const progress = dp.life / dp.maxLife;
+        const alpha = Math.max(0, 0.35 * (1 - progress));
+        ctx.fillStyle = `rgba(235, 225, 210, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(dp.x, dp.y, dp.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
       ctx.beginPath();
       ctx.ellipse(player.x + PLAYER_WIDTH / 2, player.y + PLAYER_HEIGHT + 3, 20, 8, 0, 0, Math.PI * 2);
@@ -1655,6 +1675,41 @@ export function GameCanvas({
     const gameLoop = (time: number) => {
       if (!isPaused) {
         updatePlayer();
+
+        // Spawn dust particles when running on ground
+        const absVX = Math.abs(player.velocityX);
+        if (player.isGrounded && absVX > 1 && !isPlantingFlag) {
+          const now = time;
+          const interval = absVX > 6 ? 120 : 180;
+          if (now - lastDustSpawnRef.current > interval) {
+            lastDustSpawnRef.current = now;
+            const dustArr = dustParticlesRef.current;
+            if (dustArr.length < 20) {
+              const spawnX = player.facingRight
+                ? player.x + 5 + Math.random() * 8
+                : player.x + PLAYER_WIDTH - 13 + Math.random() * 8;
+              dustArr.push({
+                x: spawnX,
+                y: player.y + PLAYER_HEIGHT - 2 + Math.random() * 4,
+                vx: (player.facingRight ? -1 : 1) * (0.3 + Math.random() * 0.5),
+                vy: -(0.3 + Math.random() * 0.4),
+                life: 0,
+                maxLife: 300 + Math.random() * 200,
+                size: 3 + Math.random() * 3,
+              });
+            }
+          }
+        }
+
+        // Update dust particles
+        const dt = 16; // approx frame time
+        dustParticlesRef.current = dustParticlesRef.current.filter(p => {
+          p.life += dt;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.size += 0.03;
+          return p.life < p.maxLife;
+        });
       }
       draw(ctx, time);
       animationFrameRef.current = requestAnimationFrame(gameLoop);
