@@ -74,6 +74,7 @@ export function GameCanvas({
   }
   const dustParticlesRef = useRef<DustParticle[]>([]);
   const lastDustSpawnRef = useRef(0);
+  const wasGroundedRef = useRef(true);
 
   const updatePlayer = useCallback(() => {
     if (isPaused) return;
@@ -1675,6 +1676,25 @@ export function GameCanvas({
     const gameLoop = (time: number) => {
       if (!isPaused) {
         updatePlayer();
+
+        // Landing dust puff
+        if (player.isGrounded && !wasGroundedRef.current) {
+          const dustArr = dustParticlesRef.current;
+          const cx = player.x + PLAYER_WIDTH / 2;
+          const footY = player.y + PLAYER_HEIGHT - 2;
+          for (let i = 0; i < 6; i++) {
+            dustArr.push({
+              x: cx + (Math.random() - 0.5) * 20,
+              y: footY + Math.random() * 3,
+              vx: (Math.random() - 0.5) * 1.2,
+              vy: -(0.4 + Math.random() * 0.6),
+              life: 0,
+              maxLife: 250 + Math.random() * 200,
+              size: 3.5 + Math.random() * 3.5,
+            });
+          }
+        }
+        wasGroundedRef.current = player.isGrounded;
 
         // Spawn dust particles when running on ground
         const absVX = Math.abs(player.velocityX);
