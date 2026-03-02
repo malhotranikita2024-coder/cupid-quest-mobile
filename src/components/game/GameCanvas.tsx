@@ -76,6 +76,8 @@ export function GameCanvas({
   const lastDustSpawnRef = useRef(0);
   const wasGroundedRef = useRef(true);
   const screenShakeRef = useRef({ intensity: 0, duration: 0, elapsed: 0 });
+  interface SquishEntry { x: number; y: number; type: string; elapsed: number; duration: number; }
+  const squishParticlesRef = useRef<SquishEntry[]>([]);
 
   const updatePlayer = useCallback(() => {
     if (isPaused) return;
@@ -333,6 +335,13 @@ export function GameCanvas({
           onEnemyDefeated(index);
           newPlayer.velocityY = JUMP_FORCE * 0.6;
           screenShakeRef.current = { intensity: 4, duration: 200, elapsed: 0 };
+          squishParticlesRef.current.push({
+            x: enemy.x + enemy.width / 2,
+            y: enemy.y + enemy.height,
+            type: enemy.type,
+            elapsed: 0,
+            duration: 350,
+          });
         } else if (!newPlayer.isInvincible) {
           onPlayerHit();
           newPlayer.isInvincible = true;
@@ -1001,7 +1010,24 @@ export function GameCanvas({
       ctx.restore();
     });
 
-    // Draw checkpoint
+    // Draw squished enemies
+    for (const sq of squishParticlesRef.current) {
+      const p = sq.elapsed / sq.duration; // 0→1
+      const scaleX = 1 + p * 0.8;        // widen
+      const scaleY = Math.max(0, 1 - p * 1.2); // flatten
+      const alpha = Math.max(0, 1 - p);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(sq.x, sq.y);
+      ctx.scale(scaleX, scaleY);
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      const emoji = sq.type === 'heartBug' ? '💗' : sq.type === 'brokenHeartSlime' ? '💔' : '😤';
+      ctx.font = '30px Arial';
+      ctx.fillText(emoji, 0, 0);
+      ctx.restore();
+    }
+
     if (!levelData.checkpoint.activated) {
       ctx.font = '40px Arial';
       ctx.textAlign = 'center';
@@ -1745,6 +1771,12 @@ export function GameCanvas({
           p.y += p.vy;
           p.size += 0.03;
           return p.life < p.maxLife;
+        });
+
+        // Update squish animations
+        squishParticlesRef.current = squishParticlesRef.current.filter(s => {
+          s.elapsed += 16;
+          return s.elapsed < s.duration;
         });
       }
       draw(ctx, time);
