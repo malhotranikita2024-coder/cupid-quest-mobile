@@ -5,6 +5,7 @@ import { GameHUD } from './GameHUD';
 import { PauseMenu } from './PauseMenu';
 import { TutorialNudge } from './TutorialNudge';
 import { TutorialDebugOverlay } from './TutorialDebugOverlay';
+import { LevelTitleOverlay } from './LevelTitleOverlay';
 import { setTutorialDebugMode } from '@/hooks/useTutorialNudges';
 import { useTouchControls } from '@/hooks/useTouchControls';
 import { useAudio } from '@/hooks/useAudio';
@@ -85,6 +86,7 @@ export function GameEngine({
   const [isDying, setIsDying] = useState(false);
   const [showNeedFlagMessage, setShowNeedFlagMessage] = useState(false);
   const [showLevelCompleteOverlay, setShowLevelCompleteOverlay] = useState(false);
+  const [showLevelTitle, setShowLevelTitle] = useState(true);
   const [fireworkParticles, setFireworkParticles] = useState<Array<{id: number; x: number; y: number; vx: number; vy: number; color: string; life: number; size: number}>>([]);
   
   const timerRef = useRef<NodeJS.Timeout>();
@@ -144,6 +146,7 @@ export function GameEngine({
     setCheckpointPosition(LEVEL_START_SPAWN);
     resetControls();
     setShowDeathOverlay(false);
+    setShowLevelTitle(true);
     setIsDying(false); // Reset death lock on level start
     isDeathLockedRef.current = false; // Reset synchronous death lock
     
@@ -1258,7 +1261,16 @@ export function GameEngine({
         </div>
       )}
 
-      {/* "Need flag" message */}
+      {/* Level title cinematic overlay */}
+      {showLevelTitle && (
+        <LevelTitleOverlay
+          level={levelData.id}
+          levelName={levelData.name}
+          collectibleEmoji={levelData.collectibleEmoji}
+          onComplete={() => setShowLevelTitle(false)}
+        />
+      )}
+
       {showNeedFlagMessage && (
         <div className="fixed inset-x-0 top-24 z-50 flex justify-center pointer-events-none animate-fade-in">
           <div className="bg-black/80 text-white px-6 py-3 rounded-2xl text-lg font-display flex items-center gap-2 shadow-lg border border-white/20">
