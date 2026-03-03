@@ -75,7 +75,7 @@ export function GameCanvas({
   const dustParticlesRef = useRef<DustParticle[]>([]);
   const lastDustSpawnRef = useRef(0);
   const wasGroundedRef = useRef(true);
-  const screenShakeRef = useRef({ intensity: 0, duration: 0, elapsed: 0 });
+  
   interface SquishEntry { x: number; y: number; type: string; elapsed: number; duration: number; }
   const squishParticlesRef = useRef<SquishEntry[]>([]);
 
@@ -334,7 +334,7 @@ export function GameCanvas({
         if (playerBottom <= enemyTop + 20 && newPlayer.velocityY > 0) {
           onEnemyDefeated(index);
           newPlayer.velocityY = JUMP_FORCE * 0.6;
-          screenShakeRef.current = { intensity: 4, duration: 200, elapsed: 0 };
+          
           squishParticlesRef.current.push({
             x: enemy.x + enemy.width / 2,
             y: enemy.y + enemy.height,
@@ -526,20 +526,8 @@ export function GameCanvas({
     const height = canvas.height;
 
     // Clear canvas
-    // Screen shake
-    const shake = screenShakeRef.current;
-    let shakeX = 0, shakeY = 0;
-    if (shake.elapsed < shake.duration) {
-      const progress = 1 - shake.elapsed / shake.duration;
-      shakeX = (Math.random() - 0.5) * 2 * shake.intensity * progress;
-      shakeY = (Math.random() - 0.5) * 2 * shake.intensity * progress;
-      shake.elapsed += 16;
-    }
-    ctx.save();
-    ctx.translate(shakeX, shakeY);
-
     ctx.fillStyle = levelData.backgroundColor;
-    ctx.fillRect(-10, -10, width + 20, height + 20);
+    ctx.fillRect(0, 0, width, height);
 
     // === STARS IN THE SKY ===
     drawStars(ctx, width, height, cameraX * 0.05, levelData.id);
@@ -1695,8 +1683,6 @@ export function GameCanvas({
       ctx.restore();
     }
 
-    ctx.restore();
-    // End screen shake transform
     ctx.restore();
   }, [levelData, player, cameraX]);
 
