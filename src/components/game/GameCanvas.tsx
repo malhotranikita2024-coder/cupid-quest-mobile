@@ -530,25 +530,27 @@ export function GameCanvas({
     ctx.fillRect(0, 0, width, height);
 
     // === STARS IN THE SKY ===
-    drawStars(ctx, width, height, cameraX * 0.05, levelData.id);
+    drawStars(ctx, width, height, cameraX * 0.08, levelData.id);
 
     // === SUN OR MOON ===
-    drawCelestialBody(ctx, width, height, cameraX * 0.02, levelData.id);
+    drawCelestialBody(ctx, width, height, cameraX * 0.05, levelData.id);
 
     // === PARALLAX BACKGROUND LAYERS ===
-    const bgOffset = cameraX * 0.2;
-    const midOffset = cameraX * 0.4;
+    const farOffset = cameraX * 0.25;   // Far hills: 25% of camera speed
+    const midOffset = cameraX * 0.45;   // Mid hills: 45% of camera speed
+    const cloudOffset = cameraX * 0.18; // Clouds: 18% + gentle drift
     
     // Layer 1: Distant hills (very back)
-    drawDistantHills(ctx, width, height, bgOffset * 0.5, levelData.id);
+    drawDistantHills(ctx, width, height, farOffset, levelData.id);
     
     // Layer 2: Mid-ground hills
-    drawMidHills(ctx, width, height, bgOffset * 0.8, levelData.id);
+    drawMidHills(ctx, width, height, midOffset, levelData.id);
     
-    // Layer 3: Clouds (parallax)
+    // Layer 3: Clouds (parallax + slow independent drift)
     ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    const cloudDrift = time * 0.008; // Very slow autonomous drift
     for (let i = 0; i < 10; i++) {
-      const cloudX = (i * 450 - bgOffset) % (width + 500) - 250;
+      const cloudX = (i * 450 - cloudOffset - cloudDrift * (0.8 + (i % 3) * 0.2)) % (width + 500) - 250;
       const cloudY = 30 + (i % 4) * 35;
       drawCloud(ctx, cloudX, cloudY, 60 + (i % 2) * 30);
     }
@@ -556,8 +558,8 @@ export function GameCanvas({
     // Layer 3.5: Flying creatures (birds/butterflies)
     drawFlyingCreatures(ctx, width, height, time, levelData.id);
     
-    // Layer 4: Background bushes/trees (behind gameplay)
-    drawBackgroundVegetation(ctx, width, height, midOffset, levelData.id);
+    // Layer 4: Background bushes/trees (behind gameplay, 35% speed)
+    drawBackgroundVegetation(ctx, width, height, cameraX * 0.35, levelData.id);
 
     ctx.save();
     ctx.translate(-cameraX, 0);
