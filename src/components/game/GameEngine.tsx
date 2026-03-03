@@ -1264,6 +1264,7 @@ export function GameEngine({
       {/* Level title cinematic overlay */}
       {showLevelTitle && (
         <LevelTitleOverlay
+          key={`level-title-${currentLevel}`}
           level={levelData.id}
           levelName={levelData.name}
           collectibleEmoji={levelData.collectibleEmoji}

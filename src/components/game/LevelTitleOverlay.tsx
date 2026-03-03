@@ -27,7 +27,7 @@ export function LevelTitleOverlay({ level, levelName, collectibleEmoji, onComple
 
   return (
     <div
-      className="absolute inset-0 flex items-center justify-center pointer-events-none z-30"
+      className="fixed inset-0 flex items-center justify-center pointer-events-none z-40"
       style={{
         opacity,
         transform: `translateY(${translateY}px)`,
