@@ -1495,7 +1495,7 @@ export function GameEngine({
               ⚠️ Boss Battle ⚠️
             </p>
             <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: '#fff', margin: '0 0 4px', textShadow: '0 0 20px rgba(255, 50, 50, 0.8)' }}>
-              🤡 Jack-in-the-Box 🤡
+              🐉 Block Dragon 🐉
             </h1>
             <p style={{ fontSize: '14px', color: 'rgba(255, 220, 150, 0.9)', margin: '4px 0 0' }}>
               Press <span style={{ padding: '2px 8px', background: 'rgba(255,255,255,0.15)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700, fontFamily: 'monospace' }}>F</span> to shoot fireballs!
