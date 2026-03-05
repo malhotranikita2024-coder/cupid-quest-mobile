@@ -423,48 +423,34 @@ export function GameEngine({
         
         boss.hitFlash = Math.max(0, boss.hitFlash - 1);
         
-        // Check collision with player fireballs - use expanded hitbox for better hit detection
+        // Check collision with player fireballs using ref for IMMEDIATE, synchronous detection
+        const hitPadding = 30; // Generous hitbox
+        const currentFireballs = playerFireballsRef.current;
         let bossHit = false;
-        const hitPadding = 25; // Generous hitbox for reliable hits with larger fireballs
-        setPlayerFireballs(prevFb => {
-          const newFb = prevFb.map(fb => {
-            if (!fb.isActive) return fb;
-            if (
-              fb.x + fb.width > boss.x - hitPadding &&
-              fb.x < boss.x + boss.width + hitPadding &&
-              fb.y + fb.height > boss.y - hitPadding &&
-              fb.y < boss.y + boss.height + hitPadding
-            ) {
-              bossHit = true;
-              return { ...fb, isActive: false };
-            }
-            return fb;
-          });
-          return newFb;
-        });
         
-        // Also check using ref for immediate collision (fixes race condition)
-        if (!bossHit) {
-          const currentFireballs = playerFireballsRef.current;
-          for (const fb of currentFireballs) {
-            if (!fb.isActive) continue;
-            if (
-              fb.x + fb.width > boss.x - hitPadding &&
-              fb.x < boss.x + boss.width + hitPadding &&
-              fb.y + fb.height > boss.y - hitPadding &&
-              fb.y < boss.y + boss.height + hitPadding
-            ) {
-              bossHit = true;
-              fb.isActive = false;
-              break;
-            }
+        for (const fb of currentFireballs) {
+          if (!fb.isActive) continue;
+          if (
+            fb.x + fb.width > boss.x - hitPadding &&
+            fb.x < boss.x + boss.width + hitPadding &&
+            fb.y + fb.height > boss.y - hitPadding &&
+            fb.y < boss.y + boss.height + hitPadding
+          ) {
+            bossHit = true;
+            fb.isActive = false;
+            break;
           }
+        }
+        
+        // Also deactivate in state for re-render
+        if (bossHit) {
+          setPlayerFireballs(prevFb => prevFb.map(fb => fb.isActive ? fb : { ...fb, isActive: false }));
         }
         
         if (bossHit && boss.state === 'bouncing') {
           boss.health--;
           boss.hitFlash = 20;
-          boss.stunnedTimer = 90;
+          boss.stunnedTimer = 60;
           boss.state = boss.health <= 0 ? 'defeated' : 'stunned';
           boss.velocityX = 0;
           boss.velocityY = 0;
@@ -505,7 +491,7 @@ export function GameEngine({
     if (!fireSword) return;
     const dist = Math.abs(player.x - fireSword.x);
     if (dist < 300) {
-      triggerNudge('fireSword', fireSword.x, fireSword.y - 20, { kind: 'collectible', initialX: fireSword.x, initialY: fireSword.y });
+      triggerNudge('fireSword', fireSword.x + 15, fireSword.y, { kind: 'collectible', initialX: fireSword.x + 15, initialY: fireSword.y });
     }
   }, [player.x, hasFirePower, isPaused, showDeathOverlay, levelData.collectibles, canTrigger, triggerNudge]);
 
@@ -1040,6 +1026,7 @@ export function GameEngine({
     audio.playDeath();
     setShowLevelTitle(false); // Kill any active level title overlay on death
     setPlayerFireballs([]); // Clear player fireballs on death
+    setHasFirePower(false); // Reset fire sword - must collect again
     setShowDeathOverlay(true);
     
     // Clear any existing death timeout

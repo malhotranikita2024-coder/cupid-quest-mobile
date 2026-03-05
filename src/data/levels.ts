@@ -329,6 +329,11 @@ function createLevel3(): LevelData {
     createFloatingPlatform(3700, 320, 130),
     createFloatingPlatform(4000, 380, 150),
     createFloatingPlatform(4300, 300, 120),
+    // Boss arena platforms - cover empty space with obstacles/platforms
+    createFloatingPlatform(5200, 400, 120),
+    createFloatingPlatform(5400, 320, 100),
+    createFloatingPlatform(5600, 380, 110),
+    createFloatingPlatform(5300, 250, 90),
   ];
 
   const collectibles: Collectible[] = [];
@@ -372,6 +377,9 @@ function createLevel3(): LevelData {
     ...createBlockRow(2910, 340, ['brick', 'question', 'brick']),
     ...createBlockRow(3510, 360, ['brick', 'question', 'brick']),
     ...createBlockRow(4110, 340, ['brick', 'question', 'brick']),
+    // Boss arena decorative blocks
+    ...createBlockRow(5200, 280, ['brick', 'brick', 'brick']),
+    ...createBlockRow(5450, 300, ['brick', 'question', 'brick']),
   ];
 
   const pipes: Pipe[] = [
