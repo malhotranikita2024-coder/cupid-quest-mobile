@@ -14,9 +14,9 @@ export function LevelTitleOverlay({ level, levelName, collectibleEmoji, onComple
   const startRef = useRef(performance.now());
   const rafRef = useRef<number>();
 
-  const FADE_IN = 300;
+  const FADE_IN = 400;
   const HOLD = 1200;
-  const FADE_OUT = 700;
+  const FADE_OUT = 500;
   const TOTAL = FADE_IN + HOLD + FADE_OUT;
 
   useEffect(() => {
