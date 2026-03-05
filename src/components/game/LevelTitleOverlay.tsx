@@ -7,14 +7,14 @@ interface LevelTitleOverlayProps {
   onComplete: () => void;
 }
 
-const FADE_IN = 400;
-const HOLD = 1400;
-const FADE_OUT = 800;
-const TOTAL = FADE_IN + HOLD + FADE_OUT; // 2600ms
+const FADE_IN = 350;
+const HOLD = 1800;
+const FADE_OUT = 500;
+const TOTAL = FADE_IN + HOLD + FADE_OUT;
 
 export function LevelTitleOverlay({ level, levelName, collectibleEmoji, onComplete }: LevelTitleOverlayProps) {
   const [alpha, setAlpha] = useState(0);
-  const [offsetY, setOffsetY] = useState(0);
+  const [scale, setScale] = useState(0.85);
   const [visible, setVisible] = useState(true);
   const startRef = useRef(0);
   const rafRef = useRef<number>();
@@ -35,15 +35,16 @@ export function LevelTitleOverlay({ level, levelName, collectibleEmoji, onComple
       const elapsed = performance.now() - startRef.current;
 
       if (elapsed < FADE_IN) {
-        setAlpha(Math.min(elapsed / FADE_IN, 1));
-        setOffsetY(0);
+        const p = Math.min(elapsed / FADE_IN, 1);
+        setAlpha(p);
+        setScale(0.85 + 0.15 * p);
       } else if (elapsed < FADE_IN + HOLD) {
         setAlpha(1);
-        setOffsetY(0);
+        setScale(1);
       } else if (elapsed < TOTAL) {
         const p = Math.min((elapsed - FADE_IN - HOLD) / FADE_OUT, 1);
         setAlpha(1 - p);
-        setOffsetY(-12 * p);
+        setScale(1 + 0.05 * p);
       } else {
         setAlpha(0);
         setVisible(false);
@@ -73,42 +74,72 @@ export function LevelTitleOverlay({ level, levelName, collectibleEmoji, onComple
         pointerEvents: 'none',
         zIndex: 999,
         opacity: alpha,
-        transform: `translateY(${offsetY}px)`,
       }}
     >
       <div
         style={{
-          padding: '24px 48px',
-          borderRadius: '16px',
+          transform: `scale(${scale})`,
+          padding: '28px 52px',
+          borderRadius: '20px',
           textAlign: 'center',
-          background: 'rgba(0, 0, 0, 0.45)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255, 200, 220, 0.2)',
-          boxShadow: '0 8px 40px rgba(0, 0, 0, 0.3)',
+          background: 'linear-gradient(145deg, rgba(30, 20, 40, 0.92), rgba(15, 10, 25, 0.88))',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '2px solid rgba(255, 215, 100, 0.5)',
+          boxShadow: '0 0 40px rgba(255, 200, 60, 0.15), 0 12px 48px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+          minWidth: '260px',
+          maxWidth: '90vw',
         }}
       >
+        {/* Welcome text */}
+        <p
+          style={{
+            fontSize: 'clamp(11px, 2vw, 14px)',
+            color: 'rgba(255, 215, 100, 0.85)',
+            margin: '0 0 6px 0',
+            textTransform: 'uppercase',
+            letterSpacing: '5px',
+            fontWeight: 600,
+          }}
+        >
+          ✦ Welcome To ✦
+        </p>
+
+        {/* World number */}
         <h1
           style={{
-            fontSize: 'clamp(24px, 5vw, 36px)',
+            fontSize: 'clamp(26px, 6vw, 40px)',
             fontWeight: 'bold',
             color: '#ffffff',
             margin: '0 0 4px 0',
-            textShadow: '0 0 24px rgba(255, 180, 200, 0.7), 0 2px 4px rgba(0,0,0,0.5)',
-            letterSpacing: '2px',
+            textShadow: '0 0 20px rgba(255, 215, 100, 0.6), 0 2px 6px rgba(0,0,0,0.6)',
+            letterSpacing: '3px',
           }}
         >
           {collectibleEmoji} WORLD {level} {collectibleEmoji}
         </h1>
+
+        {/* Divider line */}
+        <div
+          style={{
+            width: '60px',
+            height: '2px',
+            background: 'linear-gradient(90deg, transparent, rgba(255, 215, 100, 0.7), transparent)',
+            margin: '8px auto',
+          }}
+        />
+
+        {/* Level name */}
         {levelName && (
           <p
             style={{
-              fontSize: 'clamp(13px, 2.5vw, 18px)',
-              color: 'rgba(255, 225, 235, 0.9)',
-              margin: 0,
+              fontSize: 'clamp(14px, 3vw, 20px)',
+              color: 'rgba(255, 240, 220, 0.95)',
+              margin: '4px 0 0 0',
               textTransform: 'uppercase',
               letterSpacing: '4px',
-              textShadow: '0 0 12px rgba(255, 150, 180, 0.5)',
+              fontWeight: 500,
+              textShadow: '0 0 10px rgba(255, 200, 100, 0.3)',
             }}
           >
             {levelName}
