@@ -49,8 +49,9 @@ export function LevelTitleOverlay({ level, levelName, collectibleEmoji, onComple
         <div
           style={{
             position: 'relative',
-            padding: '24px 48px',
-            borderRadius: '14px',
+            padding: '18px 38px',
+            borderRadius: '11px',
+            transform: 'scale(0.8)',
             textAlign: 'center',
             background: `
               linear-gradient(150deg, rgba(252, 248, 240, 0.97), rgba(242, 234, 218, 0.94)),
