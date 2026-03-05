@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 interface LevelTitleOverlayProps {
   level: number;
@@ -11,33 +11,44 @@ export function LevelTitleOverlay({ level, levelName, collectibleEmoji, onComple
   const [opacity, setOpacity] = useState(0);
   const [translateY, setTranslateY] = useState(0);
   const [visible, setVisible] = useState(true);
-  const startRef = useRef(performance.now());
+  const startRef = useRef<number>(0);
   const rafRef = useRef<number>();
+  const completedRef = useRef(false);
 
-  const FADE_IN = 400;
+  const FADE_IN = 380;
   const HOLD = 1200;
-  const FADE_OUT = 500;
-  const TOTAL = FADE_IN + HOLD + FADE_OUT;
+  const FADE_OUT = 680;
+  const TOTAL = FADE_IN + HOLD + FADE_OUT; // 2260ms ≈ 2.3s
+
+  const stableOnComplete = useCallback(() => {
+    if (!completedRef.current) {
+      completedRef.current = true;
+      onComplete();
+    }
+  }, [onComplete]);
 
   useEffect(() => {
+    completedRef.current = false;
     startRef.current = performance.now();
 
     const tick = () => {
       const elapsed = performance.now() - startRef.current;
 
       if (elapsed < FADE_IN) {
-        setOpacity(elapsed / FADE_IN);
+        const progress = Math.min(elapsed / FADE_IN, 1);
+        setOpacity(progress);
         setTranslateY(0);
       } else if (elapsed < FADE_IN + HOLD) {
         setOpacity(1);
         setTranslateY(0);
       } else if (elapsed < TOTAL) {
-        const fadeProgress = (elapsed - FADE_IN - HOLD) / FADE_OUT;
+        const fadeProgress = Math.min((elapsed - FADE_IN - HOLD) / FADE_OUT, 1);
         setOpacity(1 - fadeProgress);
-        setTranslateY(-12 * fadeProgress);
+        setTranslateY(-14 * fadeProgress);
       } else {
+        setOpacity(0);
         setVisible(false);
-        onComplete();
+        stableOnComplete();
         return;
       }
 
@@ -48,7 +59,7 @@ export function LevelTitleOverlay({ level, levelName, collectibleEmoji, onComple
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [onComplete]);
+  }, [stableOnComplete]);
 
   if (!visible) return null;
 
@@ -56,36 +67,40 @@ export function LevelTitleOverlay({ level, levelName, collectibleEmoji, onComple
     <div
       className="fixed inset-0 flex items-center justify-center pointer-events-none"
       style={{
-        zIndex: 40,
+        zIndex: 50,
         opacity,
         transform: `translateY(${translateY}px)`,
       }}
     >
       <div
-        className="px-8 py-4 rounded-2xl text-center"
+        className="px-10 py-5 rounded-2xl text-center"
         style={{
-          background: 'rgba(0, 0, 0, 0.25)',
-          backdropFilter: 'blur(6px)',
+          background: 'rgba(0, 0, 0, 0.3)',
+          backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255, 200, 220, 0.15)',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
         }}
       >
-        <p
-          className="text-sm tracking-[0.3em] uppercase mb-1"
-          style={{
-            color: 'rgba(255, 220, 230, 0.8)',
-            textShadow: '0 0 10px rgba(255, 150, 180, 0.4)',
-          }}
-        >
-          World {level}
-        </p>
         <h1
-          className="text-2xl sm:text-3xl font-bold"
+          className="text-2xl sm:text-3xl font-bold mb-1"
           style={{
-            color: 'rgba(255, 245, 248, 0.95)',
-            textShadow: '0 0 20px rgba(255, 180, 200, 0.5), 0 2px 4px rgba(0,0,0,0.3)',
+            color: '#fff',
+            textShadow: '0 0 24px rgba(255, 180, 200, 0.6), 0 2px 4px rgba(0,0,0,0.4)',
           }}
         >
-          {collectibleEmoji} {levelName} {collectibleEmoji}
+          {collectibleEmoji} WORLD {level} {collectibleEmoji}
         </h1>
+        {levelName && (
+          <p
+            className="text-sm sm:text-base tracking-widest uppercase"
+            style={{
+              color: 'rgba(255, 225, 235, 0.85)',
+              textShadow: '0 0 10px rgba(255, 150, 180, 0.4)',
+            }}
+          >
+            {levelName}
+          </p>
+        )}
       </div>
     </div>
   );
