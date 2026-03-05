@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 
-export type TutorialNudgeType = 'enemy' | 'rose' | 'shield' | 'cookie' | 'midFlag';
+export type TutorialNudgeType = 'enemy' | 'rose' | 'shield' | 'cookie' | 'midFlag' | 'fireSword';
 
 export interface EntityTrackingInfo {
   kind: 'enemy' | 'collectible' | 'midFlag';
@@ -25,6 +25,7 @@ const NUDGE_MESSAGES: Record<TutorialNudgeType, string> = {
   shield: "❤️ I protect you from one hit!",
   cookie: "🥠 Extra life unlocked!",
   midFlag: "🚩 I'm mandatory!\nTake me to the end to win.",
+  fireSword: "🗡️🔥 Collect me!\nYou'll need me to fight the Dragon Boss!",
 };
 
 const NUDGE_CONFIG: Record<TutorialNudgeType, { displayDuration: number; pauseDuration: number }> = {
@@ -33,6 +34,7 @@ const NUDGE_CONFIG: Record<TutorialNudgeType, { displayDuration: number; pauseDu
   shield: { displayDuration: 3000, pauseDuration: 0 },
   cookie: { displayDuration: 3000, pauseDuration: 500 },
   midFlag: { displayDuration: 3500, pauseDuration: 1800 },
+  fireSword: { displayDuration: 3500, pauseDuration: 1200 },
 };
 
 const GAP_MS = 2000;
@@ -241,7 +243,8 @@ export function useTutorialNudges(currentLevel: number) {
   }, []);
 
   const triggerNudge = useCallback((type: TutorialNudgeType, worldX: number, worldY: number, tracking?: EntityTrackingInfo) => {
-    if (currentLevel !== 1) return;
+    // fireSword nudge works on any level with a boss, not just level 1
+    if (type !== 'fireSword' && currentLevel !== 1) return;
 
     // In debug mode, allow re-triggering but still prevent duplicate active/queued
     if (!debugMode.current && seenRef.current.has(type)) return;
@@ -279,7 +282,7 @@ export function useTutorialNudges(currentLevel: number) {
   }, [clearAllTimers]);
 
   const canTrigger = useCallback((type: TutorialNudgeType): boolean => {
-    if (currentLevel !== 1) return false;
+    if (type !== 'fireSword' && currentLevel !== 1) return false;
     if (debugMode.current) return true;
     return !seenRef.current.has(type);
   }, [currentLevel]);

@@ -8,6 +8,7 @@ const SPEAKER_BADGES: Record<TutorialNudgeType, string> = {
   shield: '❤️',
   cookie: '🥠',
   midFlag: '🚩',
+  fireSword: '🗡️',
 };
 
 interface TutorialNudgeProps {
