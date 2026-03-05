@@ -86,7 +86,7 @@ export function GameEngine({
   const [isDying, setIsDying] = useState(false);
   const [showNeedFlagMessage, setShowNeedFlagMessage] = useState(false);
   const [showLevelCompleteOverlay, setShowLevelCompleteOverlay] = useState(false);
-  const [showLevelTitle, setShowLevelTitle] = useState(true);
+  const [showLevelTitle, setShowLevelTitle] = useState(false);
   const [fireworkParticles, setFireworkParticles] = useState<Array<{id: number; x: number; y: number; vx: number; vy: number; color: string; life: number; size: number}>>([]);
   
   const timerRef = useRef<NodeJS.Timeout>();
