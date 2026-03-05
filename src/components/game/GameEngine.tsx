@@ -811,6 +811,7 @@ export function GameEngine({
     }));
     
     audio.playDeath();
+    setShowLevelTitle(false); // Kill any active level title overlay on death
     setShowDeathOverlay(true);
     
     // Clear any existing death timeout
