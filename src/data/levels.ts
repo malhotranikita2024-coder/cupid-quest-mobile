@@ -301,8 +301,7 @@ function createLevel3(): LevelData {
       { start: 2600, width: 600 },
       { start: 3300, width: 450 },
       { start: 3850, width: 550 },
-      { start: 4500, width: 600 },
-      { start: 5200, width: 700 },
+      { start: 4500, width: 1500 }, // Extended ground for boss arena
     ]),
     // End platform - wide brick platform for flag planting
     { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
@@ -329,16 +328,12 @@ function createLevel3(): LevelData {
     createFloatingPlatform(3700, 320, 130),
     createFloatingPlatform(4000, 380, 150),
     createFloatingPlatform(4300, 300, 120),
-    createFloatingPlatform(4700, 360, 140),
-    createFloatingPlatform(5000, 280, 130),
-    createFloatingPlatform(5300, 400, 150),
-    createFloatingPlatform(5600, 340, 130),
   ];
 
   const collectibles: Collectible[] = [];
   for (let i = 0; i < 50; i++) {
     const x = 100 + i * 115;
-    if (x < LEVEL_WIDTH - 200) {
+    if (x < 4400) { // Stop collectibles before boss arena
       collectibles.push({
         x,
         y: i % 3 === 0 ? 200 + (i % 4) * 50 : GROUND_Y - 60,
@@ -349,6 +344,8 @@ function createLevel3(): LevelData {
     }
   }
   collectibles.push({ x: 380, y: 120, type: 'cookie', collected: false, animationOffset: 0 });
+  // Fire Sword - placed early in the level so player picks it up before boss
+  collectibles.push({ x: 1500, y: GROUND_Y - 60, type: 'fireSword', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
     // Single enemies - some can shoot fireballs (2-3 out of ~10)
@@ -364,8 +361,6 @@ function createLevel3(): LevelData {
     // Platform enemy guarding mid-flag area
     { x: 4300, y: 300 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: -1, patrolStart: 4300, patrolEnd: 4420, canShoot: true },
     { x: 4000, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: 1, patrolStart: 3900, patrolEnd: 4350, canShoot: true },
-    { x: 4700, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: -1, patrolStart: 4550, patrolEnd: 5050 },
-    { x: 5400, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 5250, patrolEnd: 5800 },
   ];
 
   const hitBlocks: HitBlock[] = [
@@ -376,24 +371,20 @@ function createLevel3(): LevelData {
     ...createBlockRow(2910, 340, ['brick', 'question', 'brick']),
     ...createBlockRow(3510, 360, ['brick', 'question', 'brick']),
     ...createBlockRow(4110, 340, ['brick', 'question', 'brick']),
-    ...createBlockRow(4810, 360, ['brick', 'question', 'brick']),
-    ...createBlockRow(5410, 340, ['brick', 'question', 'brick']),
   ];
 
   const pipes: Pipe[] = [
     createPipe(700, true),
     createPipe(1300, true),
     createPipe(1950, true),
-    createFirePipe(2550), // Fire pipe guarding fortune cookie area
+    createFirePipe(2550),
     createPipe(3250, true),
-    createPipe(4450, true),
-    createPipe(5100, true),
   ];
 
-  const fallingHazards: FallingHazard[] = []; // No falling hazards in level 3
+  const fallingHazards: FallingHazard[] = [];
 
   const boss: Boss = {
-    x: 5400,
+    x: 5000,
     y: 400,
     width: 80,
     height: 90,
@@ -404,7 +395,7 @@ function createLevel3(): LevelData {
     velocityY: 0,
     stunnedTimer: 0,
     attackTimer: 0,
-    spawnTimer: 180, // 3 seconds spawn-in animation
+    spawnTimer: 180,
     bounceCount: 0,
     isGrounded: false,
     direction: -1,
@@ -1121,6 +1112,7 @@ export const COLLECTIBLE_EMOJIS: Record<string, string> = {
   arrow: '🏹',
   cookie: '🍪',
   shield: '💖',
+  fireSword: '🗡️',
 };
 
 // Adaptive reward distribution for golden question blocks
