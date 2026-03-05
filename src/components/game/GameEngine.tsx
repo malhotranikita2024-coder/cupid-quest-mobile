@@ -11,7 +11,7 @@ import { useTouchControls } from '@/hooks/useTouchControls';
 import { useAudio } from '@/hooks/useAudio';
 import { useTutorialNudges } from '@/hooks/useTutorialNudges';
 import { getLevelData, COLLECTIBLE_EMOJIS } from '@/data/levels';
-import { PlayerState, LevelData, Collectible, Fireball } from '@/types/game';
+import { PlayerState, LevelData, Collectible, Fireball, PlayerFireball, Boss } from '@/types/game';
 
 interface GameEngineProps {
   currentLevel: number;
@@ -87,6 +87,9 @@ export function GameEngine({
   const [showNeedFlagMessage, setShowNeedFlagMessage] = useState(false);
   const [showLevelCompleteOverlay, setShowLevelCompleteOverlay] = useState(false);
   const [showLevelTitle, setShowLevelTitle] = useState(false);
+  const [playerFireballs, setPlayerFireballs] = useState<PlayerFireball[]>([]);
+  const [bossDefeated, setBossDefeated] = useState(false);
+  const [showBossIntro, setShowBossIntro] = useState(false);
   const [fireworkParticles, setFireworkParticles] = useState<Array<{id: number; x: number; y: number; vx: number; vy: number; color: string; life: number; size: number}>>([]);
   
   const timerRef = useRef<NodeJS.Timeout>();
@@ -157,7 +160,9 @@ export function GameEngine({
       setShowLevelTitle(false);
     }
 
-    
+    setPlayerFireballs([]);
+    setBossDefeated(false);
+    setShowBossIntro(false);
     setIsDying(false); // Reset death lock on level start
     isDeathLockedRef.current = false; // Reset synchronous death lock
     
@@ -301,7 +306,146 @@ export function GameEngine({
     return () => clearInterval(interval);
   }, [isPaused, showDeathOverlay, cameraX]);
 
-  // Update hit block bounce timers
+  // Update player fireballs movement
+  useEffect(() => {
+    if (isPaused || showDeathOverlay) return;
+    const interval = setInterval(() => {
+      setPlayerFireballs(prev => prev
+        .map(fb => ({ ...fb, x: fb.x + fb.velocityX }))
+        .filter(fb => fb.x > cameraX - 100 && fb.x < cameraX + window.innerWidth + 100)
+      );
+    }, 1000 / 60);
+    return () => clearInterval(interval);
+  }, [isPaused, showDeathOverlay, cameraX]);
+
+  // Boss AI + collision with player fireballs
+  useEffect(() => {
+    if (isPaused || showDeathOverlay) return;
+    
+    const interval = setInterval(() => {
+      setLevelData(prev => {
+        if (!prev.boss || prev.boss.state === 'defeated') return prev;
+        
+        let boss = { ...prev.boss };
+        const GROUND_Y = 520;
+        const BOSS_GRAVITY = 0.5;
+        const ARENA_LEFT = 5100;
+        const ARENA_RIGHT = 5800;
+        
+        // Spawn-in phase
+        if (boss.state === 'spawning') {
+          boss.spawnTimer--;
+          if (boss.spawnTimer <= 0) {
+            boss.state = 'bouncing';
+            boss.velocityY = -12;
+          }
+          return { ...prev, boss };
+        }
+        
+        // Stunned phase
+        if (boss.state === 'stunned') {
+          boss.stunnedTimer--;
+          boss.hitFlash = Math.max(0, boss.hitFlash - 1);
+          if (boss.stunnedTimer <= 0) {
+            boss.state = 'bouncing';
+            boss.velocityY = -14;
+            // Get faster as health decreases
+            const speedMultiplier = 1 + (boss.maxHealth - boss.health) * 0.3;
+            boss.velocityX = boss.direction * 3 * speedMultiplier;
+          }
+          return { ...prev, boss };
+        }
+        
+        // Bouncing phase - Jack-in-the-box bounces around
+        boss.velocityY += BOSS_GRAVITY;
+        boss.y += boss.velocityY;
+        boss.x += boss.velocityX;
+        
+        // Ground collision
+        if (boss.y + boss.height >= GROUND_Y) {
+          boss.y = GROUND_Y - boss.height;
+          boss.velocityY = -10 - Math.random() * 5; // Random bounce height
+          boss.isGrounded = true;
+          boss.bounceCount++;
+          
+          // Change direction sometimes
+          if (boss.bounceCount % 3 === 0) {
+            boss.direction = boss.direction === 1 ? -1 : 1;
+            const speedMultiplier = 1 + (boss.maxHealth - boss.health) * 0.3;
+            boss.velocityX = boss.direction * 3 * speedMultiplier;
+          }
+        } else {
+          boss.isGrounded = false;
+        }
+        
+        // Arena walls
+        if (boss.x < ARENA_LEFT) {
+          boss.x = ARENA_LEFT;
+          boss.direction = 1;
+          boss.velocityX = Math.abs(boss.velocityX);
+        }
+        if (boss.x + boss.width > ARENA_RIGHT) {
+          boss.x = ARENA_RIGHT - boss.width;
+          boss.direction = -1;
+          boss.velocityX = -Math.abs(boss.velocityX);
+        }
+        
+        boss.hitFlash = Math.max(0, boss.hitFlash - 1);
+        
+        // Check collision with player fireballs
+        let bossHit = false;
+        setPlayerFireballs(prevFb => {
+          return prevFb.map(fb => {
+            if (!fb.isActive) return fb;
+            if (
+              fb.x + fb.width > boss.x &&
+              fb.x < boss.x + boss.width &&
+              fb.y + fb.height > boss.y &&
+              fb.y < boss.y + boss.height
+            ) {
+              bossHit = true;
+              return { ...fb, isActive: false };
+            }
+            return fb;
+          });
+        });
+        
+        if (bossHit && boss.state === 'bouncing') {
+          boss.health--;
+          boss.hitFlash = 20;
+          boss.stunnedTimer = 90; // 1.5 seconds stunned
+          boss.state = boss.health <= 0 ? 'defeated' : 'stunned';
+          boss.velocityX = 0;
+          boss.velocityY = 0;
+          
+          if (boss.state === 'defeated') {
+            setBossDefeated(true);
+          }
+        }
+        
+        return { ...prev, boss };
+      });
+    }, 1000 / 60);
+    
+    return () => clearInterval(interval);
+  }, [isPaused, showDeathOverlay]);
+
+  // Boss triggers "boss intro" when player is near
+  useEffect(() => {
+    if (!levelData.boss || bossDefeated) return;
+    if (levelData.boss.state !== 'idle') return;
+    
+    // Activate boss when player gets close
+    if (player.x > 5000) {
+      setShowBossIntro(true);
+      setLevelData(prev => {
+        if (!prev.boss) return prev;
+        return { ...prev, boss: { ...prev.boss, state: 'spawning' } };
+      });
+      setTimeout(() => setShowBossIntro(false), 2500);
+    }
+  }, [player.x, levelData.boss, bossDefeated]);
+
   useEffect(() => {
     if (isPaused || showDeathOverlay) return;
 
@@ -645,6 +789,21 @@ export function GameEngine({
         case 'Escape':
           onPause();
           break;
+        case 'f':
+        case 'F':
+          // Shoot player fireball if boss level
+          if (levelData.boss && levelData.boss.state !== 'defeated') {
+            const dir = player.facingRight ? 1 : -1;
+            setPlayerFireballs(prev => [...prev, {
+              x: player.x + (dir === 1 ? 40 : -10),
+              y: player.y + 15,
+              velocityX: dir * 8,
+              width: 16,
+              height: 16,
+              isActive: true,
+            }]);
+          }
+          break;
       }
     };
 
@@ -676,7 +835,10 @@ export function GameEngine({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [handleLeftStart, handleLeftEnd, handleRightStart, handleRightEnd, handleJumpStart, handleJumpEnd, handleRunStart, handleRunEnd, onPause, showDeathOverlay]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handleLeftStart, handleLeftEnd, handleRightStart, handleRightEnd,
+      handleJumpStart, handleJumpEnd, handleRunStart, handleRunEnd,
+      onPause, showDeathOverlay]);
 
   // Tutorial: enemy nudge - visible in viewport AND player within ~250px proximity
   useEffect(() => {
@@ -813,6 +975,7 @@ export function GameEngine({
     
     audio.playDeath();
     setShowLevelTitle(false); // Kill any active level title overlay on death
+    setPlayerFireballs([]); // Clear player fireballs on death
     setShowDeathOverlay(true);
     
     // Clear any existing death timeout
@@ -1193,6 +1356,7 @@ export function GameEngine({
         hasShield={hasShield}
         hasMidFlag={levelData.midFlag.collected}
         isPlantingFlag={isPlantingFlag}
+        playerFireballs={playerFireballs}
       />
       
       <GameHUD
@@ -1312,6 +1476,44 @@ export function GameEngine({
             >
               Continue →
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Boss intro overlay */}
+      {showBossIntro && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none animate-fade-in">
+          <div style={{
+            padding: '20px 40px',
+            borderRadius: '16px',
+            background: 'rgba(80, 0, 0, 0.85)',
+            border: '2px solid rgba(255, 50, 50, 0.6)',
+            boxShadow: '0 0 40px rgba(255, 0, 0, 0.3)',
+            textAlign: 'center',
+          }}>
+            <p style={{ fontSize: '14px', color: 'rgba(255, 200, 200, 0.8)', margin: '0 0 6px', letterSpacing: '3px', textTransform: 'uppercase' }}>
+              ⚠️ Boss Battle ⚠️
+            </p>
+            <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: '#fff', margin: '0 0 4px', textShadow: '0 0 20px rgba(255, 50, 50, 0.8)' }}>
+              🤡 Jack-in-the-Box 🤡
+            </h1>
+            <p style={{ fontSize: '14px', color: 'rgba(255, 220, 150, 0.9)', margin: '4px 0 0' }}>
+              Press <span style={{ padding: '2px 8px', background: 'rgba(255,255,255,0.15)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700, fontFamily: 'monospace' }}>F</span> to shoot fireballs!
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Boss fight F key hint - persistent during boss fight */}
+      {levelData.boss && levelData.boss.state !== 'defeated' && levelData.boss.state !== 'idle' && !showBossIntro && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '8px 16px', borderRadius: '10px',
+            background: 'rgba(0,0,0,0.5)', border: '1.5px solid rgba(255,255,255,0.2)',
+          }}>
+            <span style={{ padding: '3px 10px', borderRadius: '5px', background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff', fontSize: '12px', fontWeight: 700, fontFamily: 'monospace' }}>F</span>
+            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', fontWeight: 600 }}>SHOOT</span>
           </div>
         </div>
       )}
