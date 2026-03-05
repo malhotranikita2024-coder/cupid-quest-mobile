@@ -140,7 +140,8 @@ export interface PlayerFireball {
   isActive: boolean;
 }
 
-export type BossState = 'idle' | 'bouncing' | 'stunned' | 'defeated' | 'spawning';
+export type BossState = 'idle' | 'bouncing' | 'stunned' | 'defeated' | 'spawning' | 'charging';
+export type BossType = 'blockDragon' | 'pearlKraken';
 
 export interface Boss {
   x: number;
@@ -159,6 +160,12 @@ export interface Boss {
   isGrounded: boolean;
   direction: 1 | -1;
   hitFlash: number;
+  bossType?: BossType;
+  arenaLeft?: number;
+  arenaRight?: number;
+  phase?: number;
+  chargeTimer?: number;
+  summonTimer?: number;
 }
 
 export interface Checkpoint {
