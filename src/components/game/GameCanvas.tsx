@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { PlayerState, TouchControls, LevelData, HitBlock, Pipe, FallingHazard, Fireball, LevelFlag, MidLevelFlag, PlayerFireball, Boss } from '@/types/game';
 import { COLLECTIBLE_EMOJIS } from '@/data/levels';
+import bossSprite from '@/assets/boss-block-dragon.png';
 
 interface GameCanvasProps {
   levelData: LevelData;
@@ -66,6 +67,14 @@ export function GameCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
   const wasJumpingRef = useRef(false);
+  const bossImgRef = useRef<HTMLImageElement | null>(null);
+
+  // Load boss sprite
+  useEffect(() => {
+    const img = new Image();
+    img.src = bossSprite;
+    img.onload = () => { bossImgRef.current = img; };
+  }, []);
 
   // Dust particle system
   interface DustParticle {
@@ -821,106 +830,146 @@ export function GameCanvas({
       ctx.restore();
     });
 
-    // Draw boss (Jack-in-the-Box)
+    // Draw boss (Block Dragon)
     if (levelData.boss && levelData.boss.state !== 'defeated') {
       const boss = levelData.boss;
       const bossX = boss.x + boss.width / 2;
       const bossY = boss.y;
-      const wobble = Math.sin(time / 150) * 4;
       const isStunned = boss.state === 'stunned';
       const isSpawning = boss.state === 'spawning';
       const flashOn = boss.hitFlash > 0 && Math.floor(boss.hitFlash / 3) % 2 === 0;
+      const wobble = Math.sin(time / 150) * 3;
       
       ctx.save();
       
       // Boss shadow
       ctx.beginPath();
-      ctx.ellipse(bossX, boss.y + boss.height, 45, 12, 0, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.ellipse(bossX, boss.y + boss.height + 5, 50, 14, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
       ctx.fill();
       
       // Boss glow
       ctx.beginPath();
-      ctx.arc(bossX, bossY + boss.height / 2, 55, 0, Math.PI * 2);
-      const bossGlow = ctx.createRadialGradient(bossX, bossY + boss.height / 2, 10, bossX, bossY + boss.height / 2, 55);
-      bossGlow.addColorStop(0, isStunned ? 'rgba(255, 255, 100, 0.4)' : 'rgba(200, 50, 50, 0.35)');
+      ctx.arc(bossX, bossY + boss.height / 2, 60, 0, Math.PI * 2);
+      const bossGlow = ctx.createRadialGradient(bossX, bossY + boss.height / 2, 10, bossX, bossY + boss.height / 2, 60);
+      bossGlow.addColorStop(0, isStunned ? 'rgba(255, 255, 100, 0.35)' : 'rgba(255, 80, 30, 0.3)');
       bossGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = bossGlow;
       ctx.fill();
       
       if (flashOn) {
-        ctx.globalAlpha = 0.5;
+        ctx.globalAlpha = 0.4;
       }
       
       if (isSpawning) {
-        // Spawning animation: bouncing box
+        // Spawning: blocks assembling
         const spawnProgress = 1 - (boss.spawnTimer / 180);
         ctx.globalAlpha = spawnProgress;
-        ctx.font = '60px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('🎁', bossX, bossY + boss.height - 10 + Math.sin(time / 100) * 8);
-      } else {
-        // Main Jack-in-the-box body (box base)
-        ctx.fillStyle = '#8B4513';
-        ctx.fillRect(boss.x + 10, bossY + boss.height - 35, boss.width - 20, 35);
-        ctx.strokeStyle = '#FFD700';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(boss.x + 10, bossY + boss.height - 35, boss.width - 20, 35);
         
-        // Spring
-        ctx.strokeStyle = '#C0C0C0';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        const springSegments = 6;
-        for (let i = 0; i <= springSegments; i++) {
-          const sy = bossY + boss.height - 35 - (i * 8);
-          const sx = bossX + (i % 2 === 0 ? -10 : 10);
-          if (i === 0) ctx.moveTo(bossX, bossY + boss.height - 35);
-          else ctx.lineTo(sx, sy);
+        // Draw scattered blocks assembling
+        const blockColors = ['#CC0000', '#0066CC', '#FFCC00', '#00AA00'];
+        const blockCount = Math.floor(spawnProgress * 8);
+        for (let i = 0; i < blockCount; i++) {
+          const bx = bossX - 30 + (i % 4) * 18 + Math.sin(time / 80 + i) * (1 - spawnProgress) * 30;
+          const by = bossY + 20 + Math.floor(i / 4) * 18 + Math.cos(time / 80 + i) * (1 - spawnProgress) * 30;
+          ctx.fillStyle = blockColors[i % 4];
+          ctx.fillRect(bx, by, 16, 16);
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(bx, by, 16, 16);
         }
-        ctx.stroke();
+      } else if (bossImgRef.current) {
+        // Draw Block Dragon sprite
+        const spriteW = 100;
+        const spriteH = 100;
+        const drawX = bossX - spriteW / 2;
+        const drawY = bossY + boss.height - spriteH + (isStunned ? 0 : wobble);
         
-        // Jack head (clown/jester emoji)
-        ctx.font = isStunned ? '45px Arial' : '50px Arial';
-        ctx.textAlign = 'center';
-        const headY = bossY + 25 + (isStunned ? 0 : wobble);
+        // Flip sprite based on direction
+        if (boss.direction === 1) {
+          ctx.save();
+          ctx.translate(bossX, 0);
+          ctx.scale(-1, 1);
+          ctx.translate(-bossX, 0);
+        }
         
-        // Evil eyes
-        if (!isStunned) {
-          ctx.fillText('🤡', bossX, headY);
-          // Add angry eyebrows
-          ctx.font = 'bold 14px Arial';
-          ctx.fillStyle = '#FF0000';
-          ctx.fillText('😈', bossX, headY - 30);
-        } else {
-          // Dizzy when stunned
-          ctx.fillText('😵', bossX, headY);
+        // Stunned tint overlay
+        if (isStunned) {
+          ctx.globalAlpha = 0.6 + Math.sin(time / 60) * 0.2;
+        }
+        
+        ctx.drawImage(bossImgRef.current, drawX, drawY, spriteW, spriteH);
+        
+        if (boss.direction === 1) {
+          ctx.restore();
+        }
+        
+        // Stunned stars effect
+        if (isStunned) {
+          ctx.font = '18px Arial';
+          ctx.textAlign = 'center';
+          ctx.globalAlpha = 1;
+          const starX1 = bossX - 25 + Math.sin(time / 120) * 15;
+          const starY1 = drawY - 5 + Math.cos(time / 120) * 5;
+          const starX2 = bossX + 25 - Math.sin(time / 120) * 15;
+          const starY2 = drawY - 10 - Math.cos(time / 120) * 5;
+          ctx.fillText('⭐', starX1, starY1);
+          ctx.fillText('⭐', starX2, starY2);
+          ctx.fillText('💫', bossX, drawY - 15 + Math.sin(time / 80) * 4);
+        }
+        
+        // Fire breath particles when bouncing
+        if (boss.state === 'bouncing' && boss.bounceCount % 4 < 2) {
           ctx.font = '16px Arial';
-          ctx.fillText('💫', bossX - 20 + Math.sin(time / 100) * 10, headY - 25);
-          ctx.fillText('💫', bossX + 20 - Math.sin(time / 100) * 10, headY - 20);
+          const fireDir = boss.direction === -1 ? -1 : 1;
+          const fireX = bossX + fireDir * 45;
+          const fireY = drawY + 35 + Math.sin(time / 50) * 3;
+          ctx.fillText('🔥', fireX, fireY);
+          ctx.font = '12px Arial';
+          ctx.fillText('🔥', fireX + fireDir * 15, fireY - 5);
         }
+      } else {
+        // Fallback if sprite not loaded: simple colored block dragon
+        ctx.fillStyle = '#CC0000';
+        ctx.fillRect(boss.x, bossY, boss.width, boss.height);
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(boss.x, bossY, boss.width, boss.height);
+        ctx.font = 'bold 14px Arial';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.fillText('🐉', bossX, bossY + boss.height / 2 + 5);
       }
       
       ctx.restore();
       
       // Boss health bar (world space, above boss)
       if (boss.state !== 'spawning') {
-        const barWidth = 70;
-        const barHeight = 8;
+        const barWidth = 80;
+        const barHeight = 10;
         const barX = bossX - barWidth / 2;
-        const barY = bossY - 15;
+        const barY = bossY - 20;
         const healthPct = boss.health / boss.maxHealth;
         
-        ctx.fillStyle = 'rgba(0,0,0,0.6)';
-        ctx.fillRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2);
+        // Background
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4);
         
-        const healthColor = healthPct > 0.5 ? '#00CC00' : healthPct > 0.25 ? '#FFAA00' : '#FF0000';
+        // Health fill
+        const healthColor = healthPct > 0.5 ? '#00DD00' : healthPct > 0.25 ? '#FFAA00' : '#FF2200';
         ctx.fillStyle = healthColor;
         ctx.fillRect(barX, barY, barWidth * healthPct, barHeight);
         
-        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        // Outline
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
         ctx.lineWidth = 1;
         ctx.strokeRect(barX, barY, barWidth, barHeight);
+        
+        // Boss name
+        ctx.font = 'bold 10px Arial';
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.fillText('BLOCK DRAGON', bossX, barY - 5);
       }
     }
     
@@ -929,12 +978,28 @@ export function GameCanvas({
       const boss = levelData.boss;
       const bossX = boss.x + boss.width / 2;
       ctx.save();
-      ctx.font = '40px Arial';
-      ctx.textAlign = 'center';
-      ctx.globalAlpha = Math.max(0, 1 - (time % 3000) / 2000);
-      ctx.fillText('💥', bossX, boss.y + 30);
-      ctx.fillText('⭐', bossX - 25, boss.y + 10);
-      ctx.fillText('⭐', bossX + 25, boss.y + 50);
+      // Scattered blocks explosion
+      const blockColors = ['#CC0000', '#0066CC', '#FFCC00', '#00AA00', '#FF6600'];
+      const elapsed = time % 5000;
+      if (elapsed < 3000) {
+        for (let i = 0; i < 12; i++) {
+          const angle = (i / 12) * Math.PI * 2;
+          const dist = (elapsed / 30) + i * 5;
+          const bx = bossX + Math.cos(angle) * dist;
+          const by = boss.y + 45 + Math.sin(angle) * dist + (elapsed / 50);
+          const alpha = Math.max(0, 1 - elapsed / 2500);
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = blockColors[i % blockColors.length];
+          ctx.fillRect(bx - 6, by - 6, 12, 12);
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(bx - 6, by - 6, 12, 12);
+        }
+        ctx.globalAlpha = Math.max(0, 1 - elapsed / 1500);
+        ctx.font = '36px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('💥', bossX, boss.y + 40);
+      }
       ctx.restore();
     }
 
