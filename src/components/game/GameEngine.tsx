@@ -1273,8 +1273,8 @@ export function GameEngine({
         </div>
       )}
 
-      {/* Level title cinematic overlay */}
-      {showLevelTitle && (
+      {/* Level title cinematic overlay - above everything except pause */}
+      {showLevelTitle && !isPaused && !showDeathOverlay && (
         <LevelTitleOverlay
           key={`level-title-${currentLevel}`}
           level={levelData.id}
