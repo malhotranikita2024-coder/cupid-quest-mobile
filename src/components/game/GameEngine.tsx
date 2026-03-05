@@ -88,6 +88,8 @@ export function GameEngine({
   const [showLevelCompleteOverlay, setShowLevelCompleteOverlay] = useState(false);
   const [showLevelTitle, setShowLevelTitle] = useState(false);
   const [playerFireballs, setPlayerFireballs] = useState<PlayerFireball[]>([]);
+  const [hasFirePower, setHasFirePower] = useState(false);
+  const [showFireSwordPopup, setShowFireSwordPopup] = useState(false);
   const [bossDefeated, setBossDefeated] = useState(false);
   const [showBossIntro, setShowBossIntro] = useState(false);
   const [fireworkParticles, setFireworkParticles] = useState<Array<{id: number; x: number; y: number; vx: number; vy: number; color: string; life: number; size: number}>>([]);
@@ -102,6 +104,10 @@ export function GameEngine({
   playerRef.current = player;
   const levelDataRef = useRef(levelData);
   levelDataRef.current = levelData;
+  const playerFireballsRef = useRef(playerFireballs);
+  playerFireballsRef.current = playerFireballs;
+  const hasFirePowerRef = useRef(hasFirePower);
+  hasFirePowerRef.current = hasFirePower;
   // Track which level the title overlay has already been shown for
   const levelTitleShownForRef = useRef<number | null>(null);
   
@@ -168,6 +174,8 @@ export function GameEngine({
     setPlayerFireballs([]);
     setBossDefeated(false);
     setShowBossIntro(false);
+    setHasFirePower(false);
+    setShowFireSwordPopup(false);
     setIsDying(false); // Reset death lock on level start
     isDeathLockedRef.current = false; // Reset synchronous death lock
     
@@ -334,7 +342,7 @@ export function GameEngine({
         let boss = { ...prev.boss };
         const GROUND_Y = 520;
         const BOSS_GRAVITY = 0.5;
-        const ARENA_LEFT = 5100;
+        const ARENA_LEFT = 4700;
         const ARENA_RIGHT = 5800;
         
         // Spawn-in phase
@@ -361,15 +369,33 @@ export function GameEngine({
           return { ...prev, boss };
         }
         
-        // Bouncing phase - Jack-in-the-box bounces around
+        // Bouncing phase - Block Dragon bounces around
         boss.velocityY += BOSS_GRAVITY;
         boss.y += boss.velocityY;
         boss.x += boss.velocityX;
         
+        // Boss attack timer - shoot fireballs at player
+        boss.attackTimer = (boss.attackTimer || 0) + 1;
+        const attackInterval = Math.max(60, 120 - (boss.maxHealth - boss.health) * 15);
+        if (boss.attackTimer >= attackInterval && boss.state === 'bouncing') {
+          boss.attackTimer = 0;
+          const p = playerRef.current;
+          const dirToPlayer = p.x < boss.x ? -1 : 1;
+          // Boss shoots a fireball toward the player
+          prev.fireballs = [...(prev.fireballs || []), {
+            x: boss.x + boss.width / 2 + dirToPlayer * 40,
+            y: boss.y + 30,
+            velocityX: dirToPlayer * 5,
+            width: 24,
+            height: 24,
+            isActive: true,
+          }];
+        }
+        
         // Ground collision
         if (boss.y + boss.height >= GROUND_Y) {
           boss.y = GROUND_Y - boss.height;
-          boss.velocityY = -10 - Math.random() * 5; // Random bounce height
+          boss.velocityY = -10 - Math.random() * 5;
           boss.isGrounded = true;
           boss.bounceCount++;
           
@@ -397,28 +423,48 @@ export function GameEngine({
         
         boss.hitFlash = Math.max(0, boss.hitFlash - 1);
         
-        // Check collision with player fireballs
+        // Check collision with player fireballs - use expanded hitbox for better hit detection
         let bossHit = false;
+        const hitPadding = 15; // Expand hitbox for easier hits
         setPlayerFireballs(prevFb => {
-          return prevFb.map(fb => {
+          const newFb = prevFb.map(fb => {
             if (!fb.isActive) return fb;
             if (
-              fb.x + fb.width > boss.x &&
-              fb.x < boss.x + boss.width &&
-              fb.y + fb.height > boss.y &&
-              fb.y < boss.y + boss.height
+              fb.x + fb.width > boss.x - hitPadding &&
+              fb.x < boss.x + boss.width + hitPadding &&
+              fb.y + fb.height > boss.y - hitPadding &&
+              fb.y < boss.y + boss.height + hitPadding
             ) {
               bossHit = true;
               return { ...fb, isActive: false };
             }
             return fb;
           });
+          return newFb;
         });
+        
+        // Also check using ref for immediate collision (fixes race condition)
+        if (!bossHit) {
+          const currentFireballs = playerFireballsRef.current;
+          for (const fb of currentFireballs) {
+            if (!fb.isActive) continue;
+            if (
+              fb.x + fb.width > boss.x - hitPadding &&
+              fb.x < boss.x + boss.width + hitPadding &&
+              fb.y + fb.height > boss.y - hitPadding &&
+              fb.y < boss.y + boss.height + hitPadding
+            ) {
+              bossHit = true;
+              fb.isActive = false;
+              break;
+            }
+          }
+        }
         
         if (bossHit && boss.state === 'bouncing') {
           boss.health--;
           boss.hitFlash = 20;
-          boss.stunnedTimer = 90; // 1.5 seconds stunned
+          boss.stunnedTimer = 90;
           boss.state = boss.health <= 0 ? 'defeated' : 'stunned';
           boss.velocityX = 0;
           boss.velocityY = 0;
@@ -441,7 +487,7 @@ export function GameEngine({
     if (levelData.boss.state !== 'idle') return;
     
     // Activate boss when player gets close
-    if (player.x > 5000) {
+    if (player.x > 4500) {
       setShowBossIntro(true);
       setLevelData(prev => {
         if (!prev.boss) return prev;
@@ -450,6 +496,19 @@ export function GameEngine({
       setTimeout(() => setShowBossIntro(false), 2500);
     }
   }, [player.x, levelData.boss, bossDefeated]);
+
+  // Fire sword proximity popup
+  useEffect(() => {
+    if (hasFirePower || isPaused || showDeathOverlay) return;
+    const fireSword = levelData.collectibles.find(c => c.type === 'fireSword' && !c.collected);
+    if (!fireSword) { setShowFireSwordPopup(false); return; }
+    const dist = Math.abs(player.x - fireSword.x);
+    if (dist < 300) {
+      setShowFireSwordPopup(true);
+    } else {
+      setShowFireSwordPopup(false);
+    }
+  }, [player.x, hasFirePower, isPaused, showDeathOverlay, levelData.collectibles]);
 
   useEffect(() => {
     if (isPaused || showDeathOverlay) return;
@@ -796,8 +855,8 @@ export function GameEngine({
           break;
         case 'f':
         case 'F':
-          // Shoot player fireball if boss level (use refs for fresh values)
-          if (levelDataRef.current.boss && levelDataRef.current.boss.state !== 'defeated' && levelDataRef.current.boss.state !== 'idle') {
+          // Shoot player fireball if has fire power and boss level
+          if (hasFirePowerRef.current && levelDataRef.current.boss && levelDataRef.current.boss.state !== 'defeated' && levelDataRef.current.boss.state !== 'idle') {
             const p = playerRef.current;
             const dir = p.facingRight ? 1 : -1;
             setPlayerFireballs(prev => [...prev, {
@@ -1028,6 +1087,12 @@ export function GameEngine({
 
   const handleCollectItem = useCallback((index: number) => {
     setLevelData(prev => {
+      const collectible = prev.collectibles[index];
+      // Check if it's a fire sword
+      if (collectible && collectible.type === 'fireSword') {
+        setHasFirePower(true);
+        setShowFireSwordPopup(false); // Hide the "collect me" popup
+      }
       const newCollectibles = [...prev.collectibles];
       newCollectibles[index] = { ...newCollectibles[index], collected: true };
       return { ...prev, collectibles: newCollectibles };
@@ -1454,6 +1519,27 @@ export function GameEngine({
         />
       )}
 
+      {/* Fire Sword popup - "Collect me!" hint */}
+      {showFireSwordPopup && (
+        <div className="fixed inset-x-0 top-20 z-50 flex justify-center pointer-events-none animate-fade-in">
+          <div style={{
+            padding: '10px 24px',
+            borderRadius: '14px',
+            background: 'rgba(180, 50, 0, 0.9)',
+            border: '2px solid rgba(255, 150, 50, 0.7)',
+            boxShadow: '0 0 30px rgba(255, 80, 0, 0.4)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+          }}>
+            <span style={{ fontSize: '28px' }}>🗡️🔥</span>
+            <span style={{ color: '#FFD700', fontSize: '16px', fontWeight: 700, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+              Collect me! You'll need me to fight the Dragon Boss!
+            </span>
+          </div>
+        </div>
+      )}
+
       {showNeedFlagMessage && (
         <div className="fixed inset-x-0 top-24 z-50 flex justify-center pointer-events-none animate-fade-in">
           <div className="bg-black/80 text-white px-6 py-3 rounded-2xl text-lg font-display flex items-center gap-2 shadow-lg border border-white/20">
@@ -1504,14 +1590,18 @@ export function GameEngine({
               🐉 Block Dragon 🐉
             </h1>
             <p style={{ fontSize: '14px', color: 'rgba(255, 220, 150, 0.9)', margin: '4px 0 0' }}>
-              Press <span style={{ padding: '2px 8px', background: 'rgba(255,255,255,0.15)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700, fontFamily: 'monospace' }}>F</span> to shoot fireballs!
+              {hasFirePower ? (
+                <>Press <span style={{ padding: '2px 8px', background: 'rgba(255,255,255,0.15)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.3)', fontWeight: 700, fontFamily: 'monospace' }}>F</span> to shoot fireballs!</>
+              ) : (
+                <>You need the 🗡️ Fire Sword to fight!</>
+              )}
             </p>
           </div>
         </div>
       )}
 
       {/* Boss fight F key hint - persistent during boss fight */}
-      {levelData.boss && levelData.boss.state !== 'defeated' && levelData.boss.state !== 'idle' && !showBossIntro && (
+      {hasFirePower && levelData.boss && levelData.boss.state !== 'defeated' && levelData.boss.state !== 'idle' && !showBossIntro && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 pointer-events-none">
           <div style={{
             display: 'flex', alignItems: 'center', gap: '8px',

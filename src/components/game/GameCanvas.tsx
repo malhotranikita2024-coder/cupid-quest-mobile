@@ -312,6 +312,8 @@ export function GameCanvas({
       if (distance < 40) {
         if (collectible.type === 'cookie') {
           onCollectCookie(index);
+        } else if (collectible.type === 'fireSword') {
+          onCollectItem(index); // Fire sword uses same collect handler
         } else if (collectible.type === 'shield') {
           onCollectShield(index);
         } else if (collectible.isBurst) {
@@ -811,22 +813,50 @@ export function GameCanvas({
       ctx.fillText('🔥', fireball.x + fireball.width / 2, fireball.y + wobble + 12);
     });
 
-    // Draw player fireballs
+    // Draw player fireballs - enhanced real fire effect
     playerFireballs.forEach(fb => {
       if (!fb.isActive) return;
       ctx.save();
-      ctx.font = '20px Arial';
-      ctx.textAlign = 'center';
-      // Blue/cyan fireball glow
+      
+      // Outer fire glow
       ctx.beginPath();
-      ctx.arc(fb.x + fb.width / 2, fb.y + fb.height / 2, 14, 0, Math.PI * 2);
-      const fbGlow = ctx.createRadialGradient(fb.x + fb.width / 2, fb.y + fb.height / 2, 2, fb.x + fb.width / 2, fb.y + fb.height / 2, 14);
-      fbGlow.addColorStop(0, 'rgba(100, 200, 255, 0.9)');
-      fbGlow.addColorStop(0.5, 'rgba(50, 150, 255, 0.5)');
-      fbGlow.addColorStop(1, 'rgba(0, 100, 255, 0)');
-      ctx.fillStyle = fbGlow;
+      ctx.arc(fb.x + fb.width / 2, fb.y + fb.height / 2, 20, 0, Math.PI * 2);
+      const outerGlow = ctx.createRadialGradient(fb.x + fb.width / 2, fb.y + fb.height / 2, 3, fb.x + fb.width / 2, fb.y + fb.height / 2, 20);
+      outerGlow.addColorStop(0, 'rgba(255, 255, 200, 1)');
+      outerGlow.addColorStop(0.3, 'rgba(255, 180, 50, 0.9)');
+      outerGlow.addColorStop(0.6, 'rgba(255, 80, 0, 0.6)');
+      outerGlow.addColorStop(1, 'rgba(200, 30, 0, 0)');
+      ctx.fillStyle = outerGlow;
       ctx.fill();
-      ctx.fillText('💫', fb.x + fb.width / 2, fb.y + fb.height / 2 + 6);
+      
+      // Inner bright core
+      ctx.beginPath();
+      ctx.arc(fb.x + fb.width / 2, fb.y + fb.height / 2, 8, 0, Math.PI * 2);
+      const coreGlow = ctx.createRadialGradient(fb.x + fb.width / 2, fb.y + fb.height / 2, 1, fb.x + fb.width / 2, fb.y + fb.height / 2, 8);
+      coreGlow.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      coreGlow.addColorStop(0.5, 'rgba(255, 255, 100, 0.9)');
+      coreGlow.addColorStop(1, 'rgba(255, 150, 0, 0.7)');
+      ctx.fillStyle = coreGlow;
+      ctx.fill();
+      
+      // Fire trail particles
+      const trailDir = fb.velocityX > 0 ? -1 : 1;
+      for (let i = 0; i < 4; i++) {
+        const tx = fb.x + fb.width / 2 + trailDir * (8 + i * 6) + Math.sin(time / 30 + i) * 3;
+        const ty = fb.y + fb.height / 2 + Math.sin(time / 40 + i * 2) * 4;
+        const tAlpha = 0.7 - i * 0.15;
+        const tSize = 5 - i;
+        ctx.beginPath();
+        ctx.arc(tx, ty, tSize, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, ${120 + i * 30}, 0, ${tAlpha})`;
+        ctx.fill();
+      }
+      
+      // Fire emoji on top
+      ctx.font = '16px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('🔥', fb.x + fb.width / 2, fb.y + fb.height / 2 + 5);
+      
       ctx.restore();
     });
 
@@ -918,15 +948,33 @@ export function GameCanvas({
           ctx.fillText('💫', bossX, drawY - 15 + Math.sin(time / 80) * 4);
         }
         
-        // Fire breath particles when bouncing
-        if (boss.state === 'bouncing' && boss.bounceCount % 4 < 2) {
-          ctx.font = '16px Arial';
+        // Fire breath effect - continuous when bouncing
+        if (boss.state === 'bouncing') {
           const fireDir = boss.direction === -1 ? -1 : 1;
-          const fireX = bossX + fireDir * 45;
-          const fireY = drawY + 35 + Math.sin(time / 50) * 3;
-          ctx.fillText('🔥', fireX, fireY);
-          ctx.font = '12px Arial';
-          ctx.fillText('🔥', fireX + fireDir * 15, fireY - 5);
+          const mouthX = bossX + fireDir * 38;
+          const mouthY = drawY + 30;
+          
+          // Draw fire breath stream
+          for (let i = 0; i < 6; i++) {
+            const dist = 8 + i * 10;
+            const fx = mouthX + fireDir * dist;
+            const fy = mouthY + Math.sin(time / 40 + i * 0.8) * (3 + i);
+            const fSize = 14 - i * 1.5;
+            const fAlpha = 1 - i * 0.15;
+            
+            ctx.beginPath();
+            ctx.arc(fx, fy, fSize, 0, Math.PI * 2);
+            const fGrad = ctx.createRadialGradient(fx, fy, 1, fx, fy, fSize);
+            fGrad.addColorStop(0, `rgba(255, 255, 200, ${fAlpha})`);
+            fGrad.addColorStop(0.4, `rgba(255, 150, 0, ${fAlpha * 0.7})`);
+            fGrad.addColorStop(1, `rgba(200, 30, 0, 0)`);
+            ctx.fillStyle = fGrad;
+            ctx.fill();
+          }
+          
+          // Fire emoji at mouth
+          ctx.font = '18px Arial';
+          ctx.fillText('🔥', mouthX + fireDir * 15, mouthY + 5);
         }
       } else {
         // Fallback if sprite not loaded: simple colored block dragon
@@ -1110,6 +1158,29 @@ export function GameCanvas({
         ctx.fillStyle = 'rgba(255, 100, 150, 0.4)';
         ctx.fill();
         ctx.font = '31px Arial'; // Scaled 30% (was 44)
+      } else if (collectible.type === 'fireSword') {
+        // Fire Sword - dramatic fire glow
+        const pulse = Math.sin(time / 100) * 0.4 + 0.8;
+        ctx.beginPath();
+        ctx.arc(collectible.x, collectible.y + bobY - 5, 28 * pulse, 0, Math.PI * 2);
+        const fireGlow = ctx.createRadialGradient(
+          collectible.x, collectible.y + bobY - 5, 4,
+          collectible.x, collectible.y + bobY - 5, 28 * pulse
+        );
+        fireGlow.addColorStop(0, 'rgba(255, 200, 50, 0.8)');
+        fireGlow.addColorStop(0.4, 'rgba(255, 100, 0, 0.5)');
+        fireGlow.addColorStop(1, 'rgba(200, 30, 0, 0)');
+        ctx.fillStyle = fireGlow;
+        ctx.fill();
+        // Fire particles around it
+        for (let i = 0; i < 5; i++) {
+          const angle = time / 120 + (i * Math.PI * 2 / 5);
+          const fx = collectible.x + Math.cos(angle) * 18;
+          const fy = collectible.y + bobY + Math.sin(angle) * 18;
+          ctx.font = '10px Arial';
+          ctx.fillText('🔥', fx, fy);
+        }
+        ctx.font = '32px Arial';
       } else {
         ctx.font = collectible.type === 'cookie' ? '29px Arial' : '27px Arial'; // Scaled 30%
       }

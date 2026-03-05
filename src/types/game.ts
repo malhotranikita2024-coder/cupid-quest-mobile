@@ -92,7 +92,7 @@ export interface FallingHazard {
 export interface Collectible {
   x: number;
   y: number;
-  type: 'rose' | 'chocolate' | 'teddy' | 'letter' | 'pearl' | 'ring' | 'arrow' | 'cookie' | 'shield';
+  type: 'rose' | 'chocolate' | 'teddy' | 'letter' | 'pearl' | 'ring' | 'arrow' | 'cookie' | 'shield' | 'fireSword';
   collected: boolean;
   animationOffset: number;
   fromBlock?: boolean;
