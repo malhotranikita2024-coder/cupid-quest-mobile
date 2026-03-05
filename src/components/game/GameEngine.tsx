@@ -342,8 +342,8 @@ export function GameEngine({
         let boss = { ...prev.boss };
         const GROUND_Y = 520;
         const BOSS_GRAVITY = 0.5;
-        const ARENA_LEFT = 4700;
-        const ARENA_RIGHT = 5800;
+        const ARENA_LEFT = 5100;
+        const ARENA_RIGHT = 5850;
         
         // Spawn-in phase
         if (boss.state === 'spawning') {
@@ -425,7 +425,7 @@ export function GameEngine({
         
         // Check collision with player fireballs - use expanded hitbox for better hit detection
         let bossHit = false;
-        const hitPadding = 15; // Expand hitbox for easier hits
+        const hitPadding = 25; // Generous hitbox for reliable hits with larger fireballs
         setPlayerFireballs(prevFb => {
           const newFb = prevFb.map(fb => {
             if (!fb.isActive) return fb;
@@ -487,7 +487,7 @@ export function GameEngine({
     if (levelData.boss.state !== 'idle') return;
     
     // Activate boss when player gets close
-    if (player.x > 4500) {
+    if (player.x > 5000) {
       setShowBossIntro(true);
       setLevelData(prev => {
         if (!prev.boss) return prev;
@@ -860,11 +860,11 @@ export function GameEngine({
             const p = playerRef.current;
             const dir = p.facingRight ? 1 : -1;
             setPlayerFireballs(prev => [...prev, {
-              x: p.x + (dir === 1 ? 40 : -10),
-              y: p.y + 15,
-              velocityX: dir * 8,
-              width: 16,
-              height: 16,
+              x: p.x + (dir === 1 ? 40 : -20),
+              y: p.y + 12,
+              velocityX: dir * 10,
+              width: 28,
+              height: 28,
               isActive: true,
             }]);
           }
@@ -1428,6 +1428,7 @@ export function GameEngine({
         hasMidFlag={levelData.midFlag.collected}
         isPlantingFlag={isPlantingFlag}
         playerFireballs={playerFireballs}
+        hasFirePower={hasFirePower}
       />
       
       <GameHUD
