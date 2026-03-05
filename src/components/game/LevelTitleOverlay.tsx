@@ -48,16 +48,27 @@ export function LevelTitleOverlay({ level, levelName, collectibleEmoji, onComple
       >
         <div
           style={{
-            padding: '22px 44px',
-            borderRadius: '16px',
+            position: 'relative',
+            padding: '24px 48px',
+            borderRadius: '14px',
             textAlign: 'center',
-            background: 'linear-gradient(150deg, rgba(250, 245, 235, 0.95), rgba(240, 232, 218, 0.92))',
-            border: '2px solid rgba(200, 175, 130, 0.5)',
-            boxShadow: '0 0 30px rgba(200, 175, 130, 0.15), 0 10px 40px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.5)',
+            background: `
+              linear-gradient(150deg, rgba(252, 248, 240, 0.97), rgba(242, 234, 218, 0.94)),
+              repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(180, 155, 110, 0.04) 28px, rgba(180, 155, 110, 0.04) 29px),
+              repeating-linear-gradient(90deg, transparent, transparent 28px, rgba(180, 155, 110, 0.03) 28px, rgba(180, 155, 110, 0.03) 29px)
+            `,
+            border: '2px solid rgba(195, 170, 120, 0.45)',
+            boxShadow: '0 2px 8px rgba(160, 130, 80, 0.12), 0 12px 48px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.3), inset 0 -2px 6px rgba(160, 130, 80, 0.06)',
             minWidth: '240px',
             maxWidth: '88vw',
+            overflow: 'hidden',
           }}
         >
+          {/* Corner flourishes */}
+          <div style={{ position: 'absolute', top: 6, left: 10, fontSize: '10px', color: 'rgba(180, 150, 100, 0.35)' }}>❧</div>
+          <div style={{ position: 'absolute', top: 6, right: 10, fontSize: '10px', color: 'rgba(180, 150, 100, 0.35)', transform: 'scaleX(-1)' }}>❧</div>
+          <div style={{ position: 'absolute', bottom: 4, left: 10, fontSize: '10px', color: 'rgba(180, 150, 100, 0.35)', transform: 'scaleY(-1)' }}>❧</div>
+          <div style={{ position: 'absolute', bottom: 4, right: 10, fontSize: '10px', color: 'rgba(180, 150, 100, 0.35)', transform: 'scale(-1)' }}>❧</div>
           <p
             style={{
               fontSize: 'clamp(10px, 2vw, 13px)',
