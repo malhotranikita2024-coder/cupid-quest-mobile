@@ -501,24 +501,31 @@ function createLevel4(): LevelData {
   collectibles.push({ x: 1650, y: 220, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
-    // Single enemies with more fireball shooters
-    // Scaled 30%: width 50->35, height 40->28
+    // Ground enemies
     { x: 300, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 500, canShoot: true },
     { x: 800, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.5, isDefeated: false, direction: -1, patrolStart: 720, patrolEnd: 1050 },
     { x: 1350, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 1230, patrolEnd: 1650, canShoot: true },
-    // Platform enemy guarding cookie area
-    { x: 1610, y: 280 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.2, isDefeated: false, direction: 1, patrolStart: 1600, patrolEnd: 1710, canShoot: true },
     { x: 1950, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: -1, patrolStart: 1830, patrolEnd: 2200 },
-    // Enemy group (no shooting for groups)
     { x: 2500, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: 1, patrolStart: 2450, patrolEnd: 2650, isGrouped: true },
     { x: 2550, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 1.6, isDefeated: false, direction: 1, patrolStart: 2450, patrolEnd: 2650, isGrouped: true },
     { x: 3150, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 3030, patrolEnd: 3350, canShoot: true },
     { x: 3650, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 3530, patrolEnd: 3950 },
-    // Platform enemy guarding mid-flag
-    { x: 4560, y: 300 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: -1, patrolStart: 4550, patrolEnd: 4670, canShoot: true },
     { x: 4250, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.7, isDefeated: false, direction: -1, patrolStart: 4130, patrolEnd: 4600, canShoot: true },
     { x: 4900, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 4780, patrolEnd: 5200 },
     { x: 5500, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: -1, patrolStart: 5380, patrolEnd: 5800, canShoot: true },
+    // Platform enemies on top of brick rows
+    { x: 320, y: 360 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.1, isDefeated: false, direction: 1, patrolStart: 310, patrolEnd: 430 },
+    { x: 870, y: 340 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.2, isDefeated: false, direction: -1, patrolStart: 860, patrolEnd: 980, canShoot: true },
+    { x: 1420, y: 320 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.0, isDefeated: false, direction: 1, patrolStart: 1410, patrolEnd: 1530 },
+    { x: 1610, y: 280 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.2, isDefeated: false, direction: 1, patrolStart: 1600, patrolEnd: 1710, canShoot: true },
+    { x: 1970, y: 360 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.0, isDefeated: false, direction: -1, patrolStart: 1960, patrolEnd: 2160 },
+    { x: 2570, y: 340 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.1, isDefeated: false, direction: -1, patrolStart: 2560, patrolEnd: 2680, canShoot: true },
+    { x: 3170, y: 320 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.3, isDefeated: false, direction: 1, patrolStart: 3160, patrolEnd: 3280 },
+    { x: 3720, y: 360 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.2, isDefeated: false, direction: -1, patrolStart: 3710, patrolEnd: 3830, canShoot: true },
+    { x: 4320, y: 340 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.1, isDefeated: false, direction: 1, patrolStart: 4310, patrolEnd: 4430 },
+    { x: 4560, y: 300 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: -1, patrolStart: 4550, patrolEnd: 4670, canShoot: true },
+    { x: 4970, y: 320 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.2, isDefeated: false, direction: -1, patrolStart: 4960, patrolEnd: 5080, canShoot: true },
+    { x: 5570, y: 360 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.1, isDefeated: false, direction: 1, patrolStart: 5560, patrolEnd: 5680 },
   ];
 
   const hitBlocks: HitBlock[] = [
@@ -632,23 +639,32 @@ function createLevel5(): LevelData {
   collectibles.push({ x: 2650, y: 220, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
-    // Scaled 30%: width 50->35, height 40->28
+    // Ground enemies
     { x: 280, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 450, canShoot: true },
     { x: 750, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: -1, patrolStart: 680, patrolEnd: 950 },
     { x: 1250, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: 1, patrolStart: 1180, patrolEnd: 1500, canShoot: true },
     { x: 1800, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 1730, patrolEnd: 2000 },
-    // Platform enemy guarding cookie area
-    { x: 2610, y: 280 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.3, isDefeated: false, direction: 1, patrolStart: 2600, patrolEnd: 2700, canShoot: true },
     { x: 2350, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.7, isDefeated: false, direction: 1, patrolStart: 2300, patrolEnd: 2500, isGrouped: true },
     { x: 2400, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 1.7, isDefeated: false, direction: 1, patrolStart: 2300, patrolEnd: 2500, isGrouped: true },
     { x: 2950, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: -1, patrolStart: 2830, patrolEnd: 3100, canShoot: true },
     { x: 3450, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 3330, patrolEnd: 3650, canShoot: true },
     { x: 4000, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.8, isDefeated: false, direction: -1, patrolStart: 3880, patrolEnd: 4250 },
-    // Platform enemy guarding mid-flag
-    { x: 4610, y: 340 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.4, isDefeated: false, direction: -1, patrolStart: 4600, patrolEnd: 4710, canShoot: true },
     { x: 4550, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: 1, patrolStart: 4480, patrolEnd: 4800, canShoot: true },
     { x: 5150, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: -1, patrolStart: 5030, patrolEnd: 5300 },
     { x: 5650, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 5530, patrolEnd: 5850, canShoot: true },
+    // Platform enemies on top of brick rows
+    { x: 290, y: 340 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.1, isDefeated: false, direction: 1, patrolStart: 280, patrolEnd: 400 },
+    { x: 820, y: 320 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.2, isDefeated: false, direction: -1, patrolStart: 810, patrolEnd: 930, canShoot: true },
+    { x: 1320, y: 340 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.0, isDefeated: false, direction: 1, patrolStart: 1310, patrolEnd: 1430 },
+    { x: 1820, y: 320 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: 1, patrolStart: 1810, patrolEnd: 1930 },
+    { x: 2610, y: 280 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.3, isDefeated: false, direction: 1, patrolStart: 2600, patrolEnd: 2700, canShoot: true },
+    { x: 2370, y: 340 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.1, isDefeated: false, direction: -1, patrolStart: 2360, patrolEnd: 2480 },
+    { x: 2970, y: 320 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.2, isDefeated: false, direction: 1, patrolStart: 2960, patrolEnd: 3160, canShoot: true },
+    { x: 3520, y: 340 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.1, isDefeated: false, direction: -1, patrolStart: 3510, patrolEnd: 3630 },
+    { x: 4070, y: 320 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: 1, patrolStart: 4060, patrolEnd: 4180, canShoot: true },
+    { x: 4610, y: 340 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.4, isDefeated: false, direction: -1, patrolStart: 4600, patrolEnd: 4710, canShoot: true },
+    { x: 5220, y: 320 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.2, isDefeated: false, direction: 1, patrolStart: 5210, patrolEnd: 5330, canShoot: true },
+    { x: 5670, y: 340 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.1, isDefeated: false, direction: -1, patrolStart: 5660, patrolEnd: 5780 },
   ];
 
   const hitBlocks: HitBlock[] = [
@@ -766,14 +782,12 @@ function createLevel6(): LevelData {
   collectibles.push({ x: 2200, y: 240, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
-    // Scaled 30%: width 50->35, height 40->28
+    // Ground enemies
     { x: 250, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.4, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 400, canShoot: true },
     { x: 700, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.7, isDefeated: false, direction: -1, patrolStart: 630, patrolEnd: 850 },
     { x: 1150, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 1100, patrolEnd: 1300, isGrouped: true },
     { x: 1200, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 1100, patrolEnd: 1300, isGrouped: true },
     { x: 1650, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 1580, patrolEnd: 1800, canShoot: true },
-    // Platform enemy guarding cookie area
-    { x: 2160, y: 300 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: 1, patrolStart: 2150, patrolEnd: 2270, canShoot: true },
     { x: 2150, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 2030, patrolEnd: 2350, canShoot: true },
     { x: 2700, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: -1, patrolStart: 2580, patrolEnd: 2850, canShoot: true },
     { x: 3150, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: 1, patrolStart: 3030, patrolEnd: 3300 },
@@ -781,11 +795,23 @@ function createLevel6(): LevelData {
     { x: 3700, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: -1, patrolStart: 3600, patrolEnd: 3800, isGrouped: true },
     { x: 3750, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.9, isDefeated: false, direction: -1, patrolStart: 3600, patrolEnd: 3800, isGrouped: true },
     { x: 4200, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 4080, patrolEnd: 4350, canShoot: true },
-    // Platform enemy guarding mid-flag
-    { x: 4760, y: 340 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.4, isDefeated: false, direction: -1, patrolStart: 4750, patrolEnd: 4860, canShoot: true },
     { x: 4700, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 4580, patrolEnd: 4800, canShoot: true },
     { x: 5150, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.8, isDefeated: false, direction: 1, patrolStart: 5030, patrolEnd: 5350 },
     { x: 5700, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 5580, patrolEnd: 5850, canShoot: true },
+    // Platform enemies on top of brick rows
+    { x: 270, y: 340 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.1, isDefeated: false, direction: 1, patrolStart: 260, patrolEnd: 380 },
+    { x: 770, y: 300 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.2, isDefeated: false, direction: -1, patrolStart: 760, patrolEnd: 880, canShoot: true },
+    { x: 1220, y: 320 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.0, isDefeated: false, direction: -1, patrolStart: 1210, patrolEnd: 1330 },
+    { x: 1720, y: 340 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: 1, patrolStart: 1710, patrolEnd: 1910, canShoot: true },
+    { x: 2160, y: 300 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: 1, patrolStart: 2150, patrolEnd: 2270, canShoot: true },
+    { x: 2770, y: 320 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.2, isDefeated: false, direction: 1, patrolStart: 2760, patrolEnd: 2880, canShoot: true },
+    { x: 3220, y: 340 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.1, isDefeated: false, direction: -1, patrolStart: 3210, patrolEnd: 3330 },
+    { x: 3770, y: 320 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: 1, patrolStart: 3760, patrolEnd: 3880, canShoot: true },
+    { x: 4270, y: 340 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.2, isDefeated: false, direction: -1, patrolStart: 4260, patrolEnd: 4380 },
+    { x: 4760, y: 340 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.4, isDefeated: false, direction: -1, patrolStart: 4750, patrolEnd: 4860, canShoot: true },
+    { x: 4820, y: 300 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.1, isDefeated: false, direction: 1, patrolStart: 4810, patrolEnd: 4930 },
+    { x: 5270, y: 320 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.2, isDefeated: false, direction: -1, patrolStart: 5260, patrolEnd: 5380, canShoot: true },
+    { x: 5770, y: 340 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.1, isDefeated: false, direction: 1, patrolStart: 5760, patrolEnd: 5880 },
   ];
 
   const hitBlocks: HitBlock[] = [
@@ -912,30 +938,40 @@ function createLevel7(): LevelData {
   collectibles.push({ x: 3150, y: 220, type: 'cookie', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
-    // Level 7 - Final challenge, best of all mechanics
-    // Scaled 30%: width 50->35, height 40->28
+    // Level 7 - Final challenge
+    // Ground enemies
     { x: 220, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.5, isDefeated: false, direction: 1, patrolStart: 100, patrolEnd: 350, canShoot: true },
     { x: 650, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.8, isDefeated: false, direction: -1, patrolStart: 580, patrolEnd: 780 },
-    // Enemy group
     { x: 1080, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 1030, patrolEnd: 1200, isGrouped: true },
     { x: 1130, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 1030, patrolEnd: 1200, isGrouped: true },
     { x: 1550, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: -1, patrolStart: 1480, patrolEnd: 1680, canShoot: true },
     { x: 2000, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.9, isDefeated: false, direction: 1, patrolStart: 1910, patrolEnd: 2180, canShoot: true },
     { x: 2500, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.4, isDefeated: false, direction: -1, patrolStart: 2410, patrolEnd: 2610, canShoot: true },
-    // Triple enemy group
     { x: 2950, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 2900, patrolEnd: 3100, isGrouped: true },
     { x: 3000, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 2900, patrolEnd: 3100, isGrouped: true },
     { x: 3050, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: 1, patrolStart: 2900, patrolEnd: 3100, isGrouped: true },
-    // Platform enemy guarding cookie area
-    { x: 3110, y: 280 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.5, isDefeated: false, direction: 1, patrolStart: 3100, patrolEnd: 3190, canShoot: true },
     { x: 3400, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 2, isDefeated: false, direction: -1, patrolStart: 3310, patrolEnd: 3580, canShoot: true },
     { x: 3900, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.3, isDefeated: false, direction: 1, patrolStart: 3810, patrolEnd: 4010, canShoot: true },
-    // Platform enemy guarding mid-flag area
-    { x: 4460, y: 280 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.4, isDefeated: false, direction: -1, patrolStart: 4450, patrolEnd: 4540, canShoot: true },
     { x: 4350, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.1, isDefeated: false, direction: -1, patrolStart: 4240, patrolEnd: 4480, canShoot: true },
     { x: 4800, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.9, isDefeated: false, direction: 1, patrolStart: 4710, patrolEnd: 4910 },
     { x: 5250, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.2, isDefeated: false, direction: -1, patrolStart: 5140, patrolEnd: 5410, canShoot: true },
     { x: 5750, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2, isDefeated: false, direction: 1, patrolStart: 5640, patrolEnd: 5860, canShoot: true },
+    // Platform enemies on top of brick rows
+    { x: 250, y: 320 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.2, isDefeated: false, direction: 1, patrolStart: 240, patrolEnd: 360 },
+    { x: 720, y: 300 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: -1, patrolStart: 710, patrolEnd: 830, canShoot: true },
+    { x: 1120, y: 320 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.1, isDefeated: false, direction: -1, patrolStart: 1110, patrolEnd: 1230 },
+    { x: 1570, y: 300 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: 1, patrolStart: 1560, patrolEnd: 1760, canShoot: true },
+    { x: 2070, y: 320 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.2, isDefeated: false, direction: -1, patrolStart: 2060, patrolEnd: 2180 },
+    { x: 2570, y: 300 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.2, isDefeated: false, direction: 1, patrolStart: 2560, patrolEnd: 2680, canShoot: true },
+    { x: 3020, y: 320 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.1, isDefeated: false, direction: -1, patrolStart: 3010, patrolEnd: 3130 },
+    { x: 3110, y: 280 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.5, isDefeated: false, direction: 1, patrolStart: 3100, patrolEnd: 3190, canShoot: true },
+    { x: 3470, y: 300 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.2, isDefeated: false, direction: 1, patrolStart: 3460, patrolEnd: 3580, canShoot: true },
+    { x: 3920, y: 320 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.1, isDefeated: false, direction: -1, patrolStart: 3910, patrolEnd: 4030 },
+    { x: 4460, y: 280 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.4, isDefeated: false, direction: -1, patrolStart: 4450, patrolEnd: 4540, canShoot: true },
+    { x: 4370, y: 300 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: 1, patrolStart: 4360, patrolEnd: 4480 },
+    { x: 4820, y: 320 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.2, isDefeated: false, direction: -1, patrolStart: 4810, patrolEnd: 4930, canShoot: true },
+    { x: 5270, y: 300 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.1, isDefeated: false, direction: 1, patrolStart: 5260, patrolEnd: 5380 },
+    { x: 5720, y: 320 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: -1, patrolStart: 5710, patrolEnd: 5830, canShoot: true },
   ];
 
   const hitBlocks: HitBlock[] = [
