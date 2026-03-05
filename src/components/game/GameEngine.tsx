@@ -94,6 +94,8 @@ export function GameEngine({
   const plantingTimeoutRef = useRef<NodeJS.Timeout>();
   // Synchronous death lock ref - prevents race conditions with async state updates
   const isDeathLockedRef = useRef(false);
+  // Track which level the title overlay has already been shown for
+  const levelTitleShownForRef = useRef<number | null>(null);
   
   const {
     controls,
@@ -146,7 +148,15 @@ export function GameEngine({
     setCheckpointPosition(LEVEL_START_SPAWN);
     resetControls();
     setShowDeathOverlay(false);
-    setShowLevelTitle(true);
+    
+    // Only show level title overlay for NEW level entries, not retries
+    if (levelTitleShownForRef.current !== currentLevel) {
+      setShowLevelTitle(true);
+      levelTitleShownForRef.current = currentLevel;
+    } else {
+      setShowLevelTitle(false);
+    }
+    
     setIsDying(false); // Reset death lock on level start
     isDeathLockedRef.current = false; // Reset synchronous death lock
     
