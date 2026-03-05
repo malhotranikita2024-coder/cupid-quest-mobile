@@ -28,6 +28,7 @@ interface GameCanvasProps {
   hasMidFlag: boolean;
   isPlantingFlag: boolean;
   playerFireballs?: PlayerFireball[];
+  hasFirePower?: boolean;
 }
 
 const GRAVITY = 0.6;
@@ -63,6 +64,7 @@ export function GameCanvas({
   hasMidFlag,
   isPlantingFlag,
   playerFireballs = [],
+  hasFirePower = false,
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
@@ -818,44 +820,57 @@ export function GameCanvas({
       if (!fb.isActive) return;
       ctx.save();
       
-      // Outer fire glow
+      const cx = fb.x + fb.width / 2;
+      const cy = fb.y + fb.height / 2;
+      
+      // Outer fire glow - large
       ctx.beginPath();
-      ctx.arc(fb.x + fb.width / 2, fb.y + fb.height / 2, 20, 0, Math.PI * 2);
-      const outerGlow = ctx.createRadialGradient(fb.x + fb.width / 2, fb.y + fb.height / 2, 3, fb.x + fb.width / 2, fb.y + fb.height / 2, 20);
-      outerGlow.addColorStop(0, 'rgba(255, 255, 200, 1)');
-      outerGlow.addColorStop(0.3, 'rgba(255, 180, 50, 0.9)');
-      outerGlow.addColorStop(0.6, 'rgba(255, 80, 0, 0.6)');
-      outerGlow.addColorStop(1, 'rgba(200, 30, 0, 0)');
+      ctx.arc(cx, cy, 26, 0, Math.PI * 2);
+      const outerGlow = ctx.createRadialGradient(cx, cy, 4, cx, cy, 26);
+      outerGlow.addColorStop(0, 'rgba(255, 255, 220, 1)');
+      outerGlow.addColorStop(0.2, 'rgba(255, 200, 50, 0.95)');
+      outerGlow.addColorStop(0.5, 'rgba(255, 100, 0, 0.7)');
+      outerGlow.addColorStop(0.8, 'rgba(200, 30, 0, 0.3)');
+      outerGlow.addColorStop(1, 'rgba(150, 0, 0, 0)');
       ctx.fillStyle = outerGlow;
       ctx.fill();
       
-      // Inner bright core
+      // Inner bright white-hot core
       ctx.beginPath();
-      ctx.arc(fb.x + fb.width / 2, fb.y + fb.height / 2, 8, 0, Math.PI * 2);
-      const coreGlow = ctx.createRadialGradient(fb.x + fb.width / 2, fb.y + fb.height / 2, 1, fb.x + fb.width / 2, fb.y + fb.height / 2, 8);
+      ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+      const coreGlow = ctx.createRadialGradient(cx, cy, 1, cx, cy, 10);
       coreGlow.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      coreGlow.addColorStop(0.5, 'rgba(255, 255, 100, 0.9)');
-      coreGlow.addColorStop(1, 'rgba(255, 150, 0, 0.7)');
+      coreGlow.addColorStop(0.4, 'rgba(255, 255, 150, 0.95)');
+      coreGlow.addColorStop(0.7, 'rgba(255, 180, 0, 0.8)');
+      coreGlow.addColorStop(1, 'rgba(255, 100, 0, 0.5)');
       ctx.fillStyle = coreGlow;
       ctx.fill();
       
-      // Fire trail particles
+      // Fire trail - longer, more dramatic
       const trailDir = fb.velocityX > 0 ? -1 : 1;
-      for (let i = 0; i < 4; i++) {
-        const tx = fb.x + fb.width / 2 + trailDir * (8 + i * 6) + Math.sin(time / 30 + i) * 3;
-        const ty = fb.y + fb.height / 2 + Math.sin(time / 40 + i * 2) * 4;
-        const tAlpha = 0.7 - i * 0.15;
-        const tSize = 5 - i;
+      for (let i = 0; i < 6; i++) {
+        const tx = cx + trailDir * (10 + i * 8) + Math.sin(time / 25 + i) * 4;
+        const ty = cy + Math.sin(time / 35 + i * 2) * 5;
+        const tAlpha = 0.8 - i * 0.12;
+        const tSize = 7 - i * 0.8;
         ctx.beginPath();
         ctx.arc(tx, ty, tSize, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, ${120 + i * 30}, 0, ${tAlpha})`;
+        const trailGrad = ctx.createRadialGradient(tx, ty, 1, tx, ty, tSize);
+        trailGrad.addColorStop(0, `rgba(255, ${200 - i * 25}, 0, ${tAlpha})`);
+        trailGrad.addColorStop(1, `rgba(200, ${50 - i * 8}, 0, 0)`);
+        ctx.fillStyle = trailGrad;
         ctx.fill();
       }
       
-      // Fire emoji on top
-      ctx.font = '16px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('🔥', fb.x + fb.width / 2, fb.y + fb.height / 2 + 5);
+      // Flickering flame particles on top
+      for (let i = 0; i < 3; i++) {
+        const fx = cx + Math.sin(time / 20 + i * 2.5) * 8;
+        const fy = cy - 6 + Math.cos(time / 30 + i) * 4;
+        ctx.beginPath();
+        ctx.arc(fx, fy, 3 - i * 0.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, ${220 + i * 10}, ${100 + i * 30}, ${0.8 - i * 0.2})`;
+        ctx.fill();
+      }
       
       ctx.restore();
     });
@@ -1934,6 +1949,30 @@ export function GameCanvas({
       ctx.font = '14px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('❤️', player.x + PLAYER_WIDTH / 2, player.y + 35);
+      
+      // Draw fire sword if player has collected it
+      if (hasFirePower) {
+        ctx.save();
+        const swordX = player.facingRight ? player.x + PLAYER_WIDTH - 2 : player.x - 18;
+        const swordY = player.y + 12;
+        // Sword blade glow
+        ctx.beginPath();
+        ctx.arc(swordX + 10, swordY + 8, 14, 0, Math.PI * 2);
+        const swordGlow = ctx.createRadialGradient(swordX + 10, swordY + 8, 2, swordX + 10, swordY + 8, 14);
+        swordGlow.addColorStop(0, 'rgba(255, 200, 50, 0.6)');
+        swordGlow.addColorStop(1, 'rgba(255, 80, 0, 0)');
+        ctx.fillStyle = swordGlow;
+        ctx.fill();
+        // Sword emoji
+        ctx.font = '20px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🗡️', swordX + 10, swordY + 14);
+        // Fire on sword tip
+        ctx.font = '10px Arial';
+        const tipX = player.facingRight ? swordX + 18 : swordX + 2;
+        ctx.fillText('🔥', tipX, swordY + 2);
+        ctx.restore();
+      }
       
       // Draw carried flag if player has collected it (hide during/after planting)
       if (hasMidFlag && !isPlantingFlag && !levelData.flag.plantedFlag) {

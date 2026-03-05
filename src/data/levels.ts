@@ -301,7 +301,8 @@ function createLevel3(): LevelData {
       { start: 2600, width: 600 },
       { start: 3300, width: 450 },
       { start: 3850, width: 550 },
-      { start: 4500, width: 1500 }, // Extended ground for boss arena
+      { start: 4500, width: 500 },
+      { start: 5100, width: 800 },
     ]),
     // End platform - wide brick platform for flag planting
     { x: 5750, y: GROUND_Y - 60, width: 200, height: 60, type: 'ground' as const },
@@ -344,8 +345,8 @@ function createLevel3(): LevelData {
     }
   }
   collectibles.push({ x: 380, y: 120, type: 'cookie', collected: false, animationOffset: 0 });
-  // Fire Sword - placed early in the level so player picks it up before boss
-  collectibles.push({ x: 1500, y: GROUND_Y - 60, type: 'fireSword', collected: false, animationOffset: 0 });
+  // Fire Sword - placed mid-level so player picks it up before boss
+  collectibles.push({ x: 2800, y: GROUND_Y - 60, type: 'fireSword', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
     // Single enemies - some can shoot fireballs (2-3 out of ~10)
@@ -384,10 +385,10 @@ function createLevel3(): LevelData {
   const fallingHazards: FallingHazard[] = [];
 
   const boss: Boss = {
-    x: 5000,
+    x: 5300,
     y: 400,
-    width: 80,
-    height: 90,
+    width: 72,
+    height: 80,
     health: 5,
     maxHealth: 5,
     state: 'idle',
