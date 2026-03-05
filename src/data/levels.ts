@@ -370,6 +370,11 @@ function createLevel3(): LevelData {
     // Platform enemy guarding mid-flag area
     { x: 4300, y: 300 - 28, width: 35, height: 28, type: 'heartBug', velocityX: 1.3, isDefeated: false, direction: -1, patrolStart: 4300, patrolEnd: 4420, canShoot: true },
     { x: 4000, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 1.9, isDefeated: false, direction: 1, patrolStart: 3900, patrolEnd: 4350, canShoot: true },
+    // Boss arena enemies - patrolling before the dragon
+    { x: 4700, y: GROUND_Y - 40, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.6, isDefeated: false, direction: -1, patrolStart: 4600, patrolEnd: 4900 },
+    { x: 5000, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 2.0, isDefeated: false, direction: 1, patrolStart: 4900, patrolEnd: 5200, canShoot: true },
+    { x: 5100, y: 400 - 28, width: 35, height: 28, type: 'brokenHeartSlime', velocityX: 1.2, isDefeated: false, direction: -1, patrolStart: 5100, patrolEnd: 5240 },
+    { x: 5400, y: GROUND_Y - 40, width: 35, height: 28, type: 'heartBug', velocityX: 1.8, isDefeated: false, direction: -1, patrolStart: 5250, patrolEnd: 5550, canShoot: true },
   ];
 
   const hitBlocks: HitBlock[] = [
