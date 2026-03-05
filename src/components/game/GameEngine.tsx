@@ -342,8 +342,15 @@ export function GameEngine({
         let boss = { ...prev.boss };
         const GROUND_Y = 520;
         const BOSS_GRAVITY = 0.5;
-        const ARENA_LEFT = 5100;
-        const ARENA_RIGHT = 5850;
+        const ARENA_LEFT = boss.arenaLeft ?? 5100;
+        const ARENA_RIGHT = boss.arenaRight ?? 5850;
+        const isKraken = boss.bossType === 'pearlKraken';
+        
+        // Determine phase for multi-phase bosses
+        if (isKraken) {
+          const healthPct = boss.health / boss.maxHealth;
+          boss.phase = healthPct > 0.6 ? 1 : healthPct > 0.3 ? 2 : 3;
+        }
         
         // Spawn-in phase
         if (boss.state === 'spawning') {
@@ -362,44 +369,118 @@ export function GameEngine({
           if (boss.stunnedTimer <= 0) {
             boss.state = 'bouncing';
             boss.velocityY = -14;
-            // Get faster as health decreases
             const speedMultiplier = 1 + (boss.maxHealth - boss.health) * 0.3;
             boss.velocityX = boss.direction * 3 * speedMultiplier;
           }
           return { ...prev, boss };
         }
         
-        // Bouncing phase - Block Dragon bounces around
+        // Charging phase (Kraken phase 2+)
+        if (boss.state === 'charging') {
+          boss.chargeTimer = (boss.chargeTimer || 0) - 1;
+          const p = playerRef.current;
+          const chargeDir = p.x < boss.x ? -1 : 1;
+          boss.velocityX = chargeDir * 8;
+          boss.x += boss.velocityX;
+          boss.velocityY += BOSS_GRAVITY;
+          boss.y += boss.velocityY;
+          
+          if (boss.y + boss.height >= GROUND_Y) {
+            boss.y = GROUND_Y - boss.height;
+            boss.velocityY = -4;
+          }
+          
+          // Arena walls
+          if (boss.x < ARENA_LEFT) { boss.x = ARENA_LEFT; boss.velocityX = Math.abs(boss.velocityX); }
+          if (boss.x + boss.width > ARENA_RIGHT) { boss.x = ARENA_RIGHT - boss.width; boss.velocityX = -Math.abs(boss.velocityX); }
+          
+          if (boss.chargeTimer <= 0) {
+            boss.state = 'bouncing';
+            boss.velocityY = -12;
+            const speedMultiplier = 1 + (boss.maxHealth - boss.health) * 0.3;
+            boss.velocityX = boss.direction * 3 * speedMultiplier;
+          }
+          
+          // Check fireball hits during charge too
+          const currentFireballsCharge = playerFireballsRef.current;
+          let chargeHit = false;
+          for (const fb of currentFireballsCharge) {
+            if (!fb.isActive) continue;
+            if (fb.x + fb.width > boss.x - 30 && fb.x < boss.x + boss.width + 30 &&
+                fb.y + fb.height > boss.y - 30 && fb.y < boss.y + boss.height + 30) {
+              chargeHit = true; fb.isActive = false; break;
+            }
+          }
+          if (chargeHit) {
+            setPlayerFireballs(prevFb => prevFb.map(fb => fb.isActive ? fb : { ...fb, isActive: false }));
+            boss.health--;
+            boss.hitFlash = 20;
+            boss.stunnedTimer = 60;
+            boss.state = boss.health <= 0 ? 'defeated' : 'stunned';
+            boss.velocityX = 0; boss.velocityY = 0;
+            if (boss.state === 'defeated') setBossDefeated(true);
+          }
+          
+          return { ...prev, boss };
+        }
+        
+        // Bouncing phase
         boss.velocityY += BOSS_GRAVITY;
         boss.y += boss.velocityY;
         boss.x += boss.velocityX;
         
         // Boss attack timer - shoot fireballs at player
         boss.attackTimer = (boss.attackTimer || 0) + 1;
-        const attackInterval = Math.max(60, 120 - (boss.maxHealth - boss.health) * 15);
+        const attackInterval = isKraken
+          ? Math.max(40, 100 - (boss.maxHealth - boss.health) * 10)
+          : Math.max(60, 120 - (boss.maxHealth - boss.health) * 15);
         if (boss.attackTimer >= attackInterval && boss.state === 'bouncing') {
           boss.attackTimer = 0;
           const p = playerRef.current;
           const dirToPlayer = p.x < boss.x ? -1 : 1;
-          // Boss shoots a fireball toward the player
-          prev.fireballs = [...(prev.fireballs || []), {
-            x: boss.x + boss.width / 2 + dirToPlayer * 40,
-            y: boss.y + 30,
-            velocityX: dirToPlayer * 5,
-            width: 24,
-            height: 24,
-            isActive: true,
-          }];
+          
+          // Kraken phase 3: shoot 3 fireballs in a spread
+          if (isKraken && boss.phase === 3) {
+            const angles = [-0.3, 0, 0.3];
+            for (const angle of angles) {
+              prev.fireballs = [...(prev.fireballs || []), {
+                x: boss.x + boss.width / 2 + dirToPlayer * 40,
+                y: boss.y + 30,
+                velocityX: dirToPlayer * 5 * Math.cos(angle),
+                width: 24,
+                height: 24,
+                isActive: true,
+              }];
+            }
+          } else {
+            prev.fireballs = [...(prev.fireballs || []), {
+              x: boss.x + boss.width / 2 + dirToPlayer * 40,
+              y: boss.y + 30,
+              velocityX: dirToPlayer * (isKraken ? 6 : 5),
+              width: 24,
+              height: 24,
+              isActive: true,
+            }];
+          }
+        }
+        
+        // Kraken phase 2+: periodic charge attack
+        if (isKraken && (boss.phase ?? 1) >= 2) {
+          boss.summonTimer = (boss.summonTimer || 0) + 1;
+          if (boss.summonTimer >= 180 && boss.state === 'bouncing') {
+            boss.summonTimer = 0;
+            boss.state = 'charging';
+            boss.chargeTimer = 60;
+          }
         }
         
         // Ground collision
         if (boss.y + boss.height >= GROUND_Y) {
           boss.y = GROUND_Y - boss.height;
-          boss.velocityY = -10 - Math.random() * 5;
+          boss.velocityY = isKraken ? -12 - Math.random() * 4 : -10 - Math.random() * 5;
           boss.isGrounded = true;
           boss.bounceCount++;
           
-          // Change direction sometimes
           if (boss.bounceCount % 3 === 0) {
             boss.direction = boss.direction === 1 ? -1 : 1;
             const speedMultiplier = 1 + (boss.maxHealth - boss.health) * 0.3;
@@ -423,8 +504,8 @@ export function GameEngine({
         
         boss.hitFlash = Math.max(0, boss.hitFlash - 1);
         
-        // Check collision with player fireballs using ref for IMMEDIATE, synchronous detection
-        const hitPadding = 30; // Generous hitbox
+        // Check collision with player fireballs
+        const hitPadding = 30;
         const currentFireballs = playerFireballsRef.current;
         let bossHit = false;
         
@@ -442,7 +523,6 @@ export function GameEngine({
           }
         }
         
-        // Also deactivate in state for re-render
         if (bossHit) {
           setPlayerFireballs(prevFb => prevFb.map(fb => fb.isActive ? fb : { ...fb, isActive: false }));
         }
@@ -472,8 +552,9 @@ export function GameEngine({
     if (!levelData.boss || bossDefeated) return;
     if (levelData.boss.state !== 'idle') return;
     
-    // Activate boss when player gets close
-    if (player.x > 5000) {
+    // Activate boss when player gets close to arena
+    const triggerX = (levelData.boss.arenaLeft ?? 5100) - 100;
+    if (player.x > triggerX) {
       setShowBossIntro(true);
       setLevelData(prev => {
         if (!prev.boss) return prev;
@@ -1546,16 +1627,16 @@ export function GameEngine({
           <div style={{
             padding: '20px 40px',
             borderRadius: '16px',
-            background: 'rgba(80, 0, 0, 0.85)',
-            border: '2px solid rgba(255, 50, 50, 0.6)',
-            boxShadow: '0 0 40px rgba(255, 0, 0, 0.3)',
+            background: levelData.boss?.bossType === 'pearlKraken' ? 'rgba(30, 0, 80, 0.9)' : 'rgba(80, 0, 0, 0.85)',
+            border: levelData.boss?.bossType === 'pearlKraken' ? '2px solid rgba(150, 50, 255, 0.6)' : '2px solid rgba(255, 50, 50, 0.6)',
+            boxShadow: levelData.boss?.bossType === 'pearlKraken' ? '0 0 40px rgba(100, 0, 200, 0.3)' : '0 0 40px rgba(255, 0, 0, 0.3)',
             textAlign: 'center',
           }}>
             <p style={{ fontSize: '14px', color: 'rgba(255, 200, 200, 0.8)', margin: '0 0 6px', letterSpacing: '3px', textTransform: 'uppercase' }}>
               ⚠️ Boss Battle ⚠️
             </p>
-            <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: '#fff', margin: '0 0 4px', textShadow: '0 0 20px rgba(255, 50, 50, 0.8)' }}>
-              🐉 Block Dragon 🐉
+            <h1 style={{ fontSize: '32px', fontWeight: 'bold', color: '#fff', margin: '0 0 4px', textShadow: levelData.boss?.bossType === 'pearlKraken' ? '0 0 20px rgba(150, 50, 255, 0.8)' : '0 0 20px rgba(255, 50, 50, 0.8)' }}>
+              {levelData.boss?.bossType === 'pearlKraken' ? '🐙 Pearl Kraken 🐙' : '🐉 Block Dragon 🐉'}
             </h1>
             <p style={{ fontSize: '14px', color: 'rgba(255, 220, 150, 0.9)', margin: '4px 0 0' }}>
               {hasFirePower ? (

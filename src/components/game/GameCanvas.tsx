@@ -899,15 +899,17 @@ export function GameCanvas({
       ctx.restore();
     });
 
-    // Draw boss (Block Dragon)
+    // Draw boss
     if (levelData.boss && levelData.boss.state !== 'defeated') {
       const boss = levelData.boss;
       const bossX = boss.x + boss.width / 2;
       const bossY = boss.y;
       const isStunned = boss.state === 'stunned';
       const isSpawning = boss.state === 'spawning';
+      const isCharging = boss.state === 'charging';
       const flashOn = boss.hitFlash > 0 && Math.floor(boss.hitFlash / 3) % 2 === 0;
       const wobble = Math.sin(time / 150) * 3;
+      const isKraken = boss.bossType === 'pearlKraken';
       
       ctx.save();
       
@@ -920,8 +922,11 @@ export function GameCanvas({
       // Boss glow
       ctx.beginPath();
       ctx.arc(bossX, bossY + boss.height / 2, 60, 0, Math.PI * 2);
+      const glowColor = isKraken
+        ? (isStunned ? 'rgba(100, 255, 255, 0.35)' : isCharging ? 'rgba(255, 50, 50, 0.4)' : 'rgba(80, 0, 180, 0.3)')
+        : (isStunned ? 'rgba(255, 255, 100, 0.35)' : 'rgba(255, 80, 30, 0.3)');
       const bossGlow = ctx.createRadialGradient(bossX, bossY + boss.height / 2, 10, bossX, bossY + boss.height / 2, 60);
-      bossGlow.addColorStop(0, isStunned ? 'rgba(255, 255, 100, 0.35)' : 'rgba(255, 80, 30, 0.3)');
+      bossGlow.addColorStop(0, glowColor);
       bossGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = bossGlow;
       ctx.fill();
@@ -931,21 +936,219 @@ export function GameCanvas({
       }
       
       if (isSpawning) {
-        // Spawning: blocks assembling
         const spawnProgress = 1 - (boss.spawnTimer / 180);
         ctx.globalAlpha = spawnProgress;
         
-        // Draw scattered blocks assembling
-        const blockColors = ['#CC0000', '#0066CC', '#FFCC00', '#00AA00'];
-        const blockCount = Math.floor(spawnProgress * 8);
-        for (let i = 0; i < blockCount; i++) {
-          const bx = bossX - 30 + (i % 4) * 18 + Math.sin(time / 80 + i) * (1 - spawnProgress) * 30;
-          const by = bossY + 20 + Math.floor(i / 4) * 18 + Math.cos(time / 80 + i) * (1 - spawnProgress) * 30;
-          ctx.fillStyle = blockColors[i % 4];
-          ctx.fillRect(bx, by, 16, 16);
-          ctx.strokeStyle = '#000';
-          ctx.lineWidth = 1.5;
-          ctx.strokeRect(bx, by, 16, 16);
+        if (isKraken) {
+          // Kraken spawning: bubbles rising and tentacle shapes forming
+          for (let i = 0; i < Math.floor(spawnProgress * 10); i++) {
+            const bx = bossX - 35 + Math.sin(time / 60 + i * 1.2) * (1 - spawnProgress) * 40 + (i % 5) * 14;
+            const by = bossY + 60 - i * 6 + Math.cos(time / 70 + i) * (1 - spawnProgress) * 25;
+            ctx.beginPath();
+            ctx.arc(bx, by, 6 + Math.sin(i) * 3, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${100 + i * 15}, ${50 + i * 10}, ${180 + i * 5}, ${spawnProgress * 0.8})`;
+            ctx.fill();
+          }
+          // Rising bubbles
+          for (let i = 0; i < 5; i++) {
+            const bubbleX = bossX - 20 + i * 10 + Math.sin(time / 30 + i) * 8;
+            const bubbleY = bossY + 80 - ((time * 0.5 + i * 30) % 100);
+            ctx.beginPath();
+            ctx.arc(bubbleX, bubbleY, 3 + Math.sin(time / 20 + i) * 1, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(150, 200, 255, ${0.5 * spawnProgress})`;
+            ctx.fill();
+          }
+        } else {
+          const blockColors = ['#CC0000', '#0066CC', '#FFCC00', '#00AA00'];
+          const blockCount = Math.floor(spawnProgress * 8);
+          for (let i = 0; i < blockCount; i++) {
+            const bx = bossX - 30 + (i % 4) * 18 + Math.sin(time / 80 + i) * (1 - spawnProgress) * 30;
+            const by = bossY + 20 + Math.floor(i / 4) * 18 + Math.cos(time / 80 + i) * (1 - spawnProgress) * 30;
+            ctx.fillStyle = blockColors[i % 4];
+            ctx.fillRect(bx, by, 16, 16);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(bx, by, 16, 16);
+          }
+        }
+      } else if (isKraken) {
+        // Draw Pearl Kraken - a purple/teal sea creature with tentacles
+        const drawX = bossX;
+        const drawY = bossY + boss.height / 2 + (isStunned ? 0 : wobble);
+        const phase = boss.phase ?? 1;
+        
+        // Flip based on direction
+        ctx.save();
+        if (boss.direction === 1) {
+          ctx.translate(bossX, 0);
+          ctx.scale(-1, 1);
+          ctx.translate(-bossX, 0);
+        }
+        
+        if (isStunned) {
+          ctx.globalAlpha = 0.6 + Math.sin(time / 60) * 0.2;
+        }
+        
+        // Tentacles (8 of them, animated)
+        const tentacleCount = 8;
+        for (let t = 0; t < tentacleCount; t++) {
+          const baseAngle = (t / tentacleCount) * Math.PI + Math.PI * 0.0;
+          const tentLen = 30 + (phase >= 2 ? 8 : 0);
+          ctx.beginPath();
+          ctx.moveTo(drawX + Math.cos(baseAngle) * 18, drawY + 15);
+          const cx1 = drawX + Math.cos(baseAngle) * 25 + Math.sin(time / 100 + t * 0.8) * 8;
+          const cy1 = drawY + 25 + Math.cos(time / 120 + t) * 5;
+          const ex = drawX + Math.cos(baseAngle) * tentLen + Math.sin(time / 80 + t * 1.2) * 12;
+          const ey = drawY + 35 + tentLen * 0.3 + Math.cos(time / 90 + t * 0.7) * 6;
+          ctx.quadraticCurveTo(cx1, cy1, ex, ey);
+          ctx.strokeStyle = phase === 3 ? '#CC2266' : phase === 2 ? '#8844AA' : '#6633AA';
+          ctx.lineWidth = 4 - t * 0.3;
+          ctx.lineCap = 'round';
+          ctx.stroke();
+          
+          // Suction cups
+          ctx.beginPath();
+          ctx.arc(ex, ey, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = phase === 3 ? '#FF6699' : '#AA77CC';
+          ctx.fill();
+        }
+        
+        // Main body (oval head)
+        const headGrad = ctx.createRadialGradient(drawX, drawY - 5, 5, drawX, drawY - 5, 32);
+        headGrad.addColorStop(0, phase === 3 ? '#DD3388' : phase === 2 ? '#9944CC' : '#7733BB');
+        headGrad.addColorStop(0.7, phase === 3 ? '#AA1155' : phase === 2 ? '#6622AA' : '#551199');
+        headGrad.addColorStop(1, phase === 3 ? '#880044' : phase === 2 ? '#440088' : '#330066');
+        ctx.beginPath();
+        ctx.ellipse(drawX, drawY - 5, 28, 32, 0, 0, Math.PI * 2);
+        ctx.fillStyle = headGrad;
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        
+        // Crown/crest on top
+        ctx.beginPath();
+        ctx.moveTo(drawX - 15, drawY - 32);
+        ctx.lineTo(drawX - 8, drawY - 42 + Math.sin(time / 100) * 2);
+        ctx.lineTo(drawX, drawY - 35);
+        ctx.lineTo(drawX + 8, drawY - 44 + Math.cos(time / 100) * 2);
+        ctx.lineTo(drawX + 15, drawY - 32);
+        ctx.fillStyle = phase === 3 ? '#FF4488' : '#AA55DD';
+        ctx.fill();
+        
+        // Eyes - angry, glowing
+        const eyeY = drawY - 10;
+        // Left eye
+        ctx.beginPath();
+        ctx.ellipse(drawX - 10, eyeY, 7, 5, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(drawX - 10, eyeY, 4, 4, 0, 0, Math.PI * 2);
+        ctx.fillStyle = phase === 3 ? '#FF0000' : phase === 2 ? '#FF4400' : '#FF6600';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(drawX - 10, eyeY, 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#000';
+        ctx.fill();
+        // Angry brow
+        ctx.beginPath();
+        ctx.moveTo(drawX - 16, eyeY - 6);
+        ctx.lineTo(drawX - 5, eyeY - 8);
+        ctx.strokeStyle = phase === 3 ? '#880022' : '#440066';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        
+        // Right eye
+        ctx.beginPath();
+        ctx.ellipse(drawX + 10, eyeY, 7, 5, 0, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(drawX + 10, eyeY, 4, 4, 0, 0, Math.PI * 2);
+        ctx.fillStyle = phase === 3 ? '#FF0000' : phase === 2 ? '#FF4400' : '#FF6600';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(drawX + 10, eyeY, 2, 0, Math.PI * 2);
+        ctx.fillStyle = '#000';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(drawX + 5, eyeY - 8);
+        ctx.lineTo(drawX + 16, eyeY - 6);
+        ctx.strokeStyle = phase === 3 ? '#880022' : '#440066';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        
+        // Mouth
+        ctx.beginPath();
+        ctx.arc(drawX, drawY + 8, 8, 0.1 * Math.PI, 0.9 * Math.PI);
+        ctx.strokeStyle = '#220033';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Pearl on forehead
+        ctx.beginPath();
+        ctx.arc(drawX, drawY - 28, 5, 0, Math.PI * 2);
+        const pearlGrad = ctx.createRadialGradient(drawX - 1, drawY - 29, 1, drawX, drawY - 28, 5);
+        pearlGrad.addColorStop(0, '#FFFFFF');
+        pearlGrad.addColorStop(0.5, '#DDEEFF');
+        pearlGrad.addColorStop(1, '#88BBDD');
+        ctx.fillStyle = pearlGrad;
+        ctx.fill();
+        
+        // Phase indicator glow effect
+        if (phase >= 2) {
+          ctx.beginPath();
+          ctx.arc(drawX, drawY - 5, 35 + Math.sin(time / 40) * 3, 0, Math.PI * 2);
+          ctx.strokeStyle = phase === 3 ? `rgba(255, 50, 100, ${0.3 + Math.sin(time / 30) * 0.15})` : `rgba(150, 50, 255, ${0.25 + Math.sin(time / 40) * 0.1})`;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        
+        // Charging effect - speed lines and red aura
+        if (isCharging) {
+          for (let i = 0; i < 6; i++) {
+            const lx = drawX + (boss.direction === -1 ? 1 : -1) * (20 + i * 15);
+            const ly = drawY - 15 + Math.random() * 30;
+            ctx.beginPath();
+            ctx.moveTo(lx, ly);
+            ctx.lineTo(lx + (boss.direction === -1 ? 1 : -1) * 20, ly);
+            ctx.strokeStyle = `rgba(255, 100, 100, ${0.7 - i * 0.1})`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+        }
+        
+        // Ink projectile effect when bouncing
+        if (boss.state === 'bouncing') {
+          const inkDir = boss.direction === -1 ? -1 : 1;
+          const mouthX = drawX + inkDir * 20;
+          const mouthY = drawY + 8;
+          for (let i = 0; i < 4; i++) {
+            const dist = 6 + i * 8;
+            const ix = mouthX + inkDir * dist;
+            const iy = mouthY + Math.sin(time / 35 + i * 0.9) * (2 + i);
+            ctx.beginPath();
+            ctx.arc(ix, iy, 5 - i, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${80 + i * 20}, 0, ${150 - i * 20}, ${0.8 - i * 0.15})`;
+            ctx.fill();
+          }
+        }
+        
+        ctx.restore(); // direction flip restore
+        
+        // Stunned stars
+        if (isStunned) {
+          ctx.font = '18px Arial';
+          ctx.textAlign = 'center';
+          ctx.globalAlpha = 1;
+          const starX1 = bossX - 25 + Math.sin(time / 120) * 15;
+          const starY1 = bossY - 5 + Math.cos(time / 120) * 5;
+          const starX2 = bossX + 25 - Math.sin(time / 120) * 15;
+          const starY2 = bossY - 10 - Math.cos(time / 120) * 5;
+          ctx.fillText('💫', starX1, starY1);
+          ctx.fillText('🌊', starX2, starY2);
+          ctx.fillText('⭐', bossX, bossY - 15 + Math.sin(time / 80) * 4);
         }
       } else if (bossImgRef.current) {
         // Draw Block Dragon sprite
@@ -954,7 +1157,6 @@ export function GameCanvas({
         const drawX = bossX - spriteW / 2;
         const drawY = bossY + boss.height - spriteH + (isStunned ? 0 : wobble);
         
-        // Flip sprite based on direction
         if (boss.direction === 1) {
           ctx.save();
           ctx.translate(bossX, 0);
@@ -962,7 +1164,6 @@ export function GameCanvas({
           ctx.translate(-bossX, 0);
         }
         
-        // Stunned tint overlay
         if (isStunned) {
           ctx.globalAlpha = 0.6 + Math.sin(time / 60) * 0.2;
         }
@@ -973,7 +1174,6 @@ export function GameCanvas({
           ctx.restore();
         }
         
-        // Stunned stars effect
         if (isStunned) {
           ctx.font = '18px Arial';
           ctx.textAlign = 'center';
@@ -987,13 +1187,11 @@ export function GameCanvas({
           ctx.fillText('💫', bossX, drawY - 15 + Math.sin(time / 80) * 4);
         }
         
-        // Fire breath effect - continuous when bouncing
         if (boss.state === 'bouncing') {
           const fireDir = boss.direction === -1 ? -1 : 1;
           const mouthX = bossX + fireDir * 38;
           const mouthY = drawY + 30;
           
-          // Draw fire breath stream
           for (let i = 0; i < 6; i++) {
             const dist = 8 + i * 10;
             const fx = mouthX + fireDir * dist;
@@ -1011,12 +1209,11 @@ export function GameCanvas({
             ctx.fill();
           }
           
-          // Fire emoji at mouth
           ctx.font = '18px Arial';
           ctx.fillText('🔥', mouthX + fireDir * 15, mouthY + 5);
         }
       } else {
-        // Fallback if sprite not loaded: simple colored block dragon
+        // Fallback
         ctx.fillStyle = '#CC0000';
         ctx.fillRect(boss.x, bossY, boss.width, boss.height);
         ctx.strokeStyle = '#FFD700';
@@ -1030,7 +1227,7 @@ export function GameCanvas({
       
       ctx.restore();
       
-      // Boss health bar (world space, above boss)
+      // Boss health bar
       if (boss.state !== 'spawning') {
         const barWidth = 80;
         const barHeight = 10;
@@ -1038,16 +1235,13 @@ export function GameCanvas({
         const barY = bossY - 20;
         const healthPct = boss.health / boss.maxHealth;
         
-        // Background
         ctx.fillStyle = 'rgba(0,0,0,0.7)';
         ctx.fillRect(barX - 2, barY - 2, barWidth + 4, barHeight + 4);
         
-        // Health fill
         const healthColor = healthPct > 0.5 ? '#00DD00' : healthPct > 0.25 ? '#FFAA00' : '#FF2200';
         ctx.fillStyle = healthColor;
         ctx.fillRect(barX, barY, barWidth * healthPct, barHeight);
         
-        // Outline
         ctx.strokeStyle = 'rgba(255,255,255,0.5)';
         ctx.lineWidth = 1;
         ctx.strokeRect(barX, barY, barWidth, barHeight);
@@ -1056,7 +1250,8 @@ export function GameCanvas({
         ctx.font = 'bold 10px Arial';
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'center';
-        ctx.fillText('BLOCK DRAGON', bossX, barY - 5);
+        const bossName = isKraken ? `PEARL KRAKEN${(boss.phase ?? 1) >= 2 ? ` · PHASE ${boss.phase}` : ''}` : 'BLOCK DRAGON';
+        ctx.fillText(bossName, bossX, barY - 5);
       }
     }
     
@@ -1064,28 +1259,49 @@ export function GameCanvas({
     if (levelData.boss && levelData.boss.state === 'defeated') {
       const boss = levelData.boss;
       const bossX = boss.x + boss.width / 2;
+      const isKraken = boss.bossType === 'pearlKraken';
       ctx.save();
-      // Scattered blocks explosion
-      const blockColors = ['#CC0000', '#0066CC', '#FFCC00', '#00AA00', '#FF6600'];
       const elapsed = time % 5000;
       if (elapsed < 3000) {
-        for (let i = 0; i < 12; i++) {
-          const angle = (i / 12) * Math.PI * 2;
-          const dist = (elapsed / 30) + i * 5;
-          const bx = bossX + Math.cos(angle) * dist;
-          const by = boss.y + 45 + Math.sin(angle) * dist + (elapsed / 50);
-          const alpha = Math.max(0, 1 - elapsed / 2500);
-          ctx.globalAlpha = alpha;
-          ctx.fillStyle = blockColors[i % blockColors.length];
-          ctx.fillRect(bx - 6, by - 6, 12, 12);
-          ctx.strokeStyle = '#000';
-          ctx.lineWidth = 1;
-          ctx.strokeRect(bx - 6, by - 6, 12, 12);
+        if (isKraken) {
+          // Ink splash + bubbles explosion
+          const splashColors = ['#6633AA', '#9944CC', '#CC2266', '#00AACC', '#44DDFF'];
+          for (let i = 0; i < 14; i++) {
+            const angle = (i / 14) * Math.PI * 2;
+            const dist = (elapsed / 25) + i * 6;
+            const bx = bossX + Math.cos(angle) * dist;
+            const by = boss.y + 40 + Math.sin(angle) * dist * 0.7 + (elapsed / 60);
+            const alpha = Math.max(0, 1 - elapsed / 2500);
+            ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            ctx.arc(bx, by, 6 + Math.sin(i) * 2, 0, Math.PI * 2);
+            ctx.fillStyle = splashColors[i % splashColors.length];
+            ctx.fill();
+          }
+          ctx.globalAlpha = Math.max(0, 1 - elapsed / 1500);
+          ctx.font = '36px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('🌊', bossX, boss.y + 40);
+        } else {
+          const blockColors = ['#CC0000', '#0066CC', '#FFCC00', '#00AA00', '#FF6600'];
+          for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            const dist = (elapsed / 30) + i * 5;
+            const bx = bossX + Math.cos(angle) * dist;
+            const by = boss.y + 45 + Math.sin(angle) * dist + (elapsed / 50);
+            const alpha = Math.max(0, 1 - elapsed / 2500);
+            ctx.globalAlpha = alpha;
+            ctx.fillStyle = blockColors[i % blockColors.length];
+            ctx.fillRect(bx - 6, by - 6, 12, 12);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(bx - 6, by - 6, 12, 12);
+          }
+          ctx.globalAlpha = Math.max(0, 1 - elapsed / 1500);
+          ctx.font = '36px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('💥', bossX, boss.y + 40);
         }
-        ctx.globalAlpha = Math.max(0, 1 - elapsed / 1500);
-        ctx.font = '36px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('💥', bossX, boss.y + 40);
       }
       ctx.restore();
     }

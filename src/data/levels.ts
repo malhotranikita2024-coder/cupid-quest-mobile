@@ -621,6 +621,12 @@ function createLevel5(): LevelData {
     createFloatingPlatform(4900, 280, 100),
     { x: 5200, y: 380, width: 100, height: 30, type: 'moving', moveDirection: 'vertical', moveSpeed: 2, moveRange: 100, originalX: 5200, originalY: 380 },
     createFloatingPlatform(5650, 320, 130),
+    // Boss arena platforms
+    createFloatingPlatform(4750, 400, 140),
+    createFloatingPlatform(4950, 340, 120),
+    createFloatingPlatform(5150, 400, 140),
+    createFloatingPlatform(5350, 360, 120),
+    createFloatingPlatform(5100, 280, 100),
   ];
 
   const collectibles: Collectible[] = [];
@@ -637,6 +643,8 @@ function createLevel5(): LevelData {
     }
   }
   collectibles.push({ x: 2650, y: 220, type: 'cookie', collected: false, animationOffset: 0 });
+  // Fire Sword for boss fight
+  collectibles.push({ x: 2800, y: GROUND_Y - 60, type: 'fireSword', collected: false, animationOffset: 0 });
 
   const enemies: Enemy[] = [
     // Ground enemies
@@ -679,6 +687,10 @@ function createLevel5(): LevelData {
     ...createBlockRow(4660, 340, ['brick', 'question', 'brick']),
     ...createBlockRow(5210, 320, ['brick', 'question', 'brick']),
     ...createBlockRow(5660, 340, ['brick', 'question', 'brick']),
+    // Boss arena blocks
+    ...createBlockRow(4800, 360, ['brick', 'brick', 'question', 'brick']),
+    ...createBlockRow(5050, 320, ['brick', 'question', 'brick']),
+    ...createBlockRow(5300, 380, ['brick', 'brick', 'question', 'brick', 'brick']),
   ];
 
   const pipes: Pipe[] = [
@@ -703,6 +715,31 @@ function createLevel5(): LevelData {
     createFallingHazard(5600, 100, 5550),
   ];
 
+  const boss: Boss = {
+    x: 5200,
+    y: 400,
+    width: 80,
+    height: 80,
+    health: 7,
+    maxHealth: 7,
+    state: 'idle',
+    velocityX: 0,
+    velocityY: 0,
+    stunnedTimer: 0,
+    attackTimer: 0,
+    spawnTimer: 180,
+    bounceCount: 0,
+    isGrounded: false,
+    direction: -1,
+    hitFlash: 0,
+    bossType: 'pearlKraken',
+    arenaLeft: 4700,
+    arenaRight: 5850,
+    phase: 1,
+    chargeTimer: 0,
+    summonTimer: 0,
+  };
+
   return {
     id: 5,
     name: 'Pearl Ocean',
@@ -717,13 +754,12 @@ function createLevel5(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2600, y: GROUND_Y - 80, activated: false },
-    // End flag on end platform
     flag: { x: 5850, y: GROUND_Y - 60 - 80, reached: false },
-    // Mid-level flag - on elevated platform near moving platform
     midFlag: { x: 4620, y: 230, collected: false },
     backgroundColor: '#E0F7FA',
     groundColor: '#00ACC1',
     levelWidth: LEVEL_WIDTH,
+    boss,
   };
 }
 
