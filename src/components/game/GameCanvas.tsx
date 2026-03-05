@@ -880,8 +880,8 @@ export function GameCanvas({
         }
       } else if (bossImgRef.current) {
         // Draw Block Dragon sprite
-        const spriteW = 100;
-        const spriteH = 100;
+        const spriteW = 72;
+        const spriteH = 72;
         const drawX = bossX - spriteW / 2;
         const drawY = bossY + boss.height - spriteH + (isStunned ? 0 : wobble);
         

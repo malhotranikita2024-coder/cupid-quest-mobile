@@ -97,6 +97,11 @@ export function GameEngine({
   const plantingTimeoutRef = useRef<NodeJS.Timeout>();
   // Synchronous death lock ref - prevents race conditions with async state updates
   const isDeathLockedRef = useRef(false);
+  // Refs for shooting fireballs (avoids stale closures in keyboard handler)
+  const playerRef = useRef(player);
+  playerRef.current = player;
+  const levelDataRef = useRef(levelData);
+  levelDataRef.current = levelData;
   // Track which level the title overlay has already been shown for
   const levelTitleShownForRef = useRef<number | null>(null);
   
@@ -791,12 +796,13 @@ export function GameEngine({
           break;
         case 'f':
         case 'F':
-          // Shoot player fireball if boss level
-          if (levelData.boss && levelData.boss.state !== 'defeated') {
-            const dir = player.facingRight ? 1 : -1;
+          // Shoot player fireball if boss level (use refs for fresh values)
+          if (levelDataRef.current.boss && levelDataRef.current.boss.state !== 'defeated' && levelDataRef.current.boss.state !== 'idle') {
+            const p = playerRef.current;
+            const dir = p.facingRight ? 1 : -1;
             setPlayerFireballs(prev => [...prev, {
-              x: player.x + (dir === 1 ? 40 : -10),
-              y: player.y + 15,
+              x: p.x + (dir === 1 ? 40 : -10),
+              y: p.y + 15,
               velocityX: dir * 8,
               width: 16,
               height: 16,
