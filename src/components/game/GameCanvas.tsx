@@ -71,11 +71,35 @@ export function GameCanvas({
   const wasJumpingRef = useRef(false);
   const bossImgRef = useRef<HTMLImageElement | null>(null);
 
-  // Load boss sprite
+  // Load boss sprite and remove white background
   useEffect(() => {
     const img = new Image();
     img.src = bossSprite;
-    img.onload = () => { bossImgRef.current = img; };
+    img.onload = () => {
+      // Draw to offscreen canvas and remove white pixels
+      const offscreen = document.createElement('canvas');
+      offscreen.width = img.width;
+      offscreen.height = img.height;
+      const octx = offscreen.getContext('2d');
+      if (octx) {
+        octx.drawImage(img, 0, 0);
+        const imageData = octx.getImageData(0, 0, img.width, img.height);
+        const data = imageData.data;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i+1], b = data[i+2];
+          // Remove white and near-white pixels
+          if (r > 230 && g > 230 && b > 230) {
+            data[i+3] = 0; // Set alpha to 0
+          }
+        }
+        octx.putImageData(imageData, 0, 0);
+        const processed = new Image();
+        processed.src = offscreen.toDataURL();
+        processed.onload = () => { bossImgRef.current = processed; };
+      } else {
+        bossImgRef.current = img;
+      }
+    };
   }, []);
 
   // Dust particle system

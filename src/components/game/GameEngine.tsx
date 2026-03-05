@@ -491,7 +491,7 @@ export function GameEngine({
     if (!fireSword) return;
     const dist = Math.abs(player.x - fireSword.x);
     if (dist < 300) {
-      triggerNudge('fireSword', fireSword.x + 15, fireSword.y, { kind: 'collectible', initialX: fireSword.x + 15, initialY: fireSword.y });
+      triggerNudge('fireSword', fireSword.x, fireSword.y - 10, { kind: 'collectible', initialX: fireSword.x, initialY: fireSword.y - 10 });
     }
   }, [player.x, hasFirePower, isPaused, showDeathOverlay, levelData.collectibles, canTrigger, triggerNudge]);
 
