@@ -63,49 +63,46 @@ export function MobileControls({
         </button>
       </div>
 
-      {/* Right side - Action controls */}
-      <div className="absolute bottom-6 right-6 flex gap-3 pointer-events-auto">
-        {/* Run button (smaller, positioned above/left of jump) */}
-        <button
-          className="game-control-btn w-16 h-16 self-start mt-4 active:scale-95"
-          style={{ 
-            background: 'rgba(255, 215, 0, 0.35)',
-            borderColor: 'rgba(255, 215, 0, 0.6)'
+      {/* Right side - Spacebar jump hint */}
+      <div className="absolute bottom-6 right-6 flex items-center gap-2 pointer-events-none">
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 20px',
+            borderRadius: '10px',
+            background: 'rgba(0, 0, 0, 0.5)',
+            border: '1.5px solid rgba(255, 255, 255, 0.2)',
+            backdropFilter: 'blur(4px)',
           }}
-          onTouchStart={(e) => handleTouchStart(e, onRunStart)}
-          onTouchEnd={(e) => handleTouchEnd(e, onRunEnd)}
-          onTouchCancel={(e) => handleTouchEnd(e, onRunEnd)}
-          onMouseDown={onRunStart}
-          onMouseUp={onRunEnd}
-          onMouseLeave={onRunEnd}
         >
-          <Zap className="w-8 h-8 text-yellow-200 drop-shadow-lg" strokeWidth={2.5} />
-        </button>
-        
-        {/* Jump button (largest) */}
-        <button
-          className="game-control-btn w-24 h-24 active:scale-95"
-          style={{ 
-            background: 'rgba(255, 105, 180, 0.35)',
-            borderColor: 'rgba(255, 182, 193, 0.6)'
-          }}
-          onTouchStart={(e) => handleTouchStart(e, onJumpStart)}
-          onTouchEnd={(e) => handleTouchEnd(e, onJumpEnd)}
-          onTouchCancel={(e) => handleTouchEnd(e, onJumpEnd)}
-          onMouseDown={onJumpStart}
-          onMouseUp={onJumpEnd}
-          onMouseLeave={onJumpEnd}
-        >
-          <ArrowUp className="w-12 h-12 text-white drop-shadow-lg" strokeWidth={3} />
-        </button>
+          <span
+            style={{
+              display: 'inline-block',
+              padding: '4px 14px',
+              borderRadius: '6px',
+              background: 'rgba(255, 255, 255, 0.15)',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              color: '#fff',
+              fontSize: '13px',
+              fontWeight: 700,
+              letterSpacing: '1px',
+              fontFamily: 'monospace',
+              boxShadow: '0 2px 0 rgba(0,0,0,0.3)',
+            }}
+          >
+            SPACE
+          </span>
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', fontWeight: 600, letterSpacing: '1px' }}>
+            JUMP
+          </span>
+        </div>
       </div>
 
       {/* Control labels (subtle) */}
       <div className="absolute bottom-1 left-6 text-white/50 text-xs font-medium tracking-wide">
         MOVE
-      </div>
-      <div className="absolute bottom-1 right-6 text-white/50 text-xs font-medium tracking-wide">
-        RUN + JUMP
       </div>
     </div>
   );
