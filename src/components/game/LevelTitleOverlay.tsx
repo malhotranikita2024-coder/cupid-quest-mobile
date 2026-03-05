@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface LevelTitleOverlayProps {
   level: number;
@@ -8,34 +8,57 @@ interface LevelTitleOverlayProps {
 }
 
 export function LevelTitleOverlay({ level, levelName, collectibleEmoji, onComplete }: LevelTitleOverlayProps) {
-  const [phase, setPhase] = useState<'fadeIn' | 'hold' | 'fadeOut' | 'done'>('fadeIn');
+  const [opacity, setOpacity] = useState(0);
+  const [translateY, setTranslateY] = useState(0);
+  const [visible, setVisible] = useState(true);
+  const startRef = useRef(performance.now());
+  const rafRef = useRef<number>();
+
+  const FADE_IN = 300;
+  const HOLD = 1200;
+  const FADE_OUT = 700;
+  const TOTAL = FADE_IN + HOLD + FADE_OUT;
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase('hold'), 400);
-    const t2 = setTimeout(() => setPhase('fadeOut'), 1600);
-    const t3 = setTimeout(() => {
-      setPhase('done');
-      onComplete();
-    }, 2100);
-    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+    startRef.current = performance.now();
+
+    const tick = () => {
+      const elapsed = performance.now() - startRef.current;
+
+      if (elapsed < FADE_IN) {
+        setOpacity(elapsed / FADE_IN);
+        setTranslateY(0);
+      } else if (elapsed < FADE_IN + HOLD) {
+        setOpacity(1);
+        setTranslateY(0);
+      } else if (elapsed < TOTAL) {
+        const fadeProgress = (elapsed - FADE_IN - HOLD) / FADE_OUT;
+        setOpacity(1 - fadeProgress);
+        setTranslateY(-12 * fadeProgress);
+      } else {
+        setVisible(false);
+        onComplete();
+        return;
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, [onComplete]);
 
-  if (phase === 'done') return null;
-
-  const opacity = phase === 'fadeIn' ? 0 : phase === 'hold' ? 1 : 0;
-  const translateY = phase === 'fadeOut' ? -12 : 0;
+  if (!visible) return null;
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center pointer-events-none z-40"
+      className="fixed inset-0 flex items-center justify-center pointer-events-none"
       style={{
+        zIndex: 40,
         opacity,
         transform: `translateY(${translateY}px)`,
-        transition: phase === 'fadeIn'
-          ? 'opacity 400ms ease-out'
-          : phase === 'fadeOut'
-          ? 'opacity 500ms ease-in, transform 500ms ease-in'
-          : 'none',
       }}
     >
       <div
