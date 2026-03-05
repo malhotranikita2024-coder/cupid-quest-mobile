@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useCallback } from 'react';
-import { PlayerState, TouchControls, LevelData, HitBlock, Pipe, FallingHazard, Fireball, LevelFlag, MidLevelFlag } from '@/types/game';
+import { PlayerState, TouchControls, LevelData, HitBlock, Pipe, FallingHazard, Fireball, LevelFlag, MidLevelFlag, PlayerFireball, Boss } from '@/types/game';
 import { COLLECTIBLE_EMOJIS } from '@/data/levels';
 
 interface GameCanvasProps {
@@ -26,6 +26,7 @@ interface GameCanvasProps {
   hasShield: boolean;
   hasMidFlag: boolean;
   isPlantingFlag: boolean;
+  playerFireballs?: PlayerFireball[];
 }
 
 const GRAVITY = 0.6;
@@ -60,6 +61,7 @@ export function GameCanvas({
   hasShield,
   hasMidFlag,
   isPlantingFlag,
+  playerFireballs = [],
 }: GameCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number>();
@@ -349,6 +351,30 @@ export function GameCanvas({
         }
       }
     });
+
+    // Boss-player collision
+    if (levelData.boss && levelData.boss.state === 'bouncing') {
+      const boss = levelData.boss;
+      const playerLeft = newPlayer.x;
+      const playerRight = newPlayer.x + PLAYER_WIDTH;
+      const playerTop = newPlayer.y;
+      const playerBottom = newPlayer.y + PLAYER_HEIGHT;
+
+      if (
+        playerRight > boss.x &&
+        playerLeft < boss.x + boss.width &&
+        playerBottom > boss.y &&
+        playerTop < boss.y + boss.height &&
+        !newPlayer.isInvincible
+      ) {
+        onPlayerHit();
+        newPlayer.isInvincible = true;
+        newPlayer.invincibleTimer = 120;
+        // Knock player back
+        newPlayer.velocityX = newPlayer.x < boss.x ? -8 : 8;
+        newPlayer.velocityY = -8;
+      }
+    }
 
     // Pipe enemy collision
     levelData.pipes.forEach(pipe => {
@@ -775,6 +801,142 @@ export function GameCanvas({
       });
       ctx.fillText('🔥', fireball.x + fireball.width / 2, fireball.y + wobble + 12);
     });
+
+    // Draw player fireballs
+    playerFireballs.forEach(fb => {
+      if (!fb.isActive) return;
+      ctx.save();
+      ctx.font = '20px Arial';
+      ctx.textAlign = 'center';
+      // Blue/cyan fireball glow
+      ctx.beginPath();
+      ctx.arc(fb.x + fb.width / 2, fb.y + fb.height / 2, 14, 0, Math.PI * 2);
+      const fbGlow = ctx.createRadialGradient(fb.x + fb.width / 2, fb.y + fb.height / 2, 2, fb.x + fb.width / 2, fb.y + fb.height / 2, 14);
+      fbGlow.addColorStop(0, 'rgba(100, 200, 255, 0.9)');
+      fbGlow.addColorStop(0.5, 'rgba(50, 150, 255, 0.5)');
+      fbGlow.addColorStop(1, 'rgba(0, 100, 255, 0)');
+      ctx.fillStyle = fbGlow;
+      ctx.fill();
+      ctx.fillText('💫', fb.x + fb.width / 2, fb.y + fb.height / 2 + 6);
+      ctx.restore();
+    });
+
+    // Draw boss (Jack-in-the-Box)
+    if (levelData.boss && levelData.boss.state !== 'defeated') {
+      const boss = levelData.boss;
+      const bossX = boss.x + boss.width / 2;
+      const bossY = boss.y;
+      const wobble = Math.sin(time / 150) * 4;
+      const isStunned = boss.state === 'stunned';
+      const isSpawning = boss.state === 'spawning';
+      const flashOn = boss.hitFlash > 0 && Math.floor(boss.hitFlash / 3) % 2 === 0;
+      
+      ctx.save();
+      
+      // Boss shadow
+      ctx.beginPath();
+      ctx.ellipse(bossX, boss.y + boss.height, 45, 12, 0, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fill();
+      
+      // Boss glow
+      ctx.beginPath();
+      ctx.arc(bossX, bossY + boss.height / 2, 55, 0, Math.PI * 2);
+      const bossGlow = ctx.createRadialGradient(bossX, bossY + boss.height / 2, 10, bossX, bossY + boss.height / 2, 55);
+      bossGlow.addColorStop(0, isStunned ? 'rgba(255, 255, 100, 0.4)' : 'rgba(200, 50, 50, 0.35)');
+      bossGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = bossGlow;
+      ctx.fill();
+      
+      if (flashOn) {
+        ctx.globalAlpha = 0.5;
+      }
+      
+      if (isSpawning) {
+        // Spawning animation: bouncing box
+        const spawnProgress = 1 - (boss.spawnTimer / 180);
+        ctx.globalAlpha = spawnProgress;
+        ctx.font = '60px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('🎁', bossX, bossY + boss.height - 10 + Math.sin(time / 100) * 8);
+      } else {
+        // Main Jack-in-the-box body (box base)
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(boss.x + 10, bossY + boss.height - 35, boss.width - 20, 35);
+        ctx.strokeStyle = '#FFD700';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(boss.x + 10, bossY + boss.height - 35, boss.width - 20, 35);
+        
+        // Spring
+        ctx.strokeStyle = '#C0C0C0';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        const springSegments = 6;
+        for (let i = 0; i <= springSegments; i++) {
+          const sy = bossY + boss.height - 35 - (i * 8);
+          const sx = bossX + (i % 2 === 0 ? -10 : 10);
+          if (i === 0) ctx.moveTo(bossX, bossY + boss.height - 35);
+          else ctx.lineTo(sx, sy);
+        }
+        ctx.stroke();
+        
+        // Jack head (clown/jester emoji)
+        ctx.font = isStunned ? '45px Arial' : '50px Arial';
+        ctx.textAlign = 'center';
+        const headY = bossY + 25 + (isStunned ? 0 : wobble);
+        
+        // Evil eyes
+        if (!isStunned) {
+          ctx.fillText('🤡', bossX, headY);
+          // Add angry eyebrows
+          ctx.font = 'bold 14px Arial';
+          ctx.fillStyle = '#FF0000';
+          ctx.fillText('😈', bossX, headY - 30);
+        } else {
+          // Dizzy when stunned
+          ctx.fillText('😵', bossX, headY);
+          ctx.font = '16px Arial';
+          ctx.fillText('💫', bossX - 20 + Math.sin(time / 100) * 10, headY - 25);
+          ctx.fillText('💫', bossX + 20 - Math.sin(time / 100) * 10, headY - 20);
+        }
+      }
+      
+      ctx.restore();
+      
+      // Boss health bar (world space, above boss)
+      if (boss.state !== 'spawning') {
+        const barWidth = 70;
+        const barHeight = 8;
+        const barX = bossX - barWidth / 2;
+        const barY = bossY - 15;
+        const healthPct = boss.health / boss.maxHealth;
+        
+        ctx.fillStyle = 'rgba(0,0,0,0.6)';
+        ctx.fillRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2);
+        
+        const healthColor = healthPct > 0.5 ? '#00CC00' : healthPct > 0.25 ? '#FFAA00' : '#FF0000';
+        ctx.fillStyle = healthColor;
+        ctx.fillRect(barX, barY, barWidth * healthPct, barHeight);
+        
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(barX, barY, barWidth, barHeight);
+      }
+    }
+    
+    // Draw boss defeat explosion
+    if (levelData.boss && levelData.boss.state === 'defeated') {
+      const boss = levelData.boss;
+      const bossX = boss.x + boss.width / 2;
+      ctx.save();
+      ctx.font = '40px Arial';
+      ctx.textAlign = 'center';
+      ctx.globalAlpha = Math.max(0, 1 - (time % 3000) / 2000);
+      ctx.fillText('💥', bossX, boss.y + 30);
+      ctx.fillText('⭐', bossX - 25, boss.y + 10);
+      ctx.fillText('⭐', bossX + 25, boss.y + 50);
+      ctx.restore();
+    }
 
     // Draw falling hazards
     levelData.fallingHazards.forEach(hazard => {

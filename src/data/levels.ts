@@ -1,4 +1,4 @@
-import { LevelData, Platform, Collectible, Enemy, HitBlock, Pipe, FallingHazard, Fireball } from '@/types/game';
+import { LevelData, Platform, Collectible, Enemy, HitBlock, Pipe, FallingHazard, Fireball, Boss } from '@/types/game';
 
 const GROUND_Y = 520;
 const LEVEL_WIDTH = 6000; // Extended level width for 4-5 min gameplay
@@ -392,6 +392,25 @@ function createLevel3(): LevelData {
 
   const fallingHazards: FallingHazard[] = []; // No falling hazards in level 3
 
+  const boss: Boss = {
+    x: 5400,
+    y: 400,
+    width: 80,
+    height: 90,
+    health: 5,
+    maxHealth: 5,
+    state: 'idle',
+    velocityX: 0,
+    velocityY: 0,
+    stunnedTimer: 0,
+    attackTimer: 0,
+    spawnTimer: 180, // 3 seconds spawn-in animation
+    bounceCount: 0,
+    isGrounded: false,
+    direction: -1,
+    hitFlash: 0,
+  };
+
   return {
     id: 3,
     name: 'Toyland',
@@ -406,13 +425,12 @@ function createLevel3(): LevelData {
     fallingHazards,
     fireballs: [],
     checkpoint: { x: 2400, y: GROUND_Y - 80, activated: false },
-    // End flag on end platform
     flag: { x: 5850, y: GROUND_Y - 60 - 80, reached: false },
-    // Mid-level flag - on elevated platform past fire pipe
     midFlag: { x: 4320, y: 250, collected: false },
     backgroundColor: '#E8F4FF',
     groundColor: '#9B7653',
     levelWidth: LEVEL_WIDTH,
+    boss,
   };
 }
 

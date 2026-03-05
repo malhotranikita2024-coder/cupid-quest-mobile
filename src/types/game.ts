@@ -131,6 +131,36 @@ export interface Fireball {
   isActive: boolean;
 }
 
+export interface PlayerFireball {
+  x: number;
+  y: number;
+  velocityX: number;
+  width: number;
+  height: number;
+  isActive: boolean;
+}
+
+export type BossState = 'idle' | 'bouncing' | 'stunned' | 'defeated' | 'spawning';
+
+export interface Boss {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  health: number;
+  maxHealth: number;
+  state: BossState;
+  velocityX: number;
+  velocityY: number;
+  stunnedTimer: number;
+  attackTimer: number;
+  spawnTimer: number;
+  bounceCount: number;
+  isGrounded: boolean;
+  direction: 1 | -1;
+  hitFlash: number;
+}
+
 export interface Checkpoint {
   x: number;
   y: number;
@@ -174,6 +204,7 @@ export interface LevelData {
   backgroundColor: string;
   groundColor: string;
   levelWidth: number;
+  boss?: Boss;
 }
 
 export interface TouchControls {
