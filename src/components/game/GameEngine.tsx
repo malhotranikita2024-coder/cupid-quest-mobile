@@ -87,6 +87,11 @@ export function GameEngine({
   const [showNeedFlagMessage, setShowNeedFlagMessage] = useState(false);
   const [showLevelCompleteOverlay, setShowLevelCompleteOverlay] = useState(false);
   const [showLevelTitle, setShowLevelTitle] = useState(false);
+  const [debugIntroText, setDebugIntroText] = useState<string | null>(null);
+  const [debugIntroElapsed, setDebugIntroElapsed] = useState(0);
+  const debugIntroTimerRef = useRef<NodeJS.Timeout>();
+  const debugIntroStartRef = useRef(0);
+  const debugIntroRafRef = useRef<number>();
   const [fireworkParticles, setFireworkParticles] = useState<Array<{id: number; x: number; y: number; vx: number; vy: number; color: string; life: number; size: number}>>([]);
   
   const timerRef = useRef<NodeJS.Timeout>();
@@ -156,6 +161,22 @@ export function GameEngine({
     } else {
       setShowLevelTitle(false);
     }
+
+    // DEBUG: Always show debug intro proof on every level load
+    const debugMsg = `INTRO DEBUG: Level ${currentLevel} World ${currentLevel} (timestamp: ${Date.now()})`;
+    setDebugIntroText(debugMsg);
+    debugIntroStartRef.current = performance.now();
+    if (debugIntroTimerRef.current) clearTimeout(debugIntroTimerRef.current);
+    if (debugIntroRafRef.current) cancelAnimationFrame(debugIntroRafRef.current);
+    const tickDebug = () => {
+      setDebugIntroElapsed(Math.round(performance.now() - debugIntroStartRef.current));
+      debugIntroRafRef.current = requestAnimationFrame(tickDebug);
+    };
+    debugIntroRafRef.current = requestAnimationFrame(tickDebug);
+    debugIntroTimerRef.current = setTimeout(() => {
+      setDebugIntroText(null);
+      if (debugIntroRafRef.current) cancelAnimationFrame(debugIntroRafRef.current);
+    }, 3000);
     
     setIsDying(false); // Reset death lock on level start
     isDeathLockedRef.current = false; // Reset synchronous death lock
@@ -1282,6 +1303,48 @@ export function GameEngine({
           onComplete={() => setShowLevelTitle(false)}
         />
       )}
+
+      {/* DEBUG: Big centered intro proof overlay */}
+      {debugIntroText && (
+        <div
+          className="fixed inset-0 flex items-center justify-center pointer-events-none"
+          style={{ zIndex: 9999 }}
+        >
+          <div
+            style={{
+              background: 'rgba(255, 0, 0, 0.85)',
+              color: '#fff',
+              fontSize: '28px',
+              fontWeight: 'bold',
+              padding: '30px 40px',
+              borderRadius: '16px',
+              textAlign: 'center',
+              border: '4px solid #ff0',
+              maxWidth: '90vw',
+            }}
+          >
+            {debugIntroText}
+          </div>
+        </div>
+      )}
+
+      {/* DEBUG: Persistent tiny top-left debug line */}
+      <div
+        className="fixed pointer-events-none"
+        style={{
+          top: 60,
+          left: 8,
+          zIndex: 9999,
+          color: '#0f0',
+          fontSize: '12px',
+          fontFamily: 'monospace',
+          background: 'rgba(0,0,0,0.7)',
+          padding: '2px 6px',
+          borderRadius: '4px',
+        }}
+      >
+        introActive={showLevelTitle ? 'true' : 'false'} elapsedMs={debugIntroElapsed}
+      </div>
 
       {showNeedFlagMessage && (
         <div className="fixed inset-x-0 top-24 z-50 flex justify-center pointer-events-none animate-fade-in">
