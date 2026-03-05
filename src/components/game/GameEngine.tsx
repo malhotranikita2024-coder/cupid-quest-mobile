@@ -497,18 +497,17 @@ export function GameEngine({
     }
   }, [player.x, levelData.boss, bossDefeated]);
 
-  // Fire sword proximity popup
+  // Fire sword proximity - use tutorial bubble system
   useEffect(() => {
     if (hasFirePower || isPaused || showDeathOverlay) return;
+    if (!canTrigger('fireSword')) return;
     const fireSword = levelData.collectibles.find(c => c.type === 'fireSword' && !c.collected);
-    if (!fireSword) { setShowFireSwordPopup(false); return; }
+    if (!fireSword) return;
     const dist = Math.abs(player.x - fireSword.x);
     if (dist < 300) {
-      setShowFireSwordPopup(true);
-    } else {
-      setShowFireSwordPopup(false);
+      triggerNudge('fireSword', fireSword.x, fireSword.y - 20, { kind: 'collectible', initialX: fireSword.x, initialY: fireSword.y });
     }
-  }, [player.x, hasFirePower, isPaused, showDeathOverlay, levelData.collectibles]);
+  }, [player.x, hasFirePower, isPaused, showDeathOverlay, levelData.collectibles, canTrigger, triggerNudge]);
 
   useEffect(() => {
     if (isPaused || showDeathOverlay) return;
@@ -1520,26 +1519,7 @@ export function GameEngine({
         />
       )}
 
-      {/* Fire Sword popup - "Collect me!" hint */}
-      {showFireSwordPopup && (
-        <div className="fixed inset-x-0 top-20 z-50 flex justify-center pointer-events-none animate-fade-in">
-          <div style={{
-            padding: '10px 24px',
-            borderRadius: '14px',
-            background: 'rgba(180, 50, 0, 0.9)',
-            border: '2px solid rgba(255, 150, 50, 0.7)',
-            boxShadow: '0 0 30px rgba(255, 80, 0, 0.4)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-          }}>
-            <span style={{ fontSize: '28px' }}>🗡️🔥</span>
-            <span style={{ color: '#FFD700', fontSize: '16px', fontWeight: 700, textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
-              Collect me! You'll need me to fight the Dragon Boss!
-            </span>
-          </div>
-        </div>
-      )}
+      {/* Fire sword hint is now handled by TutorialNudge bubble system */}
 
       {showNeedFlagMessage && (
         <div className="fixed inset-x-0 top-24 z-50 flex justify-center pointer-events-none animate-fade-in">
