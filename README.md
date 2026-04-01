@@ -1,6 +1,6 @@
 # 🎮 Cupid Quest (Super Love Quest)
 
-🔗 Live Demo: https://cupid-quest-mobile.lovable.app
+🔗 Live Demo: https://cupid-quest-desktop.lovable.app
 
 📸 Screenshots below
 
