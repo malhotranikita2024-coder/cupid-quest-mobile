@@ -1,0 +1,1 @@
+DROP POLICY "Anyone can submit scores" ON public.leaderboard;
