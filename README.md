@@ -2,8 +2,7 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
-
+**URL**:https://cupid-quest-mobile.lovable.app
 ## How can I edit this code?
 
 There are several ways of editing your application.
