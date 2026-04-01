@@ -3,8 +3,12 @@
 🔗 Live Demo: https://cupid-quest-mobile.lovable.app
 
 📸 Screenshots below
+
+HOME SCREEN
 <img width="1908" height="882" alt="Love Quest 1" src="https://github.com/user-attachments/assets/128cd067-beae-48ca-8d00-723abbda7a8f" />
+GAME PLAY EXPERIENCE
 <img width="1908" height="882" alt="Love Quest 2" src="https://github.com/user-attachments/assets/27a404da-c64c-4f87-88ca-2cdc1d1764f2" />
+LEVEL COMPLETION
 <img width="1908" height="882" alt="Love quest 3" src="https://github.com/user-attachments/assets/2fd9e9b5-1af5-4803-a2a2-ad7d23e2a18a" />
 
 
